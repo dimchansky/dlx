@@ -69,9 +69,9 @@ func TestSolve(t *testing.T) {
 func BenchmarkSolveTestSudoku(b *testing.B) {
 	for n := 0; n < b.N; n++ {
 		for _, tc := range solverTable {
-			Solve(tc.input, func(solution string) bool {
+			Solve(tc.input, SolutionAccepterFunc(func(solution string) bool {
 				return false
-			})
+			}))
 		}
 	}
 }

@@ -30,7 +30,7 @@ func (f SolutionAccepterFunc) AcceptSolution(solution string) bool {
 
 // Solve finds all solutions of Sudoku in 81 character string format.
 // Each solution is passed to accepter. It stops immediately when accepter AcceptSolution returns true.
-func Solve(s string, accepter SolutionAccepterFunc) {
+func Solve(s string, accepter SolutionAccepter) {
 	m := encodeConstraints(s)
 
 	m.Solve(dlx.SolutionAccepterFunc(func(cs [][]int) bool {
