@@ -81,10 +81,10 @@ func TestSolve(t *testing.T) {
 		}
 
 		var solutions [][][]int
-		m.Solve(func(cs [][]int) bool {
+		m.Solve(SolutionAccepterFunc(func(cs [][]int) bool {
 			solutions = append(solutions, cs)
 			return false
-		})
+		}))
 
 		solutionsStr := toString(solutions)
 		expectedSolutionsStr := toString(v.solutions)

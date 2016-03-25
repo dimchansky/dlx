@@ -80,16 +80,32 @@ func (m *Matrix) AddRow(constraintsRow []int) {
 	}
 }
 
-// Solve finds a set or more of rows in which exactly one 1 appears for each column.
-// Each solution is passed to accept function. It stops immediately when accept function returns true.
-func (m *Matrix) Solve(accept func([][]int) bool) {
-	m.solve(accept)
+// SolutionAccepter accepts solutions for the given exact cover problem.
+// Each solution is passed to AcceptSolution. Solver stops immediately when AcceptSolution returns true.
+type SolutionAccepter interface {
+	AcceptSolution(exactCover [][]int) bool
 }
 
-func (m *Matrix) solve(accept func([][]int) bool) bool {
+// The SolutionAccepterFunc type is an adapter to allow the use of
+// ordinary functions as SolutionAccepter. If f is a function with the appropriate signature,
+// SolutionAccepterFunc(f) is a SolutionAccepter that calls f.
+type SolutionAccepterFunc func([][]int) bool
+
+// AcceptSolution calls f(exactCover) and returns its result.
+func (f SolutionAccepterFunc) AcceptSolution(exactCover [][]int) bool {
+	return f(exactCover)
+}
+
+// Solve finds a set or more of rows in which exactly one 1 appears for each column.
+// Each solution is passed to accepter. It stops immediately when accepter AcceptSolution returns true.
+func (m *Matrix) Solve(accepter SolutionAccepter) {
+	m.solve(accepter)
+}
+
+func (m *Matrix) solve(accepter SolutionAccepter) bool {
 	head := m.head
 	headRight := head.right.column
-	if headRight == head && accept(m.getExactCover()) {
+	if headRight == head && accepter.AcceptSolution(m.getExactCover()) {
 		return true
 	}
 
@@ -116,7 +132,7 @@ func (m *Matrix) solve(accept func([][]int) bool) bool {
 			coverColumn(j.column)
 		}
 
-		if m.solve(accept) {
+		if m.solve(accepter) {
 			return true
 		}
 

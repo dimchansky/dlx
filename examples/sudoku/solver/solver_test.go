@@ -52,10 +52,10 @@ func TestSolve(t *testing.T) {
 
 	for _, tc := range solverTable {
 		var solutions []string
-		Solve(tc.input, func(solution string) bool {
+		Solve(tc.input, SolutionAccepterFunc(func(solution string) bool {
 			solutions = append(solutions, solution)
 			return false
-		})
+		}))
 
 		solutionsStr := toString(solutions)
 		expectedSolutionsStr := toString(tc.solutions)
