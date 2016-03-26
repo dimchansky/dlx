@@ -1,3 +1,6 @@
 language: go
 go:
   - tip
+
+# sudo=false makes the build run using a container
+sudo: false
