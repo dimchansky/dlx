@@ -2,6 +2,8 @@
 
 `dlx` is a Go implementation of [Knuth's algorithm DLX](https://en.wikipedia.org/wiki/Knuth%27s_Algorithm_X) (algorithm X implemented in terms of [dancing links](https://en.wikipedia.org/wiki/Dancing_Links))
 
+[![Build Status](https://travis-ci.org/dimchansky/dlx.svg?branch=master)](https://travis-ci.org/dimchansky/dlx)
+
 A fantastic explanation of dancing links algorithm can be found [here](http://arxiv.org/abs/cs/0011047v1) ([PDF](http://arxiv.org/pdf/cs/0011047v1.pdf)).
 
 ## Installation
