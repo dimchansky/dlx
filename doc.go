@@ -8,11 +8,11 @@ Example
 Consider the exact cover problem specified by the matrix:
 
 	1	0	0	1	0	0	1
-    1	0	0	1	0	0	0
-    0	0	0	1	1	0	1
-    0	0	1	0	1	1	0
-    0	1	1	0	0	1	1
-    0	1	0	0	0	0	1
+	1	0	0	1	0	0	0
+	0	0	0	1	1	0	1
+	0	0	1	0	1	1	0
+	0	1	1	0	0	1	1
+	0	1	0	0	0	0	1
 
 The following code finds all solutions to the exact cover problem:
 
