@@ -77,7 +77,7 @@ func TestSolve(t *testing.T) {
 		m := NewMatrix(v.nColumns)
 
 		for _, r := range v.rows {
-			m.AddRow(r)
+			m.AddRow(r...)
 		}
 
 		var solutions [][][]int

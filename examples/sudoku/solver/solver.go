@@ -38,7 +38,7 @@ func Solve(s string, accepter SolutionAccepter) {
 	}))
 }
 
-func encodeConstraints(s string) *dlx.Matrix {
+func encodeConstraints(s string) dlx.Matrix {
 	m := dlx.NewMatrix(324)
 
 	for row, position := 0, 0; row < 9; row++ {
@@ -46,10 +46,10 @@ func encodeConstraints(s string) *dlx.Matrix {
 			region := row/3*3 + column/3
 			digit := int(s[position] - '1') // zero based digit
 			if digit >= 0 && digit < 9 {
-				m.AddRow([]int{position, 81 + row*9 + digit, 162 + column*9 + digit, 243 + region*9 + digit})
+				m.AddRow(position, 81+row*9+digit, 162+column*9+digit, 243+region*9+digit)
 			} else {
 				for digit = 0; digit < 9; digit++ {
-					m.AddRow([]int{position, 81 + row*9 + digit, 162 + column*9 + digit, 243 + region*9 + digit})
+					m.AddRow(position, 81+row*9+digit, 162+column*9+digit, 243+region*9+digit)
 				}
 			}
 		}

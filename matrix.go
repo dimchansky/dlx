@@ -1,5 +1,30 @@
 package dlx
 
+// SolutionAccepter accepts solutions for the given exact cover problem.
+// Each solution is passed to AcceptSolution. Solver stops immediately when AcceptSolution returns true.
+type SolutionAccepter interface {
+	AcceptSolution(exactCover [][]int) bool
+}
+
+// The SolutionAccepterFunc type is an adapter to allow the use of
+// ordinary functions as SolutionAccepter. If f is a function with the appropriate signature,
+// SolutionAccepterFunc(f) is a SolutionAccepter that calls f.
+type SolutionAccepterFunc func([][]int) bool
+
+// AcceptSolution calls f(exactCover) and returns its result.
+func (f SolutionAccepterFunc) AcceptSolution(exactCover [][]int) bool {
+	return f(exactCover)
+}
+
+// Matrix represents the exact cover problem. It's a matrix consisting of 0s and 1s.
+type Matrix interface {
+	// AddRow adds a row to matrix. Numbers are column indices (zero-based) for the nonzero elements of the row.
+	AddRow(constraintsRow ...int)
+	// Solve selects a subset of the rows so that the digit 1 appears in each column exactly once.
+	// Each solution is passed to AcceptSolution. Solver stops immediately when AcceptSolution returns true.
+	Solve(accepter SolutionAccepter)
+}
+
 type dataObject struct {
 	column                *columnObject
 	up, down, left, right *dataObject
@@ -13,16 +38,16 @@ type columnObject struct {
 	index int
 }
 
-// Matrix is a toroidal doubly-linked list
-type Matrix struct {
+// matrixObject is a toroidal doubly-linked list
+type matrixObject struct {
 	columns []columnObject
 	head    *columnObject
 
 	partialSolution []*dataObject
 }
 
-// NewMatrix creates the Matrix with column headers
-func NewMatrix(nColumns int) *Matrix {
+// NewMatrix creates the Matrix with the given number of columns.
+func NewMatrix(nColumns int) Matrix {
 	columns := make([]columnObject, nColumns+1)
 	// initializing head
 	head := &columns[0]
@@ -47,11 +72,11 @@ func NewMatrix(nColumns int) *Matrix {
 		prevColumn.right = columnDO
 		prevColumn = column
 	}
-	return &Matrix{columns, head, nil}
+	return &matrixObject{columns, head, nil}
 }
 
 // AddRow adds row of constraints
-func (m *Matrix) AddRow(constraintsRow []int) {
+func (m *matrixObject) AddRow(constraintsRow ...int) {
 	constraintsCount := len(constraintsRow)
 	if constraintsCount == 0 {
 		return
@@ -80,29 +105,13 @@ func (m *Matrix) AddRow(constraintsRow []int) {
 	}
 }
 
-// SolutionAccepter accepts solutions for the given exact cover problem.
-// Each solution is passed to AcceptSolution. Solver stops immediately when AcceptSolution returns true.
-type SolutionAccepter interface {
-	AcceptSolution(exactCover [][]int) bool
-}
-
-// The SolutionAccepterFunc type is an adapter to allow the use of
-// ordinary functions as SolutionAccepter. If f is a function with the appropriate signature,
-// SolutionAccepterFunc(f) is a SolutionAccepter that calls f.
-type SolutionAccepterFunc func([][]int) bool
-
-// AcceptSolution calls f(exactCover) and returns its result.
-func (f SolutionAccepterFunc) AcceptSolution(exactCover [][]int) bool {
-	return f(exactCover)
-}
-
 // Solve finds a set or more of rows in which exactly one 1 appears for each column.
 // Each solution is passed to accepter. It stops immediately when accepter AcceptSolution returns true.
-func (m *Matrix) Solve(accepter SolutionAccepter) {
+func (m *matrixObject) Solve(accepter SolutionAccepter) {
 	m.solve(accepter)
 }
 
-func (m *Matrix) solve(accepter SolutionAccepter) bool {
+func (m *matrixObject) solve(accepter SolutionAccepter) bool {
 	head := m.head
 	headRight := head.right.column
 	if headRight == head && accepter.AcceptSolution(m.getExactCover()) {
@@ -146,7 +155,7 @@ func (m *Matrix) solve(accepter SolutionAccepter) bool {
 	return false
 }
 
-func (m *Matrix) getExactCover() [][]int {
+func (m *matrixObject) getExactCover() [][]int {
 	ec := make([][]int, len(m.partialSolution))
 
 	for i, do := range m.partialSolution {
