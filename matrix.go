@@ -18,10 +18,14 @@ func (f SolutionAccepterFunc) AcceptSolution(exactCover [][]int) bool {
 
 // Matrix represents the exact cover problem. It's a matrix consisting of 0s and 1s.
 type Matrix interface {
-	// AddRow adds a row to matrix. Numbers are column indices (zero-based) for the nonzero elements of the row.
+	// AddRow adds a row to matrix.
+	// Numbers are column indices (zero-based) for the nonzero elements of the row.
 	AddRow(constraintsRow ...int)
-	// Solve selects a subset of the rows so that the digit 1 appears in each column exactly once.
-	// Each solution is passed to AcceptSolution. Solver stops immediately when AcceptSolution returns true.
+
+	// Solve selects a subset of the rows so that the digit 1 appears
+	// in each column exactly once.
+	// Each solution is passed to AcceptSolution. Solver stops immediately
+	// when AcceptSolution returns true.
 	Solve(accepter SolutionAccepter)
 }
 
