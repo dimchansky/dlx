@@ -1,4 +1,4 @@
-# dlx [![Build Status](https://travis-ci.org/dimchansky/dlx.svg?branch=master)](https://travis-ci.org/dimchansky/dlx) [![Godoc](https://godoc.org/github.com/dimchansky/dlx?status.png)](https://godoc.org/github.com/dimchansky/dlx)
+# dlx [![Build Status](https://travis-ci.org/dimchansky/dlx.svg?branch=master)](https://travis-ci.org/dimchansky/dlx) [![Coverage Status](https://coveralls.io/repos/github/dimchansky/dlx/badge.svg?branch=master)](https://coveralls.io/github/dimchansky/dlx?branch=master) [![Godoc](https://godoc.org/github.com/dimchansky/dlx?status.png)](https://godoc.org/github.com/dimchansky/dlx)
 
 `dlx` is a Go implementation of [Knuth's algorithm DLX](https://en.wikipedia.org/wiki/Knuth%27s_Algorithm_X) (algorithm X implemented in terms of [dancing links](https://en.wikipedia.org/wiki/Dancing_Links))
 
