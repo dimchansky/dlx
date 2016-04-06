@@ -2,9 +2,10 @@ package main
 
 import (
 	"fmt"
+	"os"
+
 	"github.com/dimchansky/dlx/examples/sudoku/parser"
 	"github.com/dimchansky/dlx/examples/sudoku/solver"
-	"os"
 )
 
 func main() {
