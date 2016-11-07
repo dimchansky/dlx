@@ -32,17 +32,17 @@ sudoku -help
 Find first solution:
 
 ```
-cat sudoku.txt | ./sudoku
+cat sudoku.txt | sudoku
 ```
 
 Find two solutions:
 
 ```
-cat sudoku.txt | ./sudoku -limit 2
+cat sudoku.txt | sudoku -limit 2
 ```
 
 Find all solutions:
 
 ```
-cat sudoku.txt | ./sudoku -limit 0
+cat sudoku.txt | sudoku -limit 0
 ```
