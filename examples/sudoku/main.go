@@ -1,6 +1,7 @@
 package main
 
 import (
+	"flag"
 	"fmt"
 	"os"
 
@@ -8,18 +9,29 @@ import (
 	"github.com/dimchansky/dlx/examples/sudoku/solver"
 )
 
+var (
+	solutionsLimit = flag.Uint64("limit", 1, "Limit on the number of solutions (specify zero to find all solutions)")
+)
+
 func main() {
+	flag.Parse()
+
 	s, err := parser.ParseReader(os.Stdin)
 	if err != nil {
 		fmt.Println(err)
 		return
 	}
 
-	solution, solved := solver.SolveFirst(s)
-	if !solved {
-		fmt.Println("Sudoku cannot be solved")
-	} else {
+	solutionsFound := uint64(0)
+	solver.Solve(s, solver.SolutionAccepterFunc(func(solution string) bool {
+		solutionsFound++
+		fmt.Printf("Solution %d:\n", solutionsFound)
 		printSudoku(solution)
+		return *solutionsLimit != 0 && solutionsFound >= *solutionsLimit
+	}))
+
+	if solutionsFound == 0 {
+		fmt.Println("No solution found")
 	}
 }
 
