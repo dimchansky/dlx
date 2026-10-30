@@ -13,6 +13,8 @@
 <text x="92.7" y="169.6" text-anchor="middle" font-size="17" fill="#24292f">4</text>
 <polygon points="115.0,125.0 115.0,183.9 149.0,183.9 166.0,154.4" fill="#ffffff" stroke="#24292f" stroke-width="1" stroke-linejoin="round"/>
 <text x="137.3" y="169.6" text-anchor="middle" font-size="17" fill="#24292f">5</text>
+<text x="190" y="107" text-anchor="middle" font-size="12" fill="#57606a">1</text>
+<text x="139.5" y="106" text-anchor="middle" font-size="12" fill="#57606a" transform="rotate(-30 139.5 106)">1.73</text>
 <text x="115" y="256" text-anchor="middle" font-size="15" fill="#24292f">Hexagon of six kites</text>
 <polygon points="251.0,178.5 272.0,190.6 279.0,178.5 272.0,166.4" fill="none" stroke="#8c959f" stroke-width="0.6" stroke-linejoin="round"/>
 <polygon points="251.0,178.5 272.0,166.4 265.0,154.2 251.0,154.2" fill="none" stroke="#8c959f" stroke-width="0.6" stroke-linejoin="round"/>

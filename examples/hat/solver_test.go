@@ -3,10 +3,15 @@ package main
 import (
 	"fmt"
 	"math"
+	"os"
 	"reflect"
+	"regexp"
 	"sort"
+	"strconv"
 	"strings"
 	"testing"
+
+	"github.com/dimchansky/dlx"
 )
 
 // The published totals. The disk has the same kites whichever way the hat is
@@ -174,29 +179,56 @@ func TestNewPuzzle(t *testing.T) {
 	}
 }
 
-// TestSmallMatrix pins the table and the decoding example in the README.
+// readmeMatrixRow is one row of the small matrix in the README: its number, its
+// six cells for the disk, and its count of margin kites.
+var readmeMatrixRow = regexp.MustCompile(`(?m)^\| (\*\*)?h(\d+)(?:\*\*)? \|(.*)\| (\d+) \|$`)
+
+// TestSmallMatrix compares the table and the decoding example in the README
+// with the program.
 func TestSmallMatrix(t *testing.T) {
 	t.Parallel()
 
-	want := []string{
-		"0 1 4 5", "1 2", "3 4", "0 1 2 5", "2 3", "4 5",
-		"0 1 2 3", "0 5", "3 4", "0 1", "1 2 3 4", "4 5",
-		"0 5", "1 2", "2 3 4 5", "0 3 4 5", "0 1", "2 3",
+	readme, err := os.ReadFile("README.md")
+	if err != nil {
+		t.Fatal(err)
 	}
+	table := readmeMatrixRow.FindAllStringSubmatch(string(readme), -1)
+
 	p := newPuzzle(2, false)
-	if len(p.rows) != len(want) {
-		t.Fatalf("%d hat rows, want %d", len(p.rows), len(want))
+	if len(table) != len(p.rows) {
+		t.Fatalf("README has %d hat rows, want %d", len(table), len(p.rows))
 	}
-	for i, row := range p.rows {
-		var inDisk []int
-		for _, column := range row {
+	var wantHats []placement
+	for i, cells := range table {
+		if cells[2] != strconv.Itoa(i) {
+			t.Fatalf("README row %d is named h%s", i, cells[2])
+		}
+		var want []string
+		margin := 0
+		seen := make([]bool, p.disk)
+		for _, column := range p.rows[i] {
 			if column < p.disk {
-				inDisk = append(inDisk, column)
+				seen[column] = true
+			} else {
+				margin++
 			}
 		}
-		sort.Ints(inDisk)
-		if got := strings.Trim(fmt.Sprint(inDisk), "[]"); got != want[i] {
-			t.Errorf("row %d covers disk kites %s, want %s", i, got, want[i])
+		for _, inDisk := range seen {
+			cell := "0"
+			if inDisk {
+				cell = "1"
+			}
+			want = append(want, cell)
+		}
+		got := strings.Fields(strings.NewReplacer("|", " ", "*", " ").Replace(cells[3]))
+		if !reflect.DeepEqual(got, want) {
+			t.Errorf("README row h%d = %v, want %v", i, got, want)
+		}
+		if cells[4] != strconv.Itoa(margin) {
+			t.Errorf("README row h%d has %s margin kites, want %d", i, cells[4], margin)
+		}
+		if cells[1] != "" {
+			wantHats = append(wantHats, p.placements[p.rows[i]])
 		}
 	}
 
@@ -208,7 +240,6 @@ func TestSmallMatrix(t *testing.T) {
 		first = hats
 		return true
 	})
-	wantHats := []placement{p.placements[p.rows[1]], p.placements[p.rows[2]], p.placements[p.rows[7]]}
 	if !reflect.DeepEqual(first, wantHats) {
 		t.Errorf("first cover = %+v, want %+v", first, wantHats)
 	}
@@ -234,6 +265,128 @@ func TestDisk(t *testing.T) {
 			}
 		}
 	}
+}
+
+// TestKiteCentre checks that a centre is the average of the corners, as the
+// README says.
+func TestKiteCentre(t *testing.T) {
+	t.Parallel()
+
+	for dir := 0; dir < turns; dir++ {
+		k := kite{2, -1, dir}
+		var sum point
+		for _, corner := range k.corners() {
+			sum = point{sum.a + corner.a, sum.b + corner.b}
+		}
+		if sum != k.centre() {
+			t.Errorf("kite %v has corner total %v, want %v", k, sum, k.centre())
+		}
+	}
+}
+
+// TestMarginColumns counts the covers of a matrix with no margin columns. The
+// hats then may overlap outside the disk, so most of these covers are false.
+func TestMarginColumns(t *testing.T) {
+	t.Parallel()
+
+	for radius, want := range map[int]int{2: 28, 3: 174, 4: 156, 5: 198, 6: 38} {
+		p := newPuzzle(radius, false)
+		m := dlx.NewMatrix(p.disk)
+		for _, row := range p.rows {
+			var inDisk []int
+			for _, column := range row {
+				if column < p.disk {
+					inDisk = append(inDisk, column)
+				}
+			}
+			m.AddRow(inDisk...)
+		}
+		got := 0
+		m.Solve(dlx.SolutionAccepterFunc(func([][]int) bool {
+			got++
+			return false
+		}))
+		if got != want {
+			t.Errorf("radius %d: %d covers without margin columns, want %d", radius, got, want)
+		}
+	}
+}
+
+// TestRoundDisk asks for every kite with any part strictly inside the circle,
+// not only the kites with their centre inside it.
+func TestRoundDisk(t *testing.T) {
+	t.Parallel()
+
+	tests := []struct {
+		radius, kites, covers int
+	}{
+		{radius: 2, kites: 18, covers: 46},
+		{radius: 3, kites: 18, covers: 46},
+		{radius: 4, kites: 42, covers: 64},
+		{radius: 5, kites: 60, covers: 0},
+		{radius: 6, kites: 72, covers: 0},
+		{radius: 7, kites: 114, covers: 0},
+	}
+	for _, tt := range tests {
+		var disk []kite
+		for q := -tt.radius; q <= tt.radius; q++ {
+			for r := -tt.radius; r <= tt.radius; r++ {
+				for dir := 0; dir < turns; dir++ {
+					if k := (kite{q, r, dir}); k.crossesCircle(tt.radius) {
+						disk = append(disk, k)
+					}
+				}
+			}
+		}
+		if len(disk) != tt.kites {
+			t.Errorf("radius %d: %d kites, want %d", tt.radius, len(disk), tt.kites)
+		}
+		got := 0
+		newPuzzleOn(disk, false).solve(func([]placement) bool {
+			got++
+			return false
+		})
+		if got != tt.covers {
+			t.Errorf("radius %d: %d covers, want %d", tt.radius, got, tt.covers)
+		}
+	}
+
+	// At radius 6 the two rules pick the same kites, so the result that mirror
+	// images are needed doesn't depend on the rule.
+	for _, k := range newPuzzle(6, false).kites[:72] {
+		if !k.crossesCircle(6) {
+			t.Errorf("kite %v of the disk has no part inside the circle", k)
+		}
+	}
+}
+
+// crossesCircle reports whether any part of k is strictly less than radius from
+// the origin. All values are whole numbers, so nothing is rounded.
+func (k kite) crossesCircle(radius int) bool {
+	corners := k.corners()
+	for i, from := range corners {
+		to := corners[(i+1)%len(corners)]
+		side := point{to.a - from.a, to.b - from.b}
+		// along is twice the dot product of from and side, and length is twice
+		// the squared length of side.
+		along := 2*from.a*side.a + 2*from.b*side.b + from.a*side.b + from.b*side.a
+		length := 2 * norm(side)
+		switch {
+		case along >= 0:
+			if norm(from) < radius*radius {
+				return true
+			}
+		case -along >= length:
+			if norm(to) < radius*radius {
+				return true
+			}
+		default:
+			if 2*norm(from)*length-along*along < 2*radius*radius*length {
+				return true
+			}
+		}
+	}
+	return false
 }
 
 func TestSolve_Totals(t *testing.T) {
@@ -286,7 +439,8 @@ func widen(r [2]int, value int) [2]int {
 }
 
 // TestIndependentSearch counts the covers with a separate search that doesn't
-// use hatShape or the matrix.
+// use hatShape or the matrix. It shares only the corner arithmetic: the outline
+// from placement.outline, the point type and the move of an outline to a hexagon.
 func TestIndependentSearch(t *testing.T) {
 	t.Parallel()
 
@@ -445,7 +599,7 @@ func (c *coverChecker) check(hats []placement) string {
 }
 
 // hexagonKites returns four times the centres of the six kites of a hexagon. A
-// centre is 5/4 of the way from the middle of the hexagon to its corner.
+// centre is 5/4 from the middle of the hexagon, towards the corner at distance 2.
 func hexagonKites(q, r int) []point {
 	middle := point{2*q - 2*r, 2*q + 4*r}
 	var centres []point

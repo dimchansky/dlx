@@ -72,10 +72,15 @@ const (
 	svgUnreflected = "#a8d5ff"
 	svgReflected   = "#ffb347"
 	svgDisk        = "#d1242f"
+	// The paler colours mark the kites of a hat that lie in the margin.
+	svgUnreflectedMargin = "#e6f2ff"
+	svgReflectedMargin   = "#ffeed6"
 )
 
 // writeSVG draws the hats and the disk, on a white card. Reflected hats are
-// orange and unreflected hats are blue.
+// orange and unreflected hats are blue, pale where they lie in the margin. A
+// solid line follows the jagged edge of the disk, and a dashed circle shows the
+// radius.
 func writeSVG(w io.Writer, hats []placement, radius int) error {
 	half := float64(radius)
 	for _, hat := range hats {
@@ -96,11 +101,15 @@ func writeSVG(w io.Writer, hats []placement, radius int) error {
 	fmt.Fprintf(&svg, "<title>%s</title>\n", label)
 	fmt.Fprintf(&svg, `<rect x="0.5" y="0.5" width="%.0f" height="%.0f" rx="8" fill="#ffffff" stroke="#8c959f"/>`+"\n", size-1, size-1)
 	for _, hat := range hats {
-		fill := svgUnreflected
+		inside, outside := svgUnreflected, svgUnreflectedMargin
 		if hat.mirrored {
-			fill = svgReflected
+			inside, outside = svgReflected, svgReflectedMargin
 		}
 		for _, k := range hat.kites() {
+			fill := outside
+			if k.inDisk(radius) {
+				fill = inside
+			}
 			corners := k.corners()
 			fmt.Fprintf(&svg, `<polygon points="%s" fill="%s" stroke="%s" stroke-width="0.5"/>`+"\n",
 				svgPoints(corners[:], half), fill, svgKite)
@@ -108,12 +117,48 @@ func writeSVG(w io.Writer, hats []placement, radius int) error {
 		fmt.Fprintf(&svg, `<polygon points="%s" fill="none" stroke="%s" stroke-width="1.5" stroke-linejoin="round"/>`+"\n",
 			svgPoints(hat.outline(), half), svgInk)
 	}
-	fmt.Fprintf(&svg, `<circle cx="%.1f" cy="%.1f" r="%.1f" fill="none" stroke="%s" stroke-width="2" stroke-dasharray="6 4"/>`+"\n",
+	fmt.Fprintf(&svg, `<path d="%s" fill="none" stroke="%s" stroke-width="2.5" stroke-linecap="round"/>`+"\n",
+		svgDiskEdge(hats, radius, half), svgDisk)
+	fmt.Fprintf(&svg, `<circle cx="%.1f" cy="%.1f" r="%.1f" fill="none" stroke="%s" stroke-width="1" stroke-dasharray="6 4"/>`+"\n",
 		half*svgScale, half*svgScale, float64(radius)*svgScale, svgDisk)
 	svg.WriteString("</svg>\n")
 
 	_, err := io.WriteString(w, svg.String())
 	return err
+}
+
+// svgDiskEdge returns a path along the edge of the disk: the sides that belong
+// to only one kite of the disk. A cover holds every kite of the disk.
+func svgDiskEdge(hats []placement, radius int, half float64) string {
+	var sides [][2]point
+	uses := make(map[[2]point]int)
+	for _, hat := range hats {
+		for _, k := range hat.kites() {
+			if !k.inDisk(radius) {
+				continue
+			}
+			corners := k.corners()
+			for i, from := range corners {
+				to := corners[(i+1)%len(corners)]
+				if to.a < from.a || (to.a == from.a && to.b < from.b) {
+					from, to = to, from
+				}
+				side := [2]point{from, to}
+				if uses[side] == 0 {
+					sides = append(sides, side)
+				}
+				uses[side]++
+			}
+		}
+	}
+
+	var path []string
+	for _, side := range sides {
+		if uses[side] == 1 {
+			path = append(path, "M"+svgPoints(side[:], half))
+		}
+	}
+	return strings.Join(path, " ")
 }
 
 // svgPoints lists corners in picture coordinates, where y points down.

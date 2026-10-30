@@ -42,7 +42,9 @@ func (k kite) mirrored() kite {
 	return kite{k.q + k.r, -k.r, (turns + 1 - k.dir) % turns}
 }
 
-// inDisk reports whether the centre of k is at most radius from the origin.
+// inDisk reports whether the centre of k is at most radius from the origin. The
+// centre is the average of the four corners of k, which lies 5/4 from the middle
+// of its hexagon, on the way to the corner the kite points at.
 //
 // Four times the centre of k has whole coordinates a, b along the directions at
 // 0 and 60 degrees, and a point with those coordinates is at a distance whose
@@ -99,20 +101,27 @@ type puzzle struct {
 	placements map[[hatKites]int]placement
 }
 
-// newPuzzle lists the kites of the disk and every placement that touches the
-// disk. Without withMirrors, placements are rotated copies of the hat only.
+// newPuzzle sets up the disk of the given radius. Without withMirrors,
+// placements are rotated copies of the hat only.
 func newPuzzle(radius int, withMirrors bool) *puzzle {
-	p := &puzzle{placements: make(map[[hatKites]int]placement)}
-
+	var disk []kite
 	for q := -radius; q <= radius; q++ {
 		for r := -radius; r <= radius; r++ {
 			for dir := 0; dir < turns; dir++ {
 				if k := (kite{q, r, dir}); k.inDisk(radius) {
-					p.kites = append(p.kites, k)
+					disk = append(disk, k)
 				}
 			}
 		}
 	}
+	return newPuzzleOn(disk, withMirrors)
+}
+
+// newPuzzleOn lists every placement that touches the given kites, which are the
+// kites to cover.
+func newPuzzleOn(disk []kite, withMirrors bool) *puzzle {
+	p := &puzzle{placements: make(map[[hatKites]int]placement)}
+	p.kites = append(p.kites, disk...)
 	p.disk = len(p.kites)
 
 	columns := make(map[kite]int)

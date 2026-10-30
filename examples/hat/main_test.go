@@ -3,7 +3,9 @@ package main
 import (
 	"bytes"
 	"errors"
+	"fmt"
 	"os"
+	"regexp"
 	"strings"
 	"testing"
 )
@@ -144,6 +146,58 @@ func TestRun_Pictures(t *testing.T) {
 				t.Errorf("%s differs from the output of hat %v", tt.file, tt.args)
 			}
 		})
+	}
+}
+
+// TestHatPicture compares the first picture of the README, which the program
+// doesn't draw, with the kites and the outlines the program uses.
+func TestHatPicture(t *testing.T) {
+	t.Parallel()
+
+	picture, err := os.ReadFile("hat.svg")
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	// corners lists the polygons with the given line width, in file order.
+	corners := func(width string) []string {
+		pattern := regexp.MustCompile(`<polygon points="([^"]*)"[^>]* stroke-width="` + width + `"`)
+		var polygons []string
+		for _, match := range pattern.FindAllStringSubmatch(string(picture), -1) {
+			polygons = append(polygons, match[1])
+		}
+		return polygons
+	}
+	// drawn lists points as the picture does, with the origin at x, y.
+	drawn := func(points []point, scale, x, y float64) string {
+		var list []string
+		for _, p := range points {
+			px, py := p.position()
+			list = append(list, fmt.Sprintf("%.1f,%.1f", x+px*scale, y-py*scale))
+		}
+		return strings.Join(list, " ")
+	}
+
+	hexagon := corners("1")
+	if len(hexagon) != turns {
+		t.Fatalf("picture has %d numbered kites, want %d", len(hexagon), turns)
+	}
+	for dir, got := range hexagon {
+		k := kite{0, 0, dir}.corners()
+		if want := drawn(k[:], 34, 115, 125); got != want {
+			t.Errorf("kite %d is drawn as %s, want %s", dir, got, want)
+		}
+	}
+
+	outlines := corners("2")
+	if len(outlines) != 2 {
+		t.Fatalf("picture has %d hat outlines, want 2", len(outlines))
+	}
+	if want := drawn(placement{}.outline(), 14, 335, 130); outlines[0] != want {
+		t.Errorf("hat is drawn as %s, want %s", outlines[0], want)
+	}
+	if want := drawn(placement{mirrored: true}.outline(), 14, 590, 130); outlines[1] != want {
+		t.Errorf("mirror image is drawn as %s, want %s", outlines[1], want)
 	}
 }
 
