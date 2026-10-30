@@ -1,6 +1,6 @@
 // Command vuza finds the rhythmic canons of a given rhythm: the beats on which
 // copies of the rhythm must enter so that together they strike every beat of a
-// cycle exactly once. By default it looks for Vuza canons, in which neither the
+// loop exactly once. By default it looks for Vuza canons, in which neither the
 // rhythm nor the pattern of entries repeats. Results go to standard output and
 // diagnostics to standard error.
 //
@@ -8,13 +8,13 @@
 //
 //	vuza [-n beats] [-tile list] [-limit n] [-count] [-all] [-score]
 //
-// The -n flag sets the length of the cycle, 72 by default. The -tile flag sets
+// The -n flag sets the length of the loop, 72 by default. The -tile flag sets
 // the rhythm, as a comma-separated list of beats counted from 0. The default is
 // the 72-beat rhythm 0,8,16,18,26,34. The -limit flag sets how many results to
 // print, 1 by default. Zero prints all of them. The -count flag enumerates every
 // complement and prints the totals instead, so -limit and -score have no effect
 // with it. The -all flag also accepts entry patterns that repeat. The -score
-// flag prints each voice as a line of the cycle under its result.
+// flag prints each voice as a line of the loop under its result.
 //
 // The exit status is 0 if at least one result exists or -help was given, 1 if
 // there are none, and 2 for invalid usage or an I/O failure.
@@ -35,13 +35,13 @@ const (
 	exitFailure    = 2
 )
 
-// defaultTile is a six-note rhythm that has Vuza canons in a cycle of 72 beats,
-// the shortest cycle where any exist.
+// defaultTile is a six-note rhythm that has Vuza canons in a loop of 72 beats,
+// the shortest loop where any exist.
 const defaultTile = "0,8,16,18,26,34"
 
-// maxCycle bounds the memory the matrix can take. The search itself can become
+// maxLoop bounds the memory the matrix can take. The search itself can become
 // impractical well below it.
-const maxCycle = 1024
+const maxLoop = 1024
 
 // options holds the flags that shape the output.
 type options struct {
@@ -59,12 +59,12 @@ func run(args []string, stdout, stderr io.Writer) int {
 	flags := flag.NewFlagSet("vuza", flag.ContinueOnError)
 	flags.SetOutput(stderr)
 	flags.Usage = func() { printUsage(flags) }
-	n := flags.Int("n", 72, "Number of beats in the cycle")
+	n := flags.Int("n", 72, "Number of beats in the loop")
 	tileText := flags.String("tile", defaultTile, "Rhythm, as comma-separated beats from 0 to n-1")
 	limit := flags.Uint64("limit", 1, "Limit on the number of results to print (specify zero to print all)")
 	count := flags.Bool("count", false, "Print the totals instead of results (enumerates every complement)")
 	all := flags.Bool("all", false, "Accept entry patterns that repeat")
-	score := flags.Bool("score", false, "Print each voice as a line of the cycle")
+	score := flags.Bool("score", false, "Print each voice as a line of the loop")
 
 	if err := flags.Parse(args); err != nil {
 		if errors.Is(err, flag.ErrHelp) {
@@ -77,8 +77,8 @@ func run(args []string, stdout, stderr io.Writer) int {
 		flags.Usage()
 		return exitFailure
 	}
-	if *n < 2 || *n > maxCycle {
-		report(stderr, "invalid cycle %d: want 2 to %d", *n, maxCycle)
+	if *n < 2 || *n > maxLoop {
+		report(stderr, "invalid loop length %d: want 2 to %d", *n, maxLoop)
 		return exitFailure
 	}
 	tile, err := parseTile(*tileText, *n)
@@ -90,7 +90,7 @@ func run(args []string, stdout, stderr io.Writer) int {
 	opts := options{limit: *limit, allowRepeats: *all, score: *score}
 	var found uint64
 	if *count {
-		found, err = printTotals(stdout, *n, tile, opts)
+		found, err = printTotals(stdout, *n, tile, *all)
 	} else {
 		found, err = printComplements(stdout, *n, tile, opts)
 	}
@@ -162,8 +162,9 @@ func formatScore(n int, tile, entries []int) string {
 }
 
 // printTotals enumerates every complement and prints how many there are and how
-// many of them don't repeat. It returns the total that decides the exit status.
-func printTotals(w io.Writer, n int, tile []int, opts options) (uint64, error) {
+// many of them don't repeat. It returns the total that decides the exit status:
+// the complements if allowRepeats is set, otherwise the aperiodic ones.
+func printTotals(w io.Writer, n int, tile []int, allowRepeats bool) (uint64, error) {
 	var complements, aperiodic uint64
 	solve(n, tile, func(entries []int) bool {
 		complements++
@@ -173,7 +174,7 @@ func printTotals(w io.Writer, n int, tile []int, opts options) (uint64, error) {
 		return false
 	})
 	_, err := fmt.Fprintf(w, "Complements: %d\nAperiodic: %d\n", complements, aperiodic)
-	if opts.allowRepeats {
+	if allowRepeats {
 		return complements, err
 	}
 	return aperiodic, err

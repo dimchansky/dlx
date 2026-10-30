@@ -13,6 +13,7 @@ func TestRun(t *testing.T) {
 	tests := []struct {
 		name       string
 		args       []string
+		slow       bool // repeats a whole enumeration that another test covers
 		wantCode   int
 		wantLines  int
 		wantStdout string
@@ -42,7 +43,7 @@ func TestRun(t *testing.T) {
 			wantStdout: "Complement 1: 0 2 16 18 34 56\n",
 		},
 		{
-			name:       "the paper's rhythm in a longer cycle",
+			name:       "the paper's rhythm in a longer loop",
 			args:       []string{"-n", "144", "-tile", "0,16,32,36,52,68"},
 			wantLines:  1,
 			wantStdout: "Complement 1: 0 1 2 3 11 12 13 14 24 25 26 51 59 72 73 74 84 85 86 96 97 98 99 107\n",
@@ -55,11 +56,13 @@ func TestRun(t *testing.T) {
 		{
 			name:      "zero limit prints all aperiodic complements",
 			args:      []string{"-limit", "0"},
+			slow:      true,
 			wantLines: 432,
 		},
 		{
 			name:      "all prints repeating complements too",
 			args:      []string{"-all", "-limit", "0"},
+			slow:      true,
 			wantLines: 1296,
 		},
 		{
@@ -69,7 +72,7 @@ func TestRun(t *testing.T) {
 			wantStdout: "Complement 1: 0 3\nxxx...\n...xxx\n",
 		},
 		{
-			name:       "score wraps round the cycle",
+			name:       "score wraps round the loop",
 			args:       []string{"-n", "6", "-tile", "0,1,2", "-all", "-score", "-limit", "0"},
 			wantLines:  9,
 			wantStdout: "Complement 1: 0 3\nxxx...\n...xxx\nComplement 2: 1 4\n.xxx..\nx...xx\nComplement 3: 2 5\n..xxx.\nxx...x\n",
@@ -77,6 +80,7 @@ func TestRun(t *testing.T) {
 		{
 			name:       "count ignores limit and score",
 			args:       []string{"-count", "-limit", "1", "-score"},
+			slow:       true,
 			wantLines:  2,
 			wantStdout: "Complements: 1296\nAperiodic: 432\n",
 		},
@@ -107,19 +111,19 @@ func TestRun(t *testing.T) {
 			wantStderr: "vuza: no complement found\n",
 		},
 		{
-			name:       "cycle too small",
+			name:       "loop too small",
 			args:       []string{"-n", "1", "-tile", "0"},
 			wantCode:   2,
-			wantStderr: "vuza: invalid cycle 1: want 2 to 1024\n",
+			wantStderr: "vuza: invalid loop length 1: want 2 to 1024\n",
 		},
 		{
-			name:       "cycle too large",
+			name:       "loop too large",
 			args:       []string{"-n", "1025"},
 			wantCode:   2,
-			wantStderr: "vuza: invalid cycle 1025: want 2 to 1024\n",
+			wantStderr: "vuza: invalid loop length 1025: want 2 to 1024\n",
 		},
 		{
-			name:       "default rhythm does not fit the cycle",
+			name:       "default rhythm does not fit the loop",
 			args:       []string{"-n", "12"},
 			wantCode:   2,
 			wantStderr: "vuza: invalid tile \"0,8,16,18,26,34\": beat 16 is outside 0 to 11\n",
@@ -129,6 +133,12 @@ func TestRun(t *testing.T) {
 			args:       []string{"-n", "4", "-tile", "0,2"},
 			wantCode:   2,
 			wantStderr: "vuza: invalid tile \"0,2\": it repeats every 2 beats\n",
+		},
+		{
+			name:       "repeating tile is refused with all too",
+			args:       []string{"-n", "12", "-tile", "0,6", "-all"},
+			wantCode:   2,
+			wantStderr: "vuza: invalid tile \"0,6\": it repeats every 6 beats\n",
 		},
 		{
 			name:       "unknown flag",
@@ -153,6 +163,9 @@ func TestRun(t *testing.T) {
 		tt := tt
 		t.Run(tt.name, func(t *testing.T) {
 			t.Parallel()
+			if tt.slow && testing.Short() {
+				t.Skip("slow: repeats a whole enumeration")
+			}
 
 			var stdout, stderr bytes.Buffer
 			code := run(tt.args, &stdout, &stderr)

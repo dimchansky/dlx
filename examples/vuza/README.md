@@ -28,7 +28,7 @@ The notes 0, 1, 6, 7 repeat every 6 beats, so they are really a shorter pattern 
 
 Look again at the 6-beat canon. Its rhythm 0, 1, 2 doesn't repeat, but its entries do: 0 and 3 are half a loop apart. So that canon is a shorter idea played twice.
 
-A **Vuza canon** is a canon where **neither the rhythm nor the entries repeat**. That is surprisingly hard to get. Around 1948 Hajós thought one of the two must always repeat. That turned out to be false, and the counterexamples are exactly these canons, named after D. T. Vuza, who brought them to music in 1991. The shortest loop that has one has **72 beats**. The next lengths are 108, 120, 144 and 168.
+A **Vuza canon** is a canon where **neither the rhythm nor the entries repeat**. That is surprisingly hard to get. Around 1948 the mathematician Hajós thought one of the two must always repeat. That turned out to be false, and the examples that prove it wrong are exactly these canons, named after D. T. Vuza, who brought them to music in 1991. The shortest loop that has one has **72 beats**. The next lengths are 108, 120, 144 and 168.
 
 Here is one such pair, the rhythm that this command uses by default, and its entries:
 
@@ -99,10 +99,10 @@ The entries are then sorted, and tested for repeats.
     vuza [-n beats] [-tile list] [-limit n] [-count] [-all] [-score]
 
 - `-n beats` sets the length of the loop, 72 by default, from 2 to 1024. That cap only stops the program building a huge matrix.
-- `-tile list` sets the rhythm, as comma-separated beats from 0 to n-1. The default is `0,8,16,18,26,34`. "Tile" is the usual name for a shape that fills a space without overlaps. A rhythm that repeats is refused, because a Vuza canon can't use it.
+- `-tile list` sets the rhythm, as comma-separated beats from 0 to n-1. The default is `0,8,16,18,26,34`. "Tile" is the usual name for a shape that fills a space without overlaps. A rhythm that repeats is refused, even with `-all`: a Vuza canon can't use it, and two different entries would give the same row of the matrix.
 - `-limit n` sets how many results to print, 1 by default. Zero prints all of them.
 - `-count` goes through every complement and prints the totals instead, so `-limit` and `-score` have no effect with it.
-- `-all` also accepts entries that repeat.
+- `-all` also accepts entries that repeat. The rhythm still must not.
 - `-score` prints one line per voice under each result, with an `x` on each beat that voice strikes.
 
 `-help` prints the usage text to standard error.
@@ -114,6 +114,8 @@ Results and totals go to standard output. Error messages go to standard error, a
 | 0         | At least one result exists, or `-help` was given         |
 | 1         | No result exists                                         |
 | 2         | Invalid usage, or a write failure                        |
+
+With `-count` the totals still go to standard output when the exit code is 1, for example `Aperiodic: 0`.
 
 ## Examples
 
@@ -202,20 +204,20 @@ Those 6 and 3 are the known answer for 72 beats. There are 3 six-note rhythms an
 
 ## How the results are checked
 
-- **Published rhythms.** [Fripertinger's list](https://imsc.uni-graz.at/fripertinger/canons/canon_3.html) gives the 3 and the 6 rhythms for 72 beats. The tests start from each published rhythm and check that the aperiodic complements found are exactly the published partners, each shifted 72 ways. Every six-note rhythm gives 1296 and 432, and every twelve-note rhythm gives 216 and 216.
-- **Published totals.** Table 1 of Jedrzejewski's [On the enumeration of Vuza canons](https://arxiv.org/abs/1304.6609) gives 3 and 6 for 72 beats, and one of its rows gives 8640 shapes for 144 beats with 6 notes and 24 entries. The tests confirm 8640 by counting the complements with an entry on beat 0, which is a sixth of the search and takes about a second. The full run of `vuza -n 144 -tile 0,16,32,36,52,68 -count` reports 1244160 aperiodic complements, which is 8640 x 144.
-- **A separate search.** The totals for the default rhythm, its 12-note partner and the small examples are compared with a backtracking search that doesn't use dlx.
+- **Published rhythms.** [Fripertinger's list](https://imsc.uni-graz.at/fripertinger/canons/canon_3.html) gives the 3 and the 6 rhythms for 72 beats. The tests start from each published rhythm and check that the aperiodic complements found are exactly the published partners, each shifted 72 ways. Every six-note rhythm gives 1296 and 432, and every twelve-note rhythm gives 216 and 216. With `-short` they try only the first rhythm of each kind.
+- **Published totals.** Table 1 of Jedrzejewski's [On the enumeration of Vuza canons](https://arxiv.org/abs/1304.6609) gives 3 and 6 for 72 beats, and one of its rows gives 8640 shapes for 144 beats with 6 notes and 24 entries. The tests confirm 8640 by counting only the complements with an entry on beat 0. Every complement has exactly one voice striking beat 0, and shifting moves that job evenly between the six notes, so this finds exactly a sixth of each total: 279936 complements, 207360 of them aperiodic. Multiplied by 6 they give the 1679616 and 1244160 that the full run of `vuza -n 144 -tile 0,16,32,36,52,68 -count` reports, and 1244160 is 8640 x 144. dlx and the separate search below both have to reach these numbers, and the same sum is tested on the 72-beat totals, which are also counted in full.
+- **A separate search.** The totals for the default rhythm, its 12-note partner, the 144-beat rhythm (with an entry on beat 0) and the small examples are compared with a backtracking search that doesn't use dlx.
 - **Trying everything.** For every aperiodic rhythm starting on beat 0, in loops of up to 12 beats, the tests try every possible list of entries and compare the result with dlx.
 - **The definition.** Every complement in those tests is checked by adding each note to each entry and seeing that every beat comes up once. The repeat check is compared with trying every possible turn.
-- **Short loops.** For loops of up to 28 beats, the tests try every rhythm and find no Vuza canon. It is enough to try rhythms with at most sqrt(n) notes that start on beat 0, where n is the loop length. For 28 beats that means 5 notes at most. Notes times voices equals the loop length, so at least one of the two sets is that small. It may be either the rhythm or the entries, but they can swap roles as shown above, so the smaller set can always be the one tried. Any canon can also be shifted so that this set starts on beat 0. That 72 is the shortest length comes from the published proofs, not from this test.
+- **Short loops.** For loops of up to 28 beats, the tests try every rhythm and find no Vuza canon. It is enough to try rhythms with at most sqrt(n) notes that start on beat 0, where n is the loop length. For 28 beats that means 5 notes at most. Notes times voices equals the loop length, so at least one of the two sets is that small, and its size must divide the loop length, so for 28 beats the test tries 1, 2 and 4 notes. The smaller set may be either the rhythm or the entries, but they can swap roles as shown above, so it can always be the one tried. Any canon can also be shifted so that this set starts on beat 0. The test stops at 28 only to stay quick, so that 72 is the shortest length comes from the published proofs, not from this test.
 
-The rhythm itself comes from Example 18 of the paper, which also gives a partner that the tests confirm. A warning if you read that paper: the 12-note set printed in its Example 7 completes this rhythm but repeats every 36 beats, so it isn't a Vuza partner. A test records this. The paper's tables don't depend on it.
+The rhythm itself comes from Example 18 of the paper, which also gives a partner that the tests confirm. A warning if you read that paper: the 12-note set printed in its Example 7 completes this rhythm but repeats every 36 beats, so it isn't a Vuza partner. A test records this.
 
-`go test` checks everything. `go test -short` skips the 144-beat count and the larger exhaustive loops, which are slower with `-race`. Use `-short` with `-race`.
+`go test` checks everything. `go test -short` skips the 144-beat count, the larger exhaustive loops, the published rhythms after the first of each kind, and command-line cases that repeat a count, all of which are slower with `-race`. Use `-short` with `-race`.
 
 ## Limits
 
-**You must supply the rhythm.** dlx answers "where do the entries go?", not "which rhythm works?". The matrix is built from one rhythm, so finding rhythms means a separate outer search, solving one matrix per candidate. Even for six notes in 72 beats that is 13019909 rhythms starting on beat 0. A one-off run of that search, not part of the tests, took minutes, running 8 searches side by side. It found 18 rhythms, which are the 3 published shapes, each started from its 6 notes. Longer loops and more notes are out of reach this way, which is why the rhythm is an input here.
+**You must supply the rhythm.** dlx answers "where do the entries go?", not "which rhythm works?". The matrix is built from one rhythm, so finding rhythms means a separate outer search, solving one matrix per candidate. Even for six notes in 72 beats that is 13019909 rhythms starting on beat 0. A one-off run of that search, not part of the tests, took minutes, running 8 searches side by side. It found 18 rhythms, which are the 3 published shapes, each started from its 6 notes. The number of rhythms grows fast: twelve notes in 72 beats would mean 2560547383576 of them, about 200000 times as many. That is why the rhythm is an input here.
 
 **The totals grow fast.** On the machine used to write this, `vuza -count` took a few milliseconds and the 144-beat count above took about 6 seconds for 1679616 complements. Printing the first results is much quicker than counting all of them.
 

@@ -1,5 +1,5 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 600 250" width="600" height="250" role="img" aria-label="A 6-beat cycle covered by two copies of a three-note rhythm, entering on beats 0 and 3, 1 and 4, or 2 and 5" font-family="Helvetica, Arial, sans-serif">
-<title>A 6-beat cycle covered by two copies of a three-note rhythm, entering on beats 0 and 3, 1 and 4, or 2 and 5</title>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 600 250" width="600" height="250" role="img" aria-label="A 6-beat loop covered by two copies of a three-note rhythm, entering on beats 0 and 3, 1 and 4, or 2 and 5" font-family="Helvetica, Arial, sans-serif">
+<title>A 6-beat loop covered by two copies of a three-note rhythm, entering on beats 0 and 3, 1 and 4, or 2 and 5</title>
 <rect x="0.5" y="0.5" width="599" height="249" rx="8" fill="#ffffff" stroke="#8c959f"/>
 <path d="M 70.0 45.7 A 80 80 0 0 1 150.0 45.7 L 129.0 82.1 A 38 38 0 0 0 91.0 82.1 Z" fill="#0969da" stroke="#ffffff" stroke-width="2"/>
 <text x="110.0" y="61.0" text-anchor="middle" font-size="15" font-weight="bold" fill="#ffffff">0</text>

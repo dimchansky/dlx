@@ -21,7 +21,7 @@ var (
 // rhythms in Fripertinger's list of canons of length 72:
 // https://imsc.uni-graz.at/fripertinger/canons/canon_3.html
 // Jedrzejewski's Table 1 (https://arxiv.org/abs/1304.6609) gives the same totals
-// of 3 and 6 for a cycle of 72.
+// of 3 and 6 for a loop of 72.
 var (
 	publishedSixNote = [][]int{
 		{38, 8, 8, 2, 8, 8},
@@ -41,8 +41,18 @@ var (
 // searchByHand finds all complements without the exact cover machinery: it takes
 // the first beat nobody strikes yet and tries every voice that could strike it.
 func searchByHand(n int, tile []int, visit func(entries []int)) {
+	searchByHandFrom(n, tile, nil, visit)
+}
+
+// searchByHandFrom is searchByHand with the given voices already placed.
+func searchByHandFrom(n int, tile, placed []int, visit func(entries []int)) {
 	struck := make([]bool, n)
-	var entries []int
+	for _, entry := range placed {
+		for _, note := range tile {
+			struck[(note+entry)%n] = true
+		}
+	}
+	entries := append([]int(nil), placed...)
 	var fill func(beat int)
 	fill = func(beat int) {
 		for beat < n && struck[beat] {
@@ -56,24 +66,21 @@ func searchByHand(n int, tile []int, visit func(entries []int)) {
 		}
 		for _, note := range tile {
 			entry := (beat - note + n) % n
-			var voice []int
 			fits := true
 			for _, other := range tile {
-				at := (other + entry) % n
-				fits = fits && !struck[at]
-				voice = append(voice, at)
+				fits = fits && !struck[(other+entry)%n]
 			}
 			if !fits {
 				continue
 			}
-			for _, at := range voice {
-				struck[at] = true
+			for _, other := range tile {
+				struck[(other+entry)%n] = true
 			}
 			entries = append(entries, entry)
 			fill(beat)
 			entries = entries[:len(entries)-1]
-			for _, at := range voice {
-				struck[at] = false
+			for _, other := range tile {
+				struck[(other+entry)%n] = false
 			}
 		}
 	}
@@ -97,7 +104,7 @@ func strikesEveryBeatOnce(n int, tile, entries []int) bool {
 	return true
 }
 
-// isAperiodic tries every turn of the cycle, the definition of not repeating.
+// isAperiodic tries every turn of the loop, the definition of not repeating.
 func isAperiodic(n int, beats []int) bool {
 	struck := make([]bool, n)
 	for _, beat := range beats {
@@ -115,7 +122,7 @@ func isAperiodic(n int, beats []int) bool {
 	return true
 }
 
-// shape returns the distances between neighbouring notes round the cycle, turned
+// shape returns the distances between neighbouring notes round the loop, turned
 // so that the smallest list comes first. Rhythms that differ only by a shift have
 // the same shape.
 func shape(n int, beats []int) string {
@@ -185,8 +192,9 @@ func TestBuildMatrix_MatchesReadmeExample(t *testing.T) {
 	}
 }
 
-// TestSolve_KnownTotals checks every total in the README against the separate
-// search, and every complement against the definition.
+// TestSolve_KnownTotals checks the 72-beat totals in the README and the small
+// examples against the separate search, and every complement against the
+// definition. TestSolve_EntryOnBeatZero checks the 144-beat totals.
 func TestSolve_KnownTotals(t *testing.T) {
 	t.Parallel()
 
@@ -202,7 +210,7 @@ func TestSolve_KnownTotals(t *testing.T) {
 		{name: "readme example", n: 6, tile: []int{0, 1, 2}, wantTotal: 3},
 		{name: "two notes in four beats", n: 4, tile: []int{0, 1}, wantTotal: 2},
 		{name: "does not tile", n: 6, tile: []int{0, 1, 3}},
-		{name: "size does not divide the cycle", n: 7, tile: []int{0, 1}},
+		{name: "size does not divide the loop", n: 7, tile: []int{0, 1}},
 		{name: "tile need not start at zero", n: 6, tile: []int{1, 2, 3}, wantTotal: 3},
 		{name: "single note", n: 5, tile: []int{0}, wantTotal: 1},
 	}
@@ -240,7 +248,7 @@ func TestSolve_KnownTotals(t *testing.T) {
 }
 
 // TestSolve_AllSmallTiles compares solve with generate and test: every subset of
-// the cycle is tried as a complement, so nothing about the search is shared.
+// the loop is tried as a complement, so nothing about the search is shared.
 func TestSolve_AllSmallTiles(t *testing.T) {
 	t.Parallel()
 
@@ -316,7 +324,11 @@ func TestSolve_PublishedRhythms(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			t.Parallel()
 
-			for _, gapList := range tt.rhythms {
+			rhythms := tt.rhythms
+			if testing.Short() {
+				rhythms = rhythms[:1]
+			}
+			for _, gapList := range rhythms {
 				tile := beatsFromGaps(gapList)
 				if !isAperiodic(n, tile) {
 					t.Errorf("rhythm %v repeats", tile)
@@ -380,20 +392,73 @@ func TestSolve_PaperExamples(t *testing.T) {
 	}
 }
 
-// TestSolve_PublishedTotalFor144 checks the 8640 shapes of 24 entries that one
-// row of Table 1 in the paper gives for a cycle of 144 and six notes. The whole
-// count takes seconds, so this keeps only complements with an entry on beat 0: of
-// the six voices that can strike beat 0, only the one entering there stays. A
-// complement has exactly one of the six, and a shift moves that job from one to
-// another, so this finds one sixth of the 8640 x 144 aperiodic complements.
-func TestSolve_PublishedTotalFor144(t *testing.T) {
+// TestSolve_EntryOnBeatZero checks the 144-beat totals in the README, including
+// the 8640 shapes of 24 entries that one row of Table 1 in the paper gives for six
+// notes. Enumerating them all takes seconds, so this keeps only the complements
+// with an entry on beat 0: of the voices that can strike beat 0, only the one
+// entering there stays. A complement has exactly one of those voices, and a shift
+// moves that job from one to another, so this finds 1/notes of every total. The
+// 72-beat rows check that argument against totals enumerated in full. Both dlx and
+// the separate search must get there, and they share no code with each other.
+func TestSolve_EntryOnBeatZero(t *testing.T) {
 	t.Parallel()
-	if testing.Short() {
-		t.Skip("slow: enumerates a sixth of the complements")
+
+	tests := []struct {
+		name          string
+		n             int
+		tile          []int
+		slow          bool
+		wantTotal     int
+		wantAperiodic int
+	}{
+		{name: "six notes in 72 beats", n: 72, tile: rhythm72, wantTotal: 1296, wantAperiodic: 432},
+		{name: "twelve notes in 72 beats", n: 72, tile: partner72, wantTotal: 216, wantAperiodic: 216},
+		{name: "six notes in 144 beats", n: 144, tile: []int{0, 16, 32, 36, 52, 68}, slow: true, wantTotal: 1679616, wantAperiodic: 8640 * 144},
 	}
 
-	const n = 144
-	tile := []int{0, 16, 32, 36, 52, 68}
+	for _, tt := range tests {
+		tt := tt
+		t.Run(tt.name, func(t *testing.T) {
+			t.Parallel()
+			if tt.slow && testing.Short() {
+				t.Skip("slow: enumerates a sixth of the complements")
+			}
+
+			wantTotal, wantAperiodic := tt.wantTotal/len(tt.tile), tt.wantAperiodic/len(tt.tile)
+
+			total, aperiodic := 0, 0
+			matrixWithEntryOnZero(tt.n, tt.tile).Solve(dlx.SolutionAccepterFunc(func(exactCover [][]int) bool {
+				entries := decode(tt.n, tt.tile, exactCover)
+				if !strikesEveryBeatOnce(tt.n, tt.tile, entries) {
+					t.Errorf("complement %v does not strike every beat once", entries)
+				}
+				total++
+				if period(tt.n, entries) == 0 {
+					aperiodic++
+				}
+				return false
+			}))
+			if total != wantTotal || aperiodic != wantAperiodic {
+				t.Errorf("dlx found %d complements, %d aperiodic, want %d and %d", total, aperiodic, wantTotal, wantAperiodic)
+			}
+
+			total, aperiodic = 0, 0
+			searchByHandFrom(tt.n, tt.tile, []int{0}, func(entries []int) {
+				total++
+				if isAperiodic(tt.n, entries) {
+					aperiodic++
+				}
+			})
+			if total != wantTotal || aperiodic != wantAperiodic {
+				t.Errorf("separate search found %d complements, %d aperiodic, want %d and %d", total, aperiodic, wantTotal, wantAperiodic)
+			}
+		})
+	}
+}
+
+// matrixWithEntryOnZero is buildMatrix without the voices that strike beat 0 from
+// any entry but 0. The tile must have a note on beat 0.
+func matrixWithEntryOnZero(n int, tile []int) dlx.Matrix {
 	m := dlx.NewMatrix(n)
 	for entry := 0; entry < n; entry++ {
 		voice := make([]int, len(tile))
@@ -406,23 +471,13 @@ func TestSolve_PublishedTotalFor144(t *testing.T) {
 			m.AddRow(voice...)
 		}
 	}
-
-	aperiodic := 0
-	m.Solve(dlx.SolutionAccepterFunc(func(exactCover [][]int) bool {
-		if period(n, decode(n, tile, exactCover)) == 0 {
-			aperiodic++
-		}
-		return false
-	}))
-	if want := 8640 * n / len(tile); aperiodic != want {
-		t.Errorf("found %d aperiodic complements with an entry on beat 0, want %d", aperiodic, want)
-	}
+	return m
 }
 
-// TestSolve_NoVuzaCanonInShortCycles searches every rhythm for the claim that
-// short cycles have no Vuza canon. One of the two voices has at most sqrt(n)
+// TestSolve_NoVuzaCanonInShortLoops searches every rhythm for the claim that
+// short loops have no Vuza canon. One of the two voices has at most sqrt(n)
 // notes, and shifting a canon lets that voice start on beat 0.
-func TestSolve_NoVuzaCanonInShortCycles(t *testing.T) {
+func TestSolve_NoVuzaCanonInShortLoops(t *testing.T) {
 	t.Parallel()
 
 	for n := 2; n <= 28; n++ {
@@ -513,7 +568,7 @@ func TestPeriod(t *testing.T) {
 }
 
 // TestPeriod_DivisorsSuffice checks the claim that only divisors of n need
-// trying, by comparing with every possible turn on every set in short cycles.
+// trying, by comparing with every possible turn on every set in short loops.
 func TestPeriod_DivisorsSuffice(t *testing.T) {
 	t.Parallel()
 
@@ -543,7 +598,7 @@ func TestParseTile(t *testing.T) {
 		{name: "empty", text: "", n: 6, wantErr: `beat "" is not a number`},
 		{name: "not a number", text: "0,x", n: 6, wantErr: `beat "x" is not a number`},
 		{name: "negative", text: "-1", n: 6, wantErr: "beat -1 is outside 0 to 5"},
-		{name: "past the cycle", text: "6", n: 6, wantErr: "beat 6 is outside 0 to 5"},
+		{name: "past the loop", text: "6", n: 6, wantErr: "beat 6 is outside 0 to 5"},
 		{name: "repeated beat", text: "1,1", n: 6, wantErr: "beat 1 appears twice"},
 		{name: "repeating rhythm", text: "0,3", n: 6, wantErr: "it repeats every 3 beats"},
 	}

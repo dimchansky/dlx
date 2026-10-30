@@ -9,7 +9,7 @@ import (
 	"github.com/dimchansky/dlx"
 )
 
-// solve passes each complement of tile in a cycle of n beats to accept until
+// solve passes each complement of tile in a loop of n beats to accept until
 // accept returns true. A complement is the sorted list of beats on which a voice
 // enters, so that the voices together strike every beat exactly once. The tile
 // must not repeat, or two entries would give the same row.
@@ -19,9 +19,9 @@ func solve(n int, tile []int, accept func(entries []int) bool) {
 	}))
 }
 
-// buildMatrix has a column for each beat of the cycle and a row for each beat a
+// buildMatrix has a column for each beat of the loop and a row for each beat a
 // voice can enter on. A row lists the beats that voice strikes, wrapping round
-// the cycle. Every beat is struck exactly once, so the picked rows are the
+// the loop. Every beat is struck exactly once, so the picked rows are the
 // voices of a canon.
 func buildMatrix(n int, tile []int) dlx.Matrix {
 	m := dlx.NewMatrix(n)
