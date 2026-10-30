@@ -6,6 +6,8 @@ import (
 	"math/rand"
 	"sort"
 	"testing"
+
+	"github.com/dimchansky/dlx"
 )
 
 func TestLargestDeck(t *testing.T) {
@@ -76,6 +78,20 @@ func TestCounts(t *testing.T) {
 	}
 }
 
+// rowCounter stands in for a matrix and only counts the rows added to it.
+type rowCounter struct {
+	dlx.Matrix
+	real, slack int
+}
+
+func (c *rowCounter) AddRow(columns ...int) {
+	if len(columns) == 1 {
+		c.slack++
+	} else {
+		c.real++
+	}
+}
+
 func TestEncode(t *testing.T) {
 	t.Parallel()
 
@@ -86,27 +102,29 @@ func TestEncode(t *testing.T) {
 		wantHands    int
 		wantMessages int
 		wantRows     int
-		slow         bool
+		wantSlack    int
 	}{
 		{name: "no spare message, no slack", handSize: 2, deck: 3, wantHands: 3, wantMessages: 3, wantRows: 6},
-		{name: "spare messages get slack rows", handSize: 2, deck: 2, wantHands: 1, wantMessages: 2, wantRows: 4},
+		{name: "spare messages get slack rows", handSize: 2, deck: 2, wantHands: 1, wantMessages: 2, wantRows: 2, wantSlack: 2},
 		{name: "default", handSize: 3, deck: 8, wantHands: 56, wantMessages: 56, wantRows: 336},
-		{name: "deck 7", handSize: 3, deck: 7, wantHands: 35, wantMessages: 42, wantRows: 252},
-		{name: "largest search", handSize: 4, deck: 25, wantHands: 12650, wantMessages: 13800, wantRows: 317400, slow: true},
+		{name: "deck 7", handSize: 3, deck: 7, wantHands: 35, wantMessages: 42, wantRows: 210, wantSlack: 42},
+		{name: "hand 4", handSize: 4, deck: 12, wantHands: 495, wantMessages: 1320, wantRows: 11880, wantSlack: 1320},
 	}
 
 	for _, tt := range tests {
 		tt := tt
 		t.Run(tt.name, func(t *testing.T) {
 			t.Parallel()
-			if tt.slow && testing.Short() {
-				t.Skip("slow with -race")
-			}
 
 			e := encode(tt.handSize, tt.deck)
-			if len(e.hands) != tt.wantHands || len(e.messages) != tt.wantMessages || e.rows != tt.wantRows {
-				t.Errorf("got %d hands, %d messages, %d rows, want %d, %d, %d",
-					len(e.hands), len(e.messages), e.rows, tt.wantHands, tt.wantMessages, tt.wantRows)
+			var c rowCounter
+			addRows(&c, e.hands, e.messages, tt.deck)
+			if len(e.hands) != tt.wantHands || len(e.messages) != tt.wantMessages {
+				t.Errorf("got %d hands, %d messages, want %d, %d",
+					len(e.hands), len(e.messages), tt.wantHands, tt.wantMessages)
+			}
+			if c.real != tt.wantRows || c.slack != tt.wantSlack {
+				t.Errorf("got %d rows and %d slack rows, want %d and %d", c.real, c.slack, tt.wantRows, tt.wantSlack)
 			}
 		})
 	}

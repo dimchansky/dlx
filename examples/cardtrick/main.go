@@ -10,14 +10,15 @@
 //	cardtrick [-hand size] [-deck size] -count
 //
 // The -hand flag sets the cards drawn, 3 by default, from 2 to 4. The -deck flag
-// sets the cards in the deck, numbered from 1, 8 by default. With no other flag,
-// the command prints a strategy line by line, then performs it on every hand.
-// The -play flag performs it on one hand, such as 2,5,7. The -count flag
-// enumerates every strategy and prints the total instead, for tricks of up to 10
-// hands.
+// sets the cards in the deck, numbered from 1, 8 by default. For hands of 4 the
+// search stops at deck 25, although decks 26 and 27 have strategies. With no
+// other flag, the command prints a strategy line by line, then performs it on
+// every hand. The -play flag performs it on one hand, such as 2,5,7. The -count
+// flag enumerates every strategy and prints the total instead, for tricks of up
+// to 10 hands.
 //
 // The exit status is 0 if a strategy exists or -help was given, 1 if there are
-// none, and 2 for invalid usage or an I/O failure.
+// none, and 2 for invalid usage, a trick beyond these limits, or an I/O failure.
 package main
 
 import (
@@ -46,13 +47,14 @@ const (
 	// no strategy for the hand sizes allowed, and that is answered by counting.
 	maxDeck = 1000
 
-	// maxDeckForFour is the largest deck the search reliably finishes on for
-	// hands of 4 cards, in about a second. Decks 26 and 27 have strategies, but
-	// with this column order dlx does not find one in reasonable time.
+	// maxDeckForFour is the largest deck the search finishes on for hands of 4
+	// cards, in about a second. Decks 26 and 27 have strategies, but with this
+	// column order the search did not finish within minutes.
 	maxDeckForFour = 25
 
 	// maxCountedHands bounds -count. Totals grow fast: 10 hands take seconds,
-	// and the next size of a hand of 3, with 20 hands, does not finish.
+	// and the next size of a hand of 3, with 20 hands, did not finish in 15
+	// seconds.
 	maxCountedHands = 10
 )
 
@@ -64,7 +66,7 @@ func main() {
 type options struct {
 	hand  int
 	deck  int
-	play  string
+	play  []int // the hand given to -play, nil without that flag
 	count bool
 }
 
@@ -81,7 +83,7 @@ func run(args []string, stdout, stderr io.Writer) int {
 		return exitNoSolution
 	}
 	if opts.hand == maxHand && opts.deck > maxDeckForFour {
-		report(stderr, "deck %d has a strategy, but the search does not finish: want at most %d for hand %d",
+		report(stderr, "deck %d has a strategy, but the search did not finish within minutes: want at most %d for hand %d",
 			opts.deck, maxDeckForFour, opts.hand)
 		return exitFailure
 	}
@@ -90,21 +92,12 @@ func run(args []string, stdout, stderr io.Writer) int {
 		return exitFailure
 	}
 
-	var drawn []int
-	if opts.play != "" {
-		var err error
-		if drawn, err = parseHand(opts.play, opts.hand, opts.deck); err != nil {
-			report(stderr, "invalid -play: %v", err)
-			return exitFailure
-		}
-	}
-
 	w := bufio.NewWriter(stdout)
 	switch {
 	case opts.count:
 		_, _ = fmt.Fprintf(w, "Strategies: %d\n", countStrategies(opts.hand, opts.deck))
-	case drawn != nil:
-		printPlay(w, findStrategy(opts.hand, opts.deck), drawn, opts.deck)
+	case opts.play != nil:
+		printPlay(w, findStrategy(opts.hand, opts.deck), opts.play, opts.deck)
 	default:
 		printStrategy(w, findStrategy(opts.hand, opts.deck), opts.deck, messages)
 	}
@@ -124,7 +117,7 @@ func parseOptions(args []string, stderr io.Writer) (opts options, code int, ok b
 	flags.Usage = func() { printUsage(flags) }
 	flags.IntVar(&opts.hand, "hand", 3, "Cards in a hand")
 	flags.IntVar(&opts.deck, "deck", 8, "Cards in the deck, numbered from 1")
-	flags.StringVar(&opts.play, "play", "", "Perform the trick on one hand, such as 2,5,7")
+	playText := flags.String("play", "", "Perform the trick on one hand, such as 2,5,7")
 	flags.BoolVar(&opts.count, "count", false, "Print the number of strategies (enumerates every strategy)")
 
 	if err := flags.Parse(args); err != nil {
@@ -133,6 +126,10 @@ func parseOptions(args []string, stderr io.Writer) (opts options, code int, ok b
 		}
 		return opts, exitFailure, false
 	}
+	// An empty -play is a mistake, not a missing flag, so look for the flag itself.
+	played := false
+	flags.Visit(func(f *flag.Flag) { played = played || f.Name == "play" })
+
 	switch {
 	case flags.NArg() != 0:
 		report(stderr, "unexpected argument %q", flags.Arg(0))
@@ -141,8 +138,14 @@ func parseOptions(args []string, stderr io.Writer) (opts options, code int, ok b
 		report(stderr, "invalid hand %d: want %d to %d", opts.hand, minHand, maxHand)
 	case opts.deck < opts.hand || opts.deck > maxDeck:
 		report(stderr, "invalid deck %d: want %d to %d", opts.deck, opts.hand, maxDeck)
-	case opts.count && opts.play != "":
+	case opts.count && played:
 		report(stderr, "-count and -play can't be combined")
+	case played:
+		var err error
+		if opts.play, err = parseHand(*playText, opts.hand, opts.deck); err == nil {
+			return opts, exitOK, true
+		}
+		report(stderr, "invalid -play: %v", err)
 	default:
 		return opts, exitOK, true
 	}
@@ -152,6 +155,9 @@ func parseOptions(args []string, stderr io.Writer) (opts options, code int, ok b
 // parseHand reads a comma-separated hand and returns its cards in increasing
 // order.
 func parseHand(text string, handSize, deck int) ([]int, error) {
+	if strings.TrimSpace(text) == "" {
+		return nil, fmt.Errorf("no cards given, want %d", handSize)
+	}
 	fields := strings.Split(text, ",")
 	if len(fields) != handSize {
 		return nil, fmt.Errorf("got %d cards, want %d", len(fields), handSize)
@@ -187,7 +193,7 @@ func printUsage(flags *flag.FlagSet) {
 	// As in report, a failure to write usage text cannot be reported.
 	_, _ = fmt.Fprint(w, "usage: cardtrick [-hand size] [-deck size] [-play cards | -count]\n\n")
 	flags.PrintDefaults()
-	_, _ = fmt.Fprint(w, "\nexit status: 0 solved, 1 no strategy, 2 invalid usage or I/O failure\n")
+	_, _ = fmt.Fprint(w, "\nexit status: 0 solved, 1 no strategy, 2 invalid usage, trick beyond the limits or I/O failure\n")
 }
 
 // printStrategy prints each line of the strategy, then the score of a

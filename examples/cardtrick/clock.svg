@@ -1,0 +1,41 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 340 340" width="340" height="340" role="img" aria-label="Thirteen ranks round a clock face, from A at the top clockwise to K. An arrow goes clockwise from 3 to 9, numbered 1 to 6 past the ranks 4 to 9." font-family="Helvetica, Arial, sans-serif">
+<title>Thirteen ranks round a clock face, from A at the top clockwise to K. An arrow goes clockwise from 3 to 9, numbered 1 to 6 past the ranks 4 to 9.</title>
+<defs><marker id="head" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M 0 0 L 10 5 L 0 10 z" fill="#0969da"/></marker></defs>
+<rect x="0.5" y="0.5" width="339" height="339" rx="8" fill="#ffffff" stroke="#8c959f"/>
+<circle cx="170" cy="170" r="130" fill="none" stroke="#8c959f" stroke-width="2"/>
+<path d="M 258.5 123.5 A 100 100 0 0 1 113.2 252.3" fill="none" stroke="#0969da" stroke-width="2.5" marker-end="url(#head)"/>
+<circle cx="170.0" cy="40.0" r="16" fill="#ffffff" stroke="#8c959f" stroke-width="2"/>
+<text x="170.0" y="45.0" text-anchor="middle" font-size="15" fill="#24292f">A</text>
+<circle cx="230.4" cy="54.9" r="16" fill="#ffffff" stroke="#8c959f" stroke-width="2"/>
+<text x="230.4" y="59.9" text-anchor="middle" font-size="15" fill="#24292f">2</text>
+<circle cx="277.0" cy="96.2" r="16" fill="#0969da" stroke="#0969da" stroke-width="2"/>
+<text x="277.0" y="101.2" text-anchor="middle" font-size="15" fill="#ffffff">3</text>
+<circle cx="299.1" cy="154.3" r="16" fill="#ffffff" stroke="#8c959f" stroke-width="2"/>
+<text x="299.1" y="159.3" text-anchor="middle" font-size="15" fill="#24292f">4</text>
+<circle cx="291.6" cy="216.1" r="16" fill="#ffffff" stroke="#8c959f" stroke-width="2"/>
+<text x="291.6" y="221.1" text-anchor="middle" font-size="15" fill="#24292f">5</text>
+<circle cx="256.2" cy="267.3" r="16" fill="#ffffff" stroke="#8c959f" stroke-width="2"/>
+<text x="256.2" y="272.3" text-anchor="middle" font-size="15" fill="#24292f">6</text>
+<circle cx="201.1" cy="296.2" r="16" fill="#ffffff" stroke="#8c959f" stroke-width="2"/>
+<text x="201.1" y="301.2" text-anchor="middle" font-size="15" fill="#24292f">7</text>
+<circle cx="138.9" cy="296.2" r="16" fill="#ffffff" stroke="#8c959f" stroke-width="2"/>
+<text x="138.9" y="301.2" text-anchor="middle" font-size="15" fill="#24292f">8</text>
+<circle cx="83.8" cy="267.3" r="16" fill="#0969da" stroke="#0969da" stroke-width="2"/>
+<text x="83.8" y="272.3" text-anchor="middle" font-size="15" fill="#ffffff">9</text>
+<circle cx="48.4" cy="216.1" r="16" fill="#ffffff" stroke="#8c959f" stroke-width="2"/>
+<text x="48.4" y="221.1" text-anchor="middle" font-size="15" fill="#24292f">10</text>
+<circle cx="40.9" cy="154.3" r="16" fill="#ffffff" stroke="#8c959f" stroke-width="2"/>
+<text x="40.9" y="159.3" text-anchor="middle" font-size="15" fill="#24292f">J</text>
+<circle cx="63.0" cy="96.2" r="16" fill="#ffffff" stroke="#8c959f" stroke-width="2"/>
+<text x="63.0" y="101.2" text-anchor="middle" font-size="15" fill="#24292f">Q</text>
+<circle cx="109.6" cy="54.9" r="16" fill="#ffffff" stroke="#8c959f" stroke-width="2"/>
+<text x="109.6" y="59.9" text-anchor="middle" font-size="15" fill="#24292f">K</text>
+<text x="247.4" y="165.6" text-anchor="middle" font-size="14" fill="#0969da">1</text>
+<text x="242.9" y="202.7" text-anchor="middle" font-size="14" fill="#0969da">2</text>
+<text x="221.7" y="233.4" text-anchor="middle" font-size="14" fill="#0969da">3</text>
+<text x="188.7" y="250.7" text-anchor="middle" font-size="14" fill="#0969da">4</text>
+<text x="151.3" y="250.7" text-anchor="middle" font-size="14" fill="#0969da">5</text>
+<text x="118.3" y="233.4" text-anchor="middle" font-size="14" fill="#0969da">6</text>
+<text x="170" y="168" text-anchor="middle" font-size="16" fill="#24292f">6 steps</text>
+<text x="170" y="188" text-anchor="middle" font-size="13" fill="#24292f">from 3 to 9</text>
+</svg>

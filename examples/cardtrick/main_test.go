@@ -74,7 +74,7 @@ func TestRun(t *testing.T) {
 			name:       "deck the search does not finish",
 			args:       []string{"-hand", "4", "-deck", "27"},
 			wantCode:   2,
-			wantStderr: "cardtrick: deck 27 has a strategy, but the search does not finish: want at most 25 for hand 4\n",
+			wantStderr: "cardtrick: deck 27 has a strategy, but the search did not finish within minutes: want at most 25 for hand 4\n",
 		},
 		{
 			name:       "count too large",
@@ -117,6 +117,30 @@ func TestRun(t *testing.T) {
 			args:       []string{"-play", "1,2"},
 			wantCode:   2,
 			wantStderr: "cardtrick: invalid -play: got 2 cards, want 3\n",
+		},
+		{
+			name:       "play with no cards",
+			args:       []string{"-play", ""},
+			wantCode:   2,
+			wantStderr: "cardtrick: invalid -play: no cards given, want 3\n",
+		},
+		{
+			name:       "count with an empty play",
+			args:       []string{"-count", "-play", ""},
+			wantCode:   2,
+			wantStderr: "cardtrick: -count and -play can't be combined\n",
+		},
+		{
+			name:       "bad play is reported before the counting",
+			args:       []string{"-deck", "9", "-play", "1,x,3"},
+			wantCode:   2,
+			wantStderr: "cardtrick: invalid -play: card \"x\" is not a number\n",
+		},
+		{
+			name:       "good play on an impossible trick",
+			args:       []string{"-deck", "9", "-play", "1,2,3"},
+			wantCode:   1,
+			wantStderr: "cardtrick: no strategy: 84 hands but only 72 messages\n",
 		},
 		{
 			name:       "play with a word",

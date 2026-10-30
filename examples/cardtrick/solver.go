@@ -108,43 +108,47 @@ type encoding struct {
 	hands    [][]int
 	messages [][]int
 	matrix   dlx.Matrix
-	rows     int
 }
 
 // encode builds the matrix. It has a column for each hand, then a column for
-// each message. Each row is one possible line of the strategy: it covers a hand
-// and a message made of cards from that hand. So every hand gets exactly one
-// message, and no message serves two hands, which is what lets the magician
-// work backwards.
+// each message.
+func encode(handSize, deck int) encoding {
+	hands := combinations(handSize, deck)
+	wholeDeck := make([]int, deck)
+	for i := range wholeDeck {
+		wholeDeck[i] = i + 1
+	}
+	messages := arrangements(wholeDeck, handSize-1)
+	m := dlx.NewMatrix(len(hands) + len(messages))
+	addRows(m, hands, messages, deck)
+	return encoding{hands: hands, messages: messages, matrix: m}
+}
+
+// addRows fills the matrix. Each row is one possible line of the strategy: it
+// covers a hand and a message made of cards from that hand. So every hand gets
+// exactly one message, and no message serves two hands, which is what lets the
+// magician work backwards.
 //
 // A deck below the largest has more messages than hands, and some messages go
 // unused. Their columns must still be covered, so each message also gets a
 // slack row covering it alone. When the counts are equal every message is
 // needed and slack rows would only slow the search down.
-func encode(handSize, deck int) encoding {
-	hands := combinations(handSize, deck)
-	wholeDeck := combinations(deck, deck)[0]
-	messages := arrangements(wholeDeck, handSize-1)
+func addRows(m dlx.Matrix, hands, messages [][]int, deck int) {
 	column := make(map[int]int, len(messages))
 	for i, message := range messages {
 		column[messageKey(message, deck)] = len(hands) + i
 	}
 
-	m := dlx.NewMatrix(len(hands) + len(messages))
-	rows := 0
 	for h, hand := range hands {
-		for _, message := range arrangements(hand, handSize-1) {
+		for _, message := range arrangements(hand, len(hand)-1) {
 			m.AddRow(h, column[messageKey(message, deck)])
-			rows++
 		}
 	}
 	if len(messages) > len(hands) {
 		for i := range messages {
 			m.AddRow(len(hands) + i)
 		}
-		rows += len(messages)
 	}
-	return encoding{hands: hands, messages: messages, matrix: m, rows: rows}
 }
 
 // decode turns an exact cover into a strategy, one play per hand in the order

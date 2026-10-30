@@ -40,7 +40,9 @@ The magician's copy is the same table sorted by the last column. On seeing 7 the
 
 ## Which decks can work
 
-There must be at least as many messages as hands, or two hands would have to share a message. For a hand of k cards, the counts are equal when the deck has k × (k-1) × ... × 1 cards, plus k-1 more. One card above that, there are more hands than messages.
+There must be at least as many messages as hands, or two hands would have to share a message. The two counts are close relatives. For 3 cards from deck 8, hands are 8 × 7 × 6 / 6 and messages are 8 × 7. Both have 8 × 7, so only the part left over matters: 6 / 6, which is 1, so the counts are equal.
+
+The same happens for a hand of k cards. Compared with the messages, the hands have one extra factor, the deck size minus k-1, and they are divided by k × (k-1) × ... × 1, the number of orders of a hand. So the counts are equal when the deck has k × (k-1) × ... × 1 cards, plus k-1 more. With one card more, the extra factor is larger than the divisor, and there are more hands than messages.
 
 | Cards in a hand | Largest possible deck | Hands     | Messages  |
 |-----------------|-----------------------|-----------|-----------|
@@ -59,12 +61,12 @@ With a hand of 5 from 52 cards there are 6497400 messages for 2598960 hands, 2.5
 
 A hand column must be covered exactly once, because each hand needs exactly one line. A message column must be covered by at most one line, so that the magician can read it in only one way. A row has a 1 under its hand and a 1 under its message, and there is a row only if the message is made of that hand's cards.
 
-| Matrix part | Meaning                                         | Hand 3, deck 7 | Hand 3, deck 8 |
-|-------------|-------------------------------------------------|----------------|----------------|
-| Column      | A hand, which needs exactly one message         | 35             | 56             |
-| Column      | A message, used by at most one hand             | 42             | 56             |
-| Row         | One hand with one of its messages               | 210            | 336            |
-| Row         | A slack row for one message                     | 42             | none           |
+| Matrix part | Meaning                                         | 3 cards from deck 7 | 3 cards from deck 8 |
+|-------------|-------------------------------------------------|---------------------|---------------------|
+| Column      | A hand, which needs exactly one message         | 35                  | 56                  |
+| Column      | A message, used by at most one hand             | 42                  | 56                  |
+| Row         | One hand with one of its messages               | 210                 | 336                 |
+| Row         | A slack row for one message                     | 42                  | none                |
 
 A hand of 3 has 6 messages: 3 cards to hide, then 2 orders for the other two. So deck 8 has 56 × 6 = 336 rows.
 
@@ -112,15 +114,15 @@ The smallest case is 2 cards from a deck of 2. There is one hand and two message
 | slack show 1     | 0 | 1 | 0 |
 | slack show 2     | 0 | 0 | 1 |
 
-It has two exact covers: `hand 1 2, show 1` with `slack show 2`, and `hand 1 2, show 2` with `slack show 1`. Both conditions of the recipe hold. An unused message can be covered in only one way, so slack rows add no duplicates. And a real row has two columns where a slack row has one, so they can be told apart.
+It has two exact covers: `hand 1 2, show 1` with `slack show 2`, and `hand 1 2, show 2` with `slack show 1`. Both of the [two rules for slack rows](../README.md#at-most-once-slack-rows) hold. An unused message can be covered in only one way, so slack rows add no duplicates. And a real row has two columns where a slack row has one, so they can be told apart.
 
 When hands and messages are equal, as for deck 8, every message must be used, so the program adds no slack rows.
 
 ## How a solution decodes back
 
-dlx reports column numbers. Hands are numbered in dictionary order from 0, and the messages follow them, also in dictionary order. For the default trick, the hands take columns 0 to 55 and the messages take columns 56 to 111.
+dlx reports column numbers. Hands are numbered from 0 in dictionary order, which sorts them like words, by first card, then second: 1 2 3, 1 2 4, ..., 1 2 8, 1 3 4, and so on. The messages follow them, also in dictionary order: 1 2, 1 3, ..., 1 8, 2 1, and so on. For the default trick, the hands take columns 0 to 55 and the messages take columns 56 to 111.
 
-[solver.go](solver.go) skips the rows with one column, because those are slack rows. In each other row, the first number is the hand and the second is 56 plus the message. Hand `2 5 7` is number 31 and message `7 2` is number 43, so that line comes back as `[31 99]`. The hidden card is the card of the hand that the message leaves out, here 5.
+[solver.go](solver.go) skips the rows with one column, because those are slack rows. In each other row, the first number is the hand and the second is 56 plus the message. Hand `2 5 7` is number 31: hands starting with 1 take numbers 0 to 20, hands starting `2 3` and `2 4` take 21 to 29, then come `2 5 6` and `2 5 7`. Message `7 2` is number 43: six cards start 7 messages each, which is 42 numbers, then come `7 1` and `7 2`. So that line comes back as `[31 99]`. The hidden card is the card of the hand that the message leaves out, here 5.
 
 ## Installation
 
@@ -239,16 +241,22 @@ For a deck at the limit, a strategy can also be computed with no table at all. K
 
 The spectator draws 1, 4 and 6.
 
-1. **The assistant picks the card to hide.** The cards add up to 11, which leaves remainder 2 when divided by 3. So the assistant hides the card in position 2 of the hand, counting from 0 in increasing order. That is 6.
+1. **The assistant picks the card to hide.** The cards add up to 11, which leaves remainder 2 when divided by 3, the size of the hand. So the assistant hides the card in position 2 of the hand, counting from 0 in increasing order. That is 6.
 2. **The magician narrows it down.** Imagine the deck with the shown cards deleted and the rest renumbered 0 to 5. The cards shown add up to 5, and the hidden card's new number leaves the remainder that takes 5 up to a multiple of 3, which is 1. So the new number is 1 or 4.
 3. **The order picks one of them.** Increasing order means the smaller choice, and decreasing order means the larger. The assistant shows 4 then 1, so the new number is 4.
 4. **The magician counts.** Without 1 and 4, the deck is 0, 2, 3, 5, 6, 7. Number 4 in that list, counting from 0, is 6.
 
-Step 2 works because the card in position p has p cards of the hand below it, all of them shown. So its new number is its old number minus p. And p was chosen from the sum of the whole hand, so the hidden card cancels out, and the remainder of the new number depends only on the cards shown.
+Step 2 works for every hand, and the numbers above show why. The hidden card is 6. The two cards of the hand below it, 1 and 4, are both shown, so deleting them moves it down 2 places, and its new number is 6 - 2 = 4. In general, the card in position p has p cards of the hand below it, all of them shown, so its new number is its old number minus p.
+
+Now add the shown cards to the new number: 4 + 5 = 9. That is the whole hand with 2 taken off, the same as 11 - 2 = 9. The whole hand adds up to 11, and the position 2 has the same remainder as 11, because that is how the position was chosen. Taking one from the other leaves a multiple of 3. So the new number plus the shown sum is always a multiple of 3. The magician can add up the shown cards, and that gives the remainder of the new number without seeing the hidden card.
+
+Step 3 has exactly enough orders. With 2 cards shown, 6 new numbers are possible, and one in every 3 has the right remainder, so there are 2 candidates for the 2 orders. Larger hands work the same way, dividing by the size of the hand. For 4 cards from deck 27, 24 new numbers are possible and one in every 4 fits, which leaves 6 candidates, and 3 cards have 6 orders. For 5 cards from deck 124, there are 24 candidates for the 24 orders of 4 cards. In each case, the orders in dictionary order stand for the candidates from smallest to largest.
 
 ## The classic rule for 52 cards
 
 The matrix for 5 cards from 52 would have over 9 million columns, and no magician could remember the table. The rule below is short enough to learn. Think of the ranks as 13 places round a clock face: A, 2, 3, ..., 10, J, Q, K, then A again.
+
+![Thirteen ranks round a clock face, from A at the top clockwise to K. An arrow goes clockwise from 3 to 9, numbered 1 to 6 past the ranks 4 to 9.](clock.svg)
 
 1. Five cards always include two of one suit, since there are only four suits.
 2. Going round the clock from one of those two cards to the other takes at most 6 steps in one of the two directions. The assistant hides the card that is ahead and shows the other one first.
@@ -264,7 +272,7 @@ Take the hand 3♣ 5♦ 9♣ J♥ 2♠. The two clubs are 6 steps apart, from 3 
 
 - **Every strategy is checked against the rules.** The tests confirm, with no matrix, that each hand appears once, that the shown and hidden cards are exactly that hand, and that no message is used twice. This runs on every deck for hands of 2 and 3, and on decks 4, 8, 12, 16 and 25 for hands of 4.
 - **The performance can fail.** A test gives `perform` a strategy that reuses a message and sees the score drop, so "56 of 56" is a real result.
-- **The totals come from a second counter.** A separate function in the tests uses no matrix: it gives out messages one hand at a time and remembers how many ways finish from each set of used messages. It matches every total in the table. The two largest totals take dlx about 6 and 11 seconds, so the tests leave them to that counter. They were also run once by hand with `-count`, with the same results.
+- **The totals come from a second counter.** A separate function in the tests uses no matrix: it gives out messages one hand at a time and remembers how many ways finish from each set of used messages. It matches every total in the table. The two largest totals take dlx about 5 and 15 seconds, so the tests leave them to that counter. They were also run once by hand with `-count`, with the same results.
 - **Existence doesn't rest on the search.** The tests run the recipe above on every hand of the largest decks for hands of 2, 3 and 4, including all 17550 hands of deck 27, and confirm that each hand gets its own message. For deck 124 they try a random sample of 50000 hands, since 225150024 is too many.
 - **The classic rule.** The tests play it on all 2598960 hands of a 52-card deck, and the magician is right every time.
 - **The counting shortcut.** The formula for the largest deck is compared with the counts of hands and messages. For hands of 2 and decks 4 to 6, the tests confirm that the matrix itself has no exact cover.
@@ -275,7 +283,7 @@ Take the hand 3♣ 5♦ 9♣ J♥ 2♠. The two clubs are 6 steps apart, from 3 
 
 The command stops at hands of 4, and at deck 25 for those. Deck 25 takes about a second on the machine used to write this. Decks 26 and 27 have strategies, as the recipe shows, but this program doesn't find them, so it says so and exits with code 2.
 
-- **Deck 26** did not finish in over four minutes, although deck 25 takes a second. It seems to be a matter of luck: a trial that listed the message columns in a different order solved deck 26 in under a second. That is not something to rely on, so the command doesn't use it.
+- **Deck 26** did not finish in over four minutes, although deck 25 takes a second. It seems to be a matter of luck: a trial that shuffled the message columns solved deck 26 in a couple of seconds on one shuffle, and ran past 20 seconds on four others. That is not something to rely on, so the command doesn't use it.
 - **Deck 27** has not one spare message. A search of five minutes found nothing, and the tests only build its strategy with the recipe.
 
 A likely reason is that a mistake made early in the table only shows up near the end, and backtracking undoes the most recent choices first.
