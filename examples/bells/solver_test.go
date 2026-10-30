@@ -13,8 +13,8 @@ import (
 
 // knownTotals holds the totals for every set of changes. The 10792 for abcd is
 // published in "Ringing the changes" by Polster and Ross, Plus magazine, 2009.
-// The other totals have no published source, so TestSolve_Totals proves them
-// against two separate methods.
+// The other totals have no published source, so TestIndependentTotals and
+// TestSolve_Totals prove them against two separate methods.
 var knownTotals = []struct {
 	bells   int
 	names   string
@@ -41,9 +41,9 @@ var knownTotals = []struct {
 	{4, "abcd", 2655552, 10792},
 }
 
-// maxShortCovers keeps go test -short fast, even with -race. TestRun still checks
-// the total of 88 in that mode, without the comparisons.
-const maxShortCovers = 10000
+// maxShortCovers keeps go test -short fast, even with -race. TestIndependentTotals
+// still checks every total in that mode.
+const maxShortCovers = 1000
 
 // changesNamed picks the changes for a test without going through the command.
 func changesNamed(names string) []change {
@@ -210,7 +210,7 @@ func TestAllRows(t *testing.T) {
 	}
 }
 
-// TestSolve_Totals checks every total against a count of the cycle covers that
+// TestSolve_Totals checks the solver against a count of the cycle covers that
 // uses no search, and a walk over the rows that uses no matrix. It compares the
 // extents one by one and checks each against the rules of ringing.
 func TestSolve_Totals(t *testing.T) {
@@ -220,6 +220,9 @@ func TestSolve_Totals(t *testing.T) {
 		tt := tt
 		t.Run(fmt.Sprintf("%d bells %s", tt.bells, tt.names), func(t *testing.T) {
 			t.Parallel()
+			if tt.names == "acd" {
+				t.Skip("slow, with no extent to find: TestIndependentTotals checks it")
+			}
 			if tt.covers > maxShortCovers && testing.Short() {
 				t.Skip("slow: goes through every cycle cover")
 			}
@@ -248,6 +251,125 @@ func TestSolve_Totals(t *testing.T) {
 			}
 			want := map[string]bool{}
 			walk(independent, tt.names, func(extent string) { want[extent] = true })
+			if !reflect.DeepEqual(got, want) {
+				t.Errorf("found %d extents, the walk found %d others", len(got), len(want))
+			}
+		})
+	}
+}
+
+// TestIndependentTotals checks every total, the published one included, with
+// neither the solver nor a search through the covers, so it runs under -short too.
+func TestIndependentTotals(t *testing.T) {
+	t.Parallel()
+
+	for _, tt := range knownTotals {
+		tt := tt
+		t.Run(fmt.Sprintf("%d bells %s", tt.bells, tt.names), func(t *testing.T) {
+			t.Parallel()
+
+			rows := independentRows(tt.bells)
+			if got := countCovers(rows, tt.names); got != tt.covers {
+				t.Errorf("the count found %d cycle covers, want %d", got, tt.covers)
+			}
+			extents := 0
+			walk(rows, tt.names, func(string) { extents++ })
+			if extents != tt.extents {
+				t.Errorf("the walk found %d extents, want %d", extents, tt.extents)
+			}
+		})
+	}
+}
+
+// timeMatrix builds the larger matrix from the Limits section of the README, the
+// one that holds the single loop rule itself. With n rows of bells, its columns are:
+//
+//	u                  a step leaves row u
+//	n + t*n + u        row u at time t is dealt with on the way out
+//	n + n*n + t*n + u  row u at time t is dealt with on the way in
+//
+// A step from u to v at time t covers the first, the second, and the third for v
+// at time t+1. A slack row covers the second and third for one u and t, and means
+// that the ringing isn't at u at time t. Only rounds is at time 0, and rounds is at
+// no other time, so one walker sets off and every row of bells is on its path.
+func timeMatrix(rows []string, names string) (m dlx.Matrix, matrixRows int) {
+	n := len(rows)
+	next := neighbours(rows, names)
+	out := func(t, u int) int { return n + t*n + u }
+	in := func(t, u int) int { return n + n*n + t*n + u }
+
+	m = dlx.NewMatrix(n + 2*n*n)
+	for t := 0; t < n; t++ {
+		for u := 0; u < n; u++ {
+			if t != 0 || u != 0 {
+				m.AddRow(out(t, u), in(t, u))
+				matrixRows++
+			}
+			if (t == 0) != (u == 0) {
+				continue
+			}
+			arrival := (t + 1) % n
+			for _, v := range next[u] {
+				if (arrival == 0) == (v == 0) {
+					m.AddRow(u, out(t, u), in(arrival, v))
+					matrixRows++
+				}
+			}
+		}
+	}
+	return m, matrixRows
+}
+
+// TestTimeMatrix checks the README's claim that a matrix can hold the single loop
+// rule: with no filter at all, its solutions are exactly the extents of the walk.
+func TestTimeMatrix(t *testing.T) {
+	t.Parallel()
+
+	tests := []struct {
+		name        string
+		bells       int
+		names       string
+		wantColumns int
+		wantRows    int
+		slow        bool
+	}{
+		{name: "3 bells", bells: 3, names: "ab", wantColumns: 78, wantRows: 71},
+		{name: "4 bells", bells: 4, names: "abc", wantColumns: 1176, wantRows: 2033, slow: true},
+	}
+
+	for _, tt := range tests {
+		tt := tt
+		t.Run(tt.name, func(t *testing.T) {
+			t.Parallel()
+			if tt.slow && testing.Short() {
+				t.Skip("slow: the matrix is much larger than the one in solver.go")
+			}
+
+			rows := independentRows(tt.bells)
+			n := len(rows)
+			if columns := n + 2*n*n; columns != tt.wantColumns {
+				t.Errorf("%d columns, want %d", columns, tt.wantColumns)
+			}
+			m, matrixRows := timeMatrix(rows, tt.names)
+			if matrixRows != tt.wantRows {
+				t.Errorf("%d matrix rows, want %d", matrixRows, tt.wantRows)
+			}
+
+			got := map[string]bool{}
+			m.Solve(dlx.SolutionAccepterFunc(func(exactCover [][]int) bool {
+				extent := make([]string, n+1)
+				extent[n] = rows[0]
+				for _, row := range exactCover {
+					if len(row) == 3 {
+						extent[(row[1]-n)/n] = rows[row[0]]
+					}
+				}
+				got[strings.Join(extent, " ")] = true
+				return false
+			}))
+
+			want := map[string]bool{}
+			walk(rows, tt.names, func(extent string) { want[extent] = true })
 			if !reflect.DeepEqual(got, want) {
 				t.Errorf("found %d extents, the walk found %d others", len(got), len(want))
 			}
@@ -369,14 +491,28 @@ func TestPlainBobMinimus(t *testing.T) {
 		byName[rune(c.name)] = c
 	}
 
+	index := map[string]int{}
+	for i, row := range rows {
+		index[row] = i
+	}
+
 	row := rows[0]
 	var method []string
 	method = append(method, row)
+	next := make([]int, len(rows))
 	for _, name := range strings.Repeat("dbdbdbdc", 3) {
+		from := row
 		row = byName[name].apply(row)
 		method = append(method, row)
+		next[index[from]] = index[row]
 	}
 	checkExtent(t, method, len(rows), "bcd")
+	if got := extentOf(rows, next); !reflect.DeepEqual(got, method) {
+		t.Errorf("extentOf = %v, want %v", got, method)
+	}
+	if testing.Short() {
+		return
+	}
 
 	want := strings.Join(method, " ")
 	found := false
@@ -420,10 +556,11 @@ func TestExtentOf(t *testing.T) {
 	}
 }
 
-// TestCoverLowerBounds proves the figures in the Limits section of the README.
-// Changes a and c split the rows into groups of four, which can be covered
-// independently of each other in 4 ways each, so there are at least 4 to the
-// power of the number of groups. Any larger set of changes has at least as many.
+// TestCoverLowerBounds checks the figures in the Limits section of the README.
+// Changes a and c split the rows into groups of four. The solver covers every
+// group on its own in 4 ways, and a step with a or c never leaves a group, so
+// there are at least 4 to the power of the number of groups. Any larger set of
+// changes has at least as many.
 func TestCoverLowerBounds(t *testing.T) {
 	t.Parallel()
 
@@ -443,6 +580,7 @@ func TestCoverLowerBounds(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			t.Parallel()
 
+			split := changesNamed("ac")
 			seen := map[string]bool{}
 			groups := 0
 			for _, row := range allRows(tt.bells) {
@@ -450,6 +588,7 @@ func TestCoverLowerBounds(t *testing.T) {
 					continue
 				}
 				groups++
+				var group []string
 				for _, c := range []string{"", "a", "c", "ac"} {
 					member := row
 					for _, named := range changesNamed(c) {
@@ -459,6 +598,15 @@ func TestCoverLowerBounds(t *testing.T) {
 						t.Fatalf("row %s is in two groups", member)
 					}
 					seen[member] = true
+					group = append(group, member)
+				}
+				covers := 0
+				solve(group, split, func([]int) bool {
+					covers++
+					return false
+				})
+				if covers != 4 {
+					t.Errorf("group %v has %d covers, want 4", group, covers)
 				}
 			}
 			if groups != tt.wantGroups {

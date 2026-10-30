@@ -75,7 +75,7 @@ func allRows(bells int) []string {
 //
 // Each allowed step from a row to a row is a matrix row with two 1s. An exact
 // cover therefore gives every row one way out and one way in, which is a set of
-// closed loops that visit each row once. The matrix cannot say that there must
+// closed loops that visit each row once. This matrix cannot say that there must
 // be only one loop, so solve leaves that to the caller.
 func buildMatrix(rows []string, allowed []change) dlx.Matrix {
 	n := len(rows)
@@ -109,7 +109,7 @@ func solve(rows []string, allowed []change, accept func(next []int) bool) {
 
 // extentOf follows a cover from rounds and returns the rows in ringing order,
 // with rounds again at the end. It returns nil if the loop through rounds closes
-// before it has visited every row, which is the filter the matrix cannot apply.
+// before it has visited every row, which is the rule this matrix leaves out.
 func extentOf(rows []string, next []int) []string {
 	extent := []string{rows[0]}
 	for i := next[0]; i != 0; i = next[i] {

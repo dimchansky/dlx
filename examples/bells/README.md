@@ -1,12 +1,12 @@
 # Change ringing
 
-A command-line search for extents of change ringing, written as an example of using package [dlx](https://github.com/dimchansky/dlx). It is the one example here where exact cover does only part of the job: the matrix finds candidates, and ordinary code throws almost all of them away. If exact cover is new to you, read the [introduction to the examples](../README.md) first.
+A command-line search for extents of change ringing, written as an example of using package [dlx](https://github.com/dimchansky/dlx). In this example exact cover does only part of the job: the matrix finds candidates, and ordinary code throws almost all of them away. If exact cover is new to you, read the [introduction to the examples](../README.md) first.
 
 ## The problem
 
-In English church towers, bells are rung in a changing order rather than as a tune. Each bell is number 1, 2, 3 or 4, from the lightest to the heaviest, and each one sounds once in every round of ringing. One round is called a **row**, and it is written as the order of the bells: `2134` means bell 2 sounds first, then 1, 3 and 4. Ringing starts from `1234`, which is called **rounds**.
+In English church towers, bells are rung in a changing order rather than as a tune. Each bell is number 1, 2, 3 or 4, from the lightest to the heaviest, and each one sounds once each time through the bells. One time through is called a **row**, and it is written as the order of the bells: `2134` means bell 2 sounds first, then 1, 3 and 4. Ringing starts from `1234`, which is called **rounds**.
 
-A bell can weigh hundreds of kilograms and swings on a wheel, so a ringer can only make it sound a little earlier or later than last time. That gives the rule for going from one row to the next: **a bell may move by at most one place**. So two neighbouring bells can swap, and nothing bigger can happen.
+A bell can weigh hundreds of kilograms and swings on a wheel, so a ringer can only make it sound a little earlier or later than last time. That gives the rule for going from one row to the next: **a bell may move by at most one place**. So in one step, pairs of neighbouring bells can swap, as long as no bell is in two pairs, and nothing bigger can happen.
 
 An **extent** is the longest piece of ringing with no repeats. It follows three rules:
 
@@ -18,7 +18,7 @@ Four bells can stand in 4 x 3 x 2 x 1 = 24 orders, so an extent on 4 bells has 2
 
 ### The changes
 
-A step from one row to the next is called a **change**. A change is a rule about places, not about bells: "swap whoever is in places 1 and 2". On 4 bells, exactly four changes obey the rule. Places can only be swapped with a neighbouring place, and the only two swaps that fit in one step without overlapping are 1-2 and 3-4.
+A step from one row to the next is called a **change**. A change is a rule about places, not about bells: "swap whoever is in places 1 and 2". On 4 bells, exactly four changes obey the rule and give a new row. (Leaving every bell where it is also obeys the rule, but it repeats the row, so it can't be part of an extent.) Places can only be swapped with a neighbouring place, and the only two swaps that fit in one step without overlapping are 1-2 and 3-4.
 
 | Letter | What it does              | From `1234` |
 |--------|---------------------------|-------------|
@@ -27,7 +27,7 @@ A step from one row to the next is called a **change**. A change is a rule about
 | c      | swap places 3 and 4       | `1243`      |
 | d      | do a and c together       | `2143`      |
 
-Doing the same change twice brings you back. So an arrow from a row to the next can always be turned around, and if you ring an extent backwards you get another extent.
+Doing the same change twice brings you back. So a step from one row to the next can always be turned around, and if you ring an extent backwards you get another extent.
 
 ### Three bells
 
@@ -40,7 +40,7 @@ An extent has to walk through all six rows and come back, so it must go once aro
     123 213 231 321 312 132 123
     123 132 312 321 231 213 123
 
-The rows of 4 bells make the same kind of picture, with 24 rows and 3 or 4 lines from each, but no ring to follow by eye. That is where a search comes in.
+The rows of 4 bells make the same kind of picture, with 24 rows and 3 lines from each with changes a b c, or 4 lines with a b c d, but no ring to follow by eye. That is where a search comes in.
 
 ## How it becomes a matrix
 
@@ -78,23 +78,28 @@ For example, the first step in the table leaves `123`, so it has a 1 under `out 
 
 An exact cover picks one step out of every row of bells and one step into it. Follow the arrows from any row and you must come back to where you started, because no row can be entered twice. So an exact cover is a set of closed loops, with every row of bells in exactly one loop. This is called a **cycle cover**.
 
-An extent is a cycle cover with **only one loop**. The matrix can't tell the difference. The 3 bell matrix above has four exact covers, and only two of them are extents:
+An extent is a cycle cover with **only one loop**. This matrix can't tell the difference. The 3 bell matrix above has four exact covers, and only two of them are extents:
 
 ![The four cycle covers of three bells. Covers 1 and 4 are three pairs of rows swapping back and forth. Covers 2 and 3 go once around the ring, one each way, and are the two extents.](covers.svg)
 
+Blue arrows are change a, orange arrows are change b, and the dashed grey lines are steps that the cover doesn't use.
+
 Covers 1 and 4 are three small loops: each pair of rows swaps back and forth, so the ringing never leaves its first two rows. Yet every row of bells has one step out and one step in, so these covers satisfy every column.
 
-"Only one loop" isn't a rule about any one step, so it doesn't fit into a column. It depends on the whole set of steps. So the example does what you do with any rule that a matrix can't hold: it checks each solution afterwards, and rejects the ones that fail. The `AcceptSolution` callback is the place for this, as it is for the costs in the [crew example](../crew).
+"Only one loop" isn't a rule about any one step, so it doesn't fit into a column of this matrix. It depends on the whole set of steps. So the example does what you can do with any rule that a matrix leaves out: it checks each solution afterwards, and rejects the ones that fail. dlx hands each solution to a function you give it, `AcceptSolution`, and that function is the place for this check. The [crew example](../crew) handles its costs outside the search in a similar way. A much larger matrix can hold the rule itself, as [Limits](#limits) shows, but this one is smaller and faster.
 
 ```mermaid
 flowchart LR
-    M["Matrix of steps"] --> S["dlx finds a cycle cover"]
+    M["Matrix of steps"] --> S["dlx finds the next cycle cover"]
     S --> F["Follow the arrows from rounds"]
     F --> Q{"Back at rounds after every row?"}
     Q -- "Yes" --> E["An extent"]
     Q -- "No, the loop closed early" --> R["Reject it"]
-    E --> S
+    E --> L{"-limit reached?"}
+    L -- "No" --> S
     R --> S
+    L -- "Yes" --> D["Stop"]
+    S -- "No covers left" --> D
 ```
 
 ## How a solution decodes back
@@ -129,6 +134,48 @@ Extents and totals go to standard output. Error messages go to standard error, a
 | 2         | Invalid usage, or a write failure                     |
 
 ## Examples
+
+Print the first extent on 4 bells, using the default changes a b c:
+
+    bells
+
+Output:
+
+    Extent 1:
+    1234
+    2134
+    2143
+    1243
+    1423
+    4123
+    4213
+    2413
+    2431
+    4231
+    4321
+    4312
+    4132
+    1432
+    1342
+    3142
+    3412
+    3421
+    3241
+    2341
+    2314
+    3214
+    3124
+    1324
+    1234
+
+Count the extents with those same changes:
+
+    bells -count
+
+Output:
+
+    Cycle covers: 28561
+    Extents: 88
 
 Print both extents on 3 bells:
 
@@ -177,7 +224,7 @@ and on standard error:
 
 ## Number of extents
 
-There are 15 sets of changes on 4 bells. Four of them have extents:
+There are 15 sets of changes on 4 bells: each of the 4 letters is either in or out, which gives 2 x 2 x 2 x 2 = 16, and the empty set doesn't count. Four of them have extents:
 
 | Changes | Cycle covers | Extents | Covers per extent, about |
 |---------|--------------|---------|--------------------------|
@@ -199,21 +246,28 @@ One of the 106 extents that use `bcd` is the method that ringers call Plain Bob 
 
 ## How the results are checked
 
-- The total of 10792 is published in ["Ringing the changes"](https://plus.maths.org/content/ringing-changes) by Burkard Polster and Marty Ross, in Plus magazine, 2009. The article calls a row a "change". I found no published source for the other totals, including the 88, so they rest on the checks below.
-- A separate walk over the rows finds every extent one step at a time, with no matrix and no cycle covers. The tests compare the two lists, extent by extent, for every set of changes.
+- The total of 10792 is published in ["Ringing the changes"](https://plus.maths.org/content/ringing-changes) by Burkard Polster and Marty Ross, in Plus magazine, 2009. The article calls a row a "change". No published source is known for the other totals, including the 88, so they rest on the checks below.
+- A separate walk over the rows finds every extent one step at a time, with no matrix and no cycle covers. The tests compare the two lists, extent by extent, for every set of changes except `acd`, where the solver would spend a second or more finding nothing. For `acd`, the walk and the count below check the totals.
 - A separate count of the cycle covers goes through the rows in turn and keeps a tally of the choices so far. It involves no search, and it must give the same total.
 - Both of those build their own rows and read the changes off pairs of rows, so they share no data with the solver.
 - Each extent is checked against the three rules, and Plain Bob Minimus has to be among the extents.
+- The larger matrix from [Limits](#limits) has to give the same extents as the walk, on 3 bells and with `abc`, with no filter.
 
-`go test` checks everything. `go test` takes several seconds, nearly all of it on `abcd`. `go test -short` leaves out the comparisons for the five largest sets, though it still checks the total of 88. Use `-short` with `-race`.
+`go test` checks everything and takes several seconds, nearly all of it on `abcd`. `go test -short` leaves out the solver runs for the seven sets with more than 1000 covers, though the walk and the count still check every total, including the 10792. Use `-short` with `-race`.
 
 ## Limits
 
-Most of the work here is not exact cover. For `abcd`, dlx produces 2655552 covers and the filter keeps 10792, so only about 1 cover in 246 is an extent. The matrix helps very little with the real difficulty of the problem, which is getting a single loop.
+Most of the work here is not exact cover. For `abcd`, dlx produces 2655552 covers and the filter keeps 10792, so only about 1 cover in 246 is an extent. This matrix helps very little with the real difficulty of the problem, which is getting a single loop.
 
-So this is a poor way to solve this problem, and it's here to show where exact cover stops. On the machine used to write this, `-changes abcd -count` takes about 3 seconds, while the plain walk in the tests finds the same 10792 extents in under a tenth of a second. The walk knows about loops as it goes, and leaves a dead end at once. dlx has to finish each cover before anyone looks at its loops.
+So this is a poor way to solve this problem, and it's here to show what happens when a matrix leaves a rule out. `-changes abcd -count` takes a few seconds on a laptop, while the plain walk in the tests finds the same 10792 extents in under a tenth of a second. The walk knows about loops as it goes, and leaves a dead end at once. dlx has to finish each cover before anyone looks at its loops.
 
-It also won't grow. Changes a and c split the rows into groups of four, such as `12345`, `21345`, `12435` and `21435` on 5 bells. Each group can be covered in 4 ways on its own, whatever the other groups do, so the number of covers is at least 4 multiplied by itself once per group. The table for 4 bells shows exactly this: `ac` has 6 groups and 4096 covers.
+The step matrix also won't grow. Changes a and c alone split the rows into groups of four, and a step with a or c never leaves its group. On 4 bells, one group is `1234`, `2134`, `2143` and `1243`. Drawn as a square, with a along the top and bottom and c down the sides, it can be covered in exactly 4 ways:
+
+![One group of four rows drawn as a square, covered in four ways: only a swaps, only c swaps, once around clockwise, and once around anticlockwise.](groups.svg)
+
+Each row needs one step out and one step in. So the group either splits into two pairs that swap back and forth, which can be done with a or with c, or it goes once around the square, in either direction. Blue is a, orange is c, and the dashed grey lines are steps that aren't used. On 5 bells it's the same square with a 5 on the end of each row, and the other bells give other squares.
+
+No group depends on another, so the choices multiply: the number of covers is at least 4 multiplied by itself once per group. Allowing more changes only adds covers. On 4 bells there are 6 groups, and `-changes ac -count` reports exactly 4 x 4 x 4 x 4 x 4 x 4 = 4096 covers.
 
 | Bells | Rows | Groups of four | At least this many covers |
 |-------|------|----------------|---------------------------|
@@ -222,3 +276,19 @@ It also won't grow. Changes a and c split the rows into groups of four, such as 
 | 6     | 720  | 180            | a 109 digit number        |
 
 At about a million covers a second, 5 bells would take tens of thousands of years, and that is only a lower limit. So the command stops at 4 bells.
+
+### A larger matrix can hold the rule
+
+The limit is in the step matrix, not in exact cover. A matrix can say "only one loop" if it also says when each row of bells is rung, so that the ringing is one path through time instead of a set of loops. With n rows of bells, time runs from 0 to n - 1, and the last step returns to rounds at time 0.
+
+| Matrix part | Meaning                                                    | `abc` |
+|-------------|------------------------------------------------------------|-------|
+| Column      | A step leaves this row of bells                            | 24    |
+| Column      | This row of bells at this time, on the way out             | 576   |
+| Column      | This row of bells at this time, on the way in              | 576   |
+| Row         | A step from one row of bells to another at this time, or   | 2033  |
+|             | slack: the ringing isn't at this row of bells at this time |       |
+
+A step covers "leaves" for its row of bells, "out" at its time, and "in" for the next row of bells at the next time. The slack row covers "out" and "in" together. So at each time and for each row of bells, either the ringing passes through or it isn't there. Only rounds can be at time 0, and rounds can't be at any other time. One path sets off and nothing else can start, so there is only one loop, and the first column makes it visit every row of bells.
+
+That gives 1176 columns and 2033 rows for `abc`, against 48 columns and 72 rows above, and the solutions are exactly the extents, with no filter. The tests check this against the walk. The price is speed. Here `abc` took about 0.25 seconds instead of 0.04, `abd` and `bcd` about 0.9 seconds instead of 0.03, and `abcd` hadn't finished after more than 5 minutes, while the step matrix and its filter take a few seconds. That is why the example filters instead.

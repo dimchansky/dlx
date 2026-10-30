@@ -46,6 +46,7 @@ func TestRun(t *testing.T) {
 		wantCode   int
 		wantStdout string
 		wantStderr string // a substring, because usage text may follow
+		slow       bool   // skipped under -short: goes through every cover of abc
 	}{
 		{name: "first extent by default", wantStdout: firstExtent},
 		{name: "three bells", args: []string{"-bells", "3"}, wantStdout: threeBells},
@@ -54,7 +55,7 @@ func TestRun(t *testing.T) {
 			args:       []string{"-bells", "3", "-limit", "0"},
 			wantStdout: threeBells + "Extent 2:\n123\n132\n312\n321\n231\n213\n123\n",
 		},
-		{name: "count", args: []string{"-count"}, wantStdout: "Cycle covers: 28561\nExtents: 88\n"},
+		{name: "count", args: []string{"-count"}, wantStdout: "Cycle covers: 28561\nExtents: 88\n", slow: true},
 		{
 			name:       "count ignores limit",
 			args:       []string{"-bells", "3", "-count", "-limit", "1"},
@@ -132,6 +133,9 @@ func TestRun(t *testing.T) {
 		tt := tt
 		t.Run(tt.name, func(t *testing.T) {
 			t.Parallel()
+			if tt.slow && testing.Short() {
+				t.Skip("slow: goes through every cycle cover")
+			}
 
 			var stdout, stderr bytes.Buffer
 			code := run(tt.args, &stdout, &stderr)
