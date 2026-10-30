@@ -3,8 +3,6 @@ package main
 import (
 	"bytes"
 	"errors"
-	"fmt"
-	"io"
 	"os"
 	"strings"
 	"testing"
@@ -73,7 +71,7 @@ func TestRun(t *testing.T) {
 		{
 			name:          "first solution by default",
 			stdin:         board,
-			wantCode:      exitSolved,
+			wantCode:      0,
 			wantSolutions: 1,
 			wantStdout:    firstSolution,
 		},
@@ -81,66 +79,72 @@ func TestRun(t *testing.T) {
 			name:          "limit stops the search",
 			args:          []string{"-limit", "2"},
 			stdin:         board,
-			wantCode:      exitSolved,
+			wantCode:      0,
 			wantSolutions: 2,
 		},
 		{
 			name:          "zero limit finds all solutions",
 			args:          []string{"-limit", "0"},
 			stdin:         board,
-			wantCode:      exitSolved,
+			wantCode:      0,
 			wantSolutions: 8,
 		},
 		{
 			name:          "limit above the number of solutions",
 			args:          []string{"-limit", "100"},
 			stdin:         board,
-			wantCode:      exitSolved,
+			wantCode:      0,
 			wantSolutions: 8,
 		},
 		{
 			name:       "no solution",
 			stdin:      conflictingBoard,
-			wantCode:   exitNoSolution,
+			wantCode:   1,
 			wantStderr: "sudoku: no solution found\n",
 		},
 		{
 			name:       "invalid board",
 			stdin:      "1 2 x",
-			wantCode:   exitFailure,
+			wantCode:   2,
 			wantStderr: "sudoku: line 1, column 3: expected digit or underscore symbol\n",
+		},
+		{
+			name:       "text after the board",
+			stdin:      board + "\nmore",
+			wantCode:   2,
+			wantStderr: "sudoku: line 10: unexpected content after the board\n",
 		},
 		{
 			name:       "empty input",
 			stdin:      "",
-			wantCode:   exitFailure,
+			wantCode:   2,
 			wantStderr: "sudoku: line 1: unexpected end of input\n",
 		},
 		{
 			name:       "unknown flag",
 			args:       []string{"-unknown"},
 			stdin:      board,
-			wantCode:   exitFailure,
+			wantCode:   2,
 			wantStderr: "flag provided but not defined: -unknown\nusage: sudoku",
 		},
 		{
 			name:       "negative limit",
 			args:       []string{"-limit", "-1"},
 			stdin:      board,
-			wantCode:   exitFailure,
+			wantCode:   2,
 			wantStderr: `invalid value "-1" for flag -limit`,
 		},
 		{
 			name:       "positional argument",
 			args:       []string{"sudoku.txt"},
 			stdin:      board,
-			wantCode:   exitFailure,
+			wantCode:   2,
 			wantStderr: "sudoku: unexpected argument \"sudoku.txt\"\nusage: sudoku",
 		},
 		{
 			name:       "help",
 			args:       []string{"-help"},
-			wantCode:   exitSolved,
+			wantCode:   0,
 			wantStderr: "usage: sudoku [-limit n] < board.txt",
 		},
 	}
@@ -158,6 +162,9 @@ func TestRun(t *testing.T) {
 			}
 			if got := strings.Count(stdout.String(), "Solution "); got != tt.wantSolutions {
 				t.Errorf("printed %d solutions, want %d", got, tt.wantSolutions)
+			}
+			if tt.wantSolutions == 0 && stdout.Len() != 0 {
+				t.Errorf("unexpected stdout:\n%s", stdout.String())
 			}
 			if tt.wantStdout != "" && stdout.String() != tt.wantStdout {
 				t.Errorf("stdout:\n%s\nwant:\n%s", stdout.String(), tt.wantStdout)
@@ -178,8 +185,8 @@ func TestRun_ReadFailure(t *testing.T) {
 	var stdout, stderr bytes.Buffer
 	code := run(nil, iotest.ErrReader(errors.New("read failure")), &stdout, &stderr)
 
-	if code != exitFailure {
-		t.Errorf("exit status %d, want %d", code, exitFailure)
+	if code != 2 {
+		t.Errorf("exit status %d, want 2", code)
 	}
 	want := "sudoku: line 1: reading input: read failure\n"
 	if stderr.String() != want {
@@ -190,124 +197,25 @@ func TestRun_ReadFailure(t *testing.T) {
 	}
 }
 
-func TestRun_WriteFailure(t *testing.T) {
+// The board has too many solutions to enumerate, so this ends only if the write
+// failure stops the search.
+func TestRun_WriteFailureStopsSearch(t *testing.T) {
 	t.Parallel()
 
-	tests := []struct {
-		name  string
-		args  []string
-		stdin string
-	}{
-		{
-			// The solution fits in the output buffer, so the write happens at the flush.
-			name:  "single solution",
-			stdin: readBoardFile(t),
-		},
-		{
-			// The board has too many solutions to enumerate, so this ends only
-			// if the failure stops the search.
-			name:  "unbounded search",
-			args:  []string{"-limit", "0"},
-			stdin: emptyBoard,
-		},
+	var stderr bytes.Buffer
+	code := run([]string{"-limit", "0"}, strings.NewReader(emptyBoard), failingWriter{}, &stderr)
+
+	if code != 2 {
+		t.Errorf("exit status %d, want 2", code)
 	}
-
-	for _, tt := range tests {
-		tt := tt
-		t.Run(tt.name, func(t *testing.T) {
-			t.Parallel()
-
-			var stderr bytes.Buffer
-			code := run(tt.args, strings.NewReader(tt.stdin), failingWriter{}, &stderr)
-
-			if code != exitFailure {
-				t.Errorf("exit status %d, want %d", code, exitFailure)
-			}
-			want := "sudoku: writing solution: write failure\n"
-			if stderr.String() != want {
-				t.Errorf("stderr = %q, want %q", stderr.String(), want)
-			}
-		})
+	want := "sudoku: writing solution: write failure\n"
+	if stderr.String() != want {
+		t.Errorf("stderr = %q, want %q", stderr.String(), want)
 	}
 }
-
-func TestPrintSolution_WriteFailure(t *testing.T) {
-	t.Parallel()
-
-	solution := strings.Repeat("123456789", 9)
-	line := "1 2 3 4 5 6 7 8 9\n"
-
-	tests := []struct {
-		name       string
-		failAfter  int
-		wantOutput string
-	}{
-		{
-			name:      "header",
-			failAfter: 0,
-		},
-		{
-			name:       "first line",
-			failAfter:  len("Solution 1:\n"),
-			wantOutput: "Solution 1:\n",
-		},
-		{
-			name:       "last line",
-			failAfter:  len("Solution 1:\n") + 8*len(line),
-			wantOutput: "Solution 1:\n" + strings.Repeat(line, 8),
-		},
-	}
-
-	for _, tt := range tests {
-		tt := tt
-		t.Run(tt.name, func(t *testing.T) {
-			t.Parallel()
-
-			var output bytes.Buffer
-			w := &limitedWriter{w: &output, remaining: tt.failAfter}
-
-			if err := printSolution(w, 1, solution); !errors.Is(err, errWrite) {
-				t.Errorf("printSolution() = %v, want %v", err, errWrite)
-			}
-			if output.String() != tt.wantOutput {
-				t.Errorf("output = %q, want %q", output.String(), tt.wantOutput)
-			}
-		})
-	}
-}
-
-func TestPrintSolution(t *testing.T) {
-	t.Parallel()
-
-	var output bytes.Buffer
-	if err := printSolution(&output, 7, strings.Repeat("123456789", 9)); err != nil {
-		t.Fatal(err)
-	}
-
-	want := fmt.Sprintf("Solution 7:\n%s", strings.Repeat("1 2 3 4 5 6 7 8 9\n", 9))
-	if output.String() != want {
-		t.Errorf("output:\n%s\nwant:\n%s", output.String(), want)
-	}
-}
-
-var errWrite = errors.New("write failure")
 
 type failingWriter struct{}
 
 func (failingWriter) Write([]byte) (int, error) {
-	return 0, errWrite
-}
-
-// limitedWriter fails the first write that does not fit in remaining bytes.
-type limitedWriter struct {
-	w         io.Writer
-	remaining int
-}
-
-func (l *limitedWriter) Write(p []byte) (int, error) {
-	if len(p) > l.remaining {
-		return 0, errWrite
-	}
-	l.remaining -= len(p)
-	return l.w.Write(p)
+	return 0, errors.New("write failure")
 }

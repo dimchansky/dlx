@@ -2,7 +2,8 @@
 // solutions to standard output. Diagnostics go to standard error.
 //
 // The board is nine lines of nine whitespace-separated cells, each a digit from
-// 1 to 9, or '_' or '0' for a blank.
+// 1 to 9, or '_' or '0' for a blank. Only blank lines may follow it, and input is
+// read until end of file.
 //
 // Usage:
 //
@@ -11,12 +12,12 @@
 // The -limit flag sets how many solutions to print, 1 by default. Zero prints
 // all of them.
 //
-// The exit status is 0 if at least one solution was printed, 1 if the board has
-// no solutions, and 2 for invalid usage, invalid input or an I/O failure.
+// The exit status is 0 if at least one solution was printed or -help was given,
+// 1 if the board has no solutions, and 2 for invalid usage, invalid input or an
+// I/O failure.
 package main
 
 import (
-	"bufio"
 	"errors"
 	"flag"
 	"fmt"
@@ -28,7 +29,7 @@ import (
 )
 
 const (
-	exitSolved     = 0
+	exitOK         = 0
 	exitNoSolution = 1
 	exitFailure    = 2
 )
@@ -46,7 +47,7 @@ func run(args []string, stdin io.Reader, stdout, stderr io.Writer) int {
 
 	if err := flags.Parse(args); err != nil {
 		if errors.Is(err, flag.ErrHelp) {
-			return exitSolved
+			return exitOK
 		}
 		return exitFailure
 	}
@@ -62,17 +63,13 @@ func run(args []string, stdin io.Reader, stdout, stderr io.Writer) int {
 		return exitFailure
 	}
 
-	out := bufio.NewWriter(stdout)
 	solutionsFound := uint64(0)
 	var writeErr error
 	solver.Solve(board, solver.SolutionAccepterFunc(func(solution string) bool {
 		solutionsFound++
-		writeErr = printSolution(out, solutionsFound, solution)
+		writeErr = printSolution(stdout, solutionsFound, solution)
 		return writeErr != nil || (*limit != 0 && solutionsFound >= *limit)
 	}))
-	if writeErr == nil {
-		writeErr = out.Flush()
-	}
 	if writeErr != nil {
 		report(stderr, "writing solution: %v", writeErr)
 		return exitFailure
@@ -82,7 +79,7 @@ func run(args []string, stdin io.Reader, stdout, stderr io.Writer) int {
 		report(stderr, "no solution found")
 		return exitNoSolution
 	}
-	return exitSolved
+	return exitOK
 }
 
 // report writes a diagnostic. There is nowhere left to report a failure of the
@@ -108,14 +105,10 @@ func printSolution(w io.Writer, number uint64, solution string) error {
 
 // printSudoku writes a solved board as nine lines of nine digits.
 func printSudoku(w io.Writer, s string) error {
-	line := make([]byte, 0, 18)
-	for r := 0; r < 9; r++ {
-		line = line[:0]
-		for _, digit := range []byte(s[r*9 : (r+1)*9]) {
-			line = append(line, digit, ' ')
-		}
-		line[len(line)-1] = '\n'
-		if _, err := w.Write(line); err != nil {
+	for r, i := 0, 0; r < 9; r, i = r+1, i+9 {
+		_, err := fmt.Fprintf(w, "%c %c %c %c %c %c %c %c %c\n", s[i], s[i+1], s[i+2],
+			s[i+3], s[i+4], s[i+5], s[i+6], s[i+7], s[i+8])
+		if err != nil {
 			return err
 		}
 	}
