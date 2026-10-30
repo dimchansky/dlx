@@ -2,9 +2,18 @@ package dlx
 
 import "fmt"
 
-// SolutionAccepter accepts solutions for the given exact cover problem.
-// Each solution is passed to AcceptSolution. Solver stops immediately when AcceptSolution returns true.
+// SolutionAccepter receives the solutions of an exact cover problem.
 type SolutionAccepter interface {
+	// AcceptSolution receives one solution and returns true to stop the search.
+	//
+	// exactCover holds one element per selected row, each listing the row's
+	// column indices in the order they were passed to AddRow. The rows appear
+	// in the order the search selected them, not in AddRow order. Both levels
+	// of the slice are freshly allocated, so it is safe to retain and modify.
+	//
+	// AcceptSolution must not call AddRow or Solve on the matrix being solved.
+	// If it panics, the matrix is left in an undefined state and must be
+	// discarded.
 	AcceptSolution(exactCover [][]int) bool
 }
 
@@ -18,16 +27,41 @@ func (f SolutionAccepterFunc) AcceptSolution(exactCover [][]int) bool {
 	return f(exactCover)
 }
 
-// Matrix represents the exact cover problem. It's a matrix consisting of 0s and 1s.
+// Matrix represents an exact cover problem: a matrix of 0s and 1s, for which
+// Solve looks for a subset of rows with exactly one 1 in every column.
+//
+// A Matrix is not safe for concurrent use, including concurrent calls to Solve.
 type Matrix interface {
-	// AddRow adds a row to matrix.
-	// Numbers are column indices (zero-based) for the nonzero elements of the row.
+	// AddRow adds a row to the matrix. constraintsRow lists the zero-based
+	// column indices of the row's 1s, in any order. The slice is not retained.
+	//
+	// A row with no indices is ignored: it could not cover anything. Rows have
+	// no identity, so a row added twice is two rows and yields separate
+	// solutions.
+	//
+	// AddRow panics if an index is outside [0, nColumns) or appears twice in
+	// constraintsRow. The matrix is unchanged after such a panic.
 	AddRow(constraintsRow ...int)
 
-	// Solve selects a subset of the rows so that the digit 1 appears
-	// in each column exactly once.
-	// Each solution is passed to AcceptSolution. Solver stops immediately
-	// when AcceptSolution returns true.
+	// Solve searches for every subset of rows that has exactly one 1 in each
+	// column, and passes each one to accepter. The search ends when accepter
+	// returns true or when no solutions remain.
+	//
+	// A matrix with no columns has exactly one solution, which is empty. A
+	// matrix with a column that no row covers has none.
+	//
+	// The order of the search is deterministic: matrices built by the same
+	// sequence of AddRow calls report the same solutions in the same order.
+	// It branches on the leftmost column with the fewest remaining rows, trying
+	// that column's rows in AddRow order.
+	//
+	// Solve restores the matrix before returning, even after accepter stops the
+	// search, so it can be called again and more rows can be added. Recursion
+	// depth is bounded by the number of columns.
+	//
+	// Solve panics if accepter is nil. A nil function converted to
+	// SolutionAccepterFunc is not detected and panics as a panicking accepter
+	// would, when the first solution is reported.
 	Solve(accepter SolutionAccepter)
 }
 
