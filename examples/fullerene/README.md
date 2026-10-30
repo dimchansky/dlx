@@ -52,7 +52,7 @@ flowchart LR
     H --> A9
 ```
 
-Both rows in the diagram cover atom 4, so an exact cover can't pick both. That single fact is the whole "one role per atom" rule.
+Both rows in the diagram cover atoms 4 and 9, so an exact cover can't pick both. That single fact is the whole "one role per atom" rule.
 
 | Matrix part | Meaning                                   | Naphthalene | C60 |
 |-------------|-------------------------------------------|-------------|-----|
@@ -84,6 +84,19 @@ Add the two hexagon rows and there are 5 exact covers: the same 3, plus "hexagon
 
 Sextets need no new idea. Every atom still has one role, so adding rows with six 1s is all it takes.
 
+`fullerene -molecule naphthalene -clar` goes through those 5 covers and groups them by how many sextets they use:
+
+| Sextets | Covers | Different sets of hexagons | Sets that cannot grow |
+|--------:|-------:|---------------------------:|----------------------:|
+| 0       | 3      | 1                          | 0                     |
+| 1       | 2      | 2                          | 2                     |
+| Total   | 5      | 3                          | 2                     |
+
+Check it against the drawing above, row by row:
+
+- The 3 covers with no sextets are the 3 Kekulé structures. They all use the same set of hexagons, the empty one, so there is 1 set. That set can still grow, because either hexagon could join it.
+- The 2 covers with one sextet use 2 different sets: just hexagon 0, or just hexagon 1. Neither can grow, because the two hexagons share atoms 4 and 9.
+
 ## Building C60
 
 The matrix for C60 is the same recipe with 60 columns, so the only real work is writing down the molecule. [molecule.go](molecule.go) builds it from one small table, `pentagonNeighbours`, with no geometry.
@@ -94,7 +107,7 @@ No two pentagons of a football touch, and each is joined to five others by a sin
 - Two atoms that point at each other are bonded: 30 more bonds, which makes 90.
 - Three pentagons that are all neighbours of each other surround a hexagon: 20 hexagons.
 
-For example, atom 0 of pentagon 0 points at pentagon 1, and atom 5 of pentagon 1 points back at pentagon 0, so 0-5 is a bond. This flat map shows the result. It is the football opened through one pentagon and stretched flat, so the outer five atoms, 55 to 59, are pentagon 11:
+For example, atom 0 of pentagon 0 points at pentagon 1, and atom 5 of pentagon 1 points back at pentagon 0, so 0-5 is a bond. Hexagon h0 is surrounded by pentagons 0, 1 and 2, and its atoms are the ones that point between those three: 0, 5, 6, 14, 10 and 1 around the ring. This flat map shows the result. It is the football opened through one pentagon and stretched flat, so the outer five atoms, 55 to 59, are pentagon 11:
 
 ![A flat map of C60 with all 60 atoms numbered, 11 pentagons shaded and labelled P0 to P10, and the hexagons labelled h0 to h19](c60-map.svg)
 
@@ -105,15 +118,15 @@ You can follow any printed answer on this map.
 dlx reports each picked row as its list of columns, in the order given to `AddRow`. A column number is an atom number, so there is almost nothing to decode. [solver.go](solver.go) tells the rows apart by length:
 
 - Two columns: a double bond. For naphthalene, the row `[4 9]` is the bond 4-9.
-- Six columns: a sextet. For naphthalene, the row `[4 5 6 7 8 9]` is hexagon 1, found by looking the row up in a map.
+- Six columns: a sextet. For naphthalene, the row `[4 5 6 7 8 9]` is hexagon 1, found with a lookup table.
 
 ## Three results about C60
 
-**The structure that matches the real molecule.** Exactly one of the 12500 structures has no double bond along a pentagon. All 30 of its double bonds lie between two hexagons, and every hexagon gets three. Measurements of real C60 show the same pattern: the bonds between two hexagons are the shorter ones, as double bonds are.
+**The structure that matches the real molecule.** Exactly one of the 12500 structures has no double bond along a pentagon. All 30 of its double bonds lie between two hexagons, and every hexagon gets three. Each of these bonds also joins two pentagons: its two ends lie on different pentagons, and it has a hexagon on either side. Measurements of real C60 show the same pattern: the bonds between two hexagons are the shorter ones, as double bonds are.
 
 ![C60 on the flat map with 30 red double bonds, all of them joining two pentagons](c60-double-bonds.svg)
 
-**The sextet table.** `fullerene -clar` goes through all 250967 covers and groups them by which hexagons are sextets:
+**The sextet table.** `fullerene -clar` goes through all 250967 covers and groups them the same way as the naphthalene table:
 
 | Sextets | Covers | Different sets of hexagons | Sets that cannot grow |
 |--------:|-------:|---------------------------:|----------------------:|
@@ -132,7 +145,7 @@ A set "cannot grow" if no further hexagon can join it as a sextet. Those sets ar
 
 The last column is the published Clar polynomial of C60, 5x⁸ + 280x⁷ + 10x⁶, where each number is how many Clar structures have the size given by the power of x. Those numbers add up to 295. Some authors use "Clar structure" only for the largest sets, which would give 5.
 
-**The five largest sets are five cubes.** Each hexagon touches exactly three others, and in the largest sets no two sextets touch. The centres of the eight hexagons of a set are the corners of a cube, and each hexagon belongs to exactly two of the five sets. This is the classic picture of five cubes inside a dodecahedron, a solid with 12 faces and 20 corners, one corner for each hexagon of C60. Here is one of the five, with its eight sextets and its remaining six double bonds:
+**The five largest sets are five cubes.** Each hexagon touches exactly three others, and two touching hexagons share atoms, so no cover of any size can hold both. The centres of the eight hexagons of a set are the corners of a cube, and each hexagon belongs to exactly two of the five sets. This is the classic picture of five cubes inside a dodecahedron, a solid with 12 faces and 20 corners, one corner for each hexagon of C60. Here is one of the five, the first of the sets printed by `fullerene -clar` under Examples below: the sextets 1 3 5 7 11 13 15 19, labelled as on the map above, and the double bonds 0-5 12-35 16-24 28-46 34-52 43-57:
 
 ![C60 on the flat map with eight hexagons marked as sextets and six red double bonds](c60-sextets.svg)
 
@@ -235,6 +248,6 @@ The main checks don't trust the solver's graph. The tests build C60 a second tim
 
 This is a teaching example, not the right tool for large molecules. dlx visits every answer one at a time, so the work of `-count` grows with the number of structures, and that number grows very fast with the size of the molecule: 3 for naphthalene, 12500 for C60.
 
-Better methods are known. Counting the perfect matchings of any graph that can be drawn without crossing lines, as every fullerene can, takes polynomial time with the Fisher-Kasteleyn-Temperley algorithm, the method behind the determinant test above. That means the work grows like a fixed power of the number of atoms, and not exponentially. Finding one perfect matching of any graph is polynomial too, with Edmonds' blossom algorithm. What dlx offers here is simplicity: the same few lines answer both questions, and sextets took only a few more rows.
+Better methods are known. Counting the perfect matchings of any graph that can be drawn without crossing lines, as every fullerene can, takes polynomial time with the Fisher-Kasteleyn-Temperley algorithm, the method behind the determinant test above. That means the work grows like a fixed power of the number of atoms, not by multiplying with every extra atom. Finding one perfect matching of any graph is polynomial too, with Edmonds' blossom algorithm. What dlx offers here is simplicity: the same few lines answer both questions, and sextets took only a few more rows.
 
 The tool knows only these four molecules, and it models which bonds are double, not real energies. The number of Kekulé structures and of sextets is a rough guide to stability, not a measurement of it.

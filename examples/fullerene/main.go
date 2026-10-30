@@ -145,21 +145,21 @@ func printTotal(w io.Writer, mol molecule) (uint64, error) {
 // structure, and if any cover exists then turning its sextets into double bonds
 // gives one.
 func printClar(w io.Writer, mol molecule) (uint64, error) {
-	report := analyseClar(mol)
-	if len(report.lines) == 0 {
+	clar := analyseClar(mol)
+	if len(clar.lines) == 0 {
 		return 0, nil
 	}
-	return uint64(report.lines[0].covers), writeClarReport(w, report)
+	return uint64(clar.lines[0].covers), writeClarReport(w, clar)
 }
 
 // writeClarReport prints the table of sextets and the covers with the most
 // sextets.
-func writeClarReport(w io.Writer, report clarReport) error {
+func writeClarReport(w io.Writer, clar clarReport) error {
 	// Output goes to a buffer first, so one check covers every write.
 	var out bytes.Buffer
 	var totals clarLine
 	fmt.Fprintf(&out, "%7s %7s %6s %11s\n", "Sextets", "Covers", "Sets", "Cannot grow")
-	for _, line := range report.lines {
+	for _, line := range clar.lines {
 		fmt.Fprintf(&out, "%7d %7d %6d %11d\n", line.sextets, line.covers, line.sets, line.structures)
 		totals.covers += line.covers
 		totals.sets += line.sets
@@ -167,7 +167,7 @@ func writeClarReport(w io.Writer, report clarReport) error {
 	}
 	fmt.Fprintf(&out, "%7s %7d %6d %11d\n", "Total", totals.covers, totals.sets, totals.structures)
 
-	for _, c := range report.largest {
+	for _, c := range clar.largest {
 		fmt.Fprintf(&out, "sextets %s, double bonds %s\n",
 			strings.Trim(fmt.Sprint(sextetList(c.sextets)), "[]"), formatBonds(c.doubleBonds))
 	}

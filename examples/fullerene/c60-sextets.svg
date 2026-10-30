@@ -107,6 +107,14 @@
 <circle cx="215.0" cy="325.4" r="8.8" fill="none" stroke="#0969da" stroke-width="2"/>
 <circle cx="293.0" cy="115.7" r="9.6" fill="none" stroke="#0969da" stroke-width="2"/>
 <circle cx="88.9" cy="264.0" r="9.6" fill="none" stroke="#0969da" stroke-width="2"/>
+<text x="268.9" y="205.5" font-size="9" fill="#0969da" text-anchor="middle" dominant-baseline="central">h1</text>
+<text x="181.7" y="268.9" font-size="9" fill="#0969da" text-anchor="middle" dominant-baseline="central">h3</text>
+<text x="215.0" y="133.7" font-size="9" fill="#0969da" text-anchor="middle" dominant-baseline="central">h5</text>
+<text x="130.0" y="195.4" font-size="9" fill="#0969da" text-anchor="middle" dominant-baseline="central">h7</text>
+<text x="312.4" y="254.7" font-size="9" fill="#0969da" text-anchor="middle" dominant-baseline="central">h11</text>
+<text x="215.0" y="325.4" font-size="9" fill="#0969da" text-anchor="middle" dominant-baseline="central">h13</text>
+<text x="293.0" y="115.7" font-size="9" fill="#0969da" text-anchor="middle" dominant-baseline="central">h15</text>
+<text x="88.9" y="264.0" font-size="9" fill="#0969da" text-anchor="middle" dominant-baseline="central">h19</text>
 <line x1="187.0" y1="184.5" x2="174.7" y2="167.5" stroke="#cf222e" stroke-width="4.0" stroke-linecap="round"/>
 <line x1="284.6" y1="162.1" x2="310.7" y2="171.7" stroke="#cf222e" stroke-width="4.0" stroke-linecap="round"/>
 <line x1="275.7" y1="273.0" x2="243.8" y2="296.2" stroke="#cf222e" stroke-width="4.0" stroke-linecap="round"/>

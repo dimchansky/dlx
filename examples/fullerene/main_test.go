@@ -18,6 +18,24 @@ sextets 1, double bonds 0-1 2-3
 sextets 0, double bonds 5-6 7-8
 `
 
+const c60Clar = `Sextets  Covers   Sets Cannot grow
+      0   12500      1           0
+      1   41580     20           0
+      2   67650    160           0
+      3   66900    660           0
+      4   42000   1510           0
+      5   16352   1912           0
+      6    3620   1240          10
+      7     360    320         280
+      8       5      5           5
+  Total  250967   5828         295
+sextets 1 3 5 7 11 13 15 19, double bonds 0-5 12-35 16-24 28-46 34-52 43-57
+sextets 0 3 6 8 10 14 15 18, double bonds 2-15 9-26 13-31 22-45 37-44 53-59
+sextets 0 2 7 9 11 12 16 18, double bonds 4-25 7-30 11-19 23-41 38-56 47-54
+sextets 2 4 5 8 13 14 16 17, double bonds 1-10 8-51 17-40 21-29 32-39 48-58
+sextets 1 4 6 9 10 12 17 19, double bonds 3-20 6-14 18-36 27-50 33-55 42-49
+`
+
 const benzeneClar = `Sextets  Covers   Sets Cannot grow
       0       2      1           0
       1       1      1           1
@@ -69,6 +87,13 @@ func TestRun(t *testing.T) {
 			args:       []string{"-molecule", "naphthalene", "-clar"},
 			wantLines:  6,
 			wantStdout: naphthaleneClar,
+		},
+		{
+			name:       "clar table of C60",
+			args:       []string{"-clar"},
+			wantLines:  16,
+			wantStdout: c60Clar,
+			slow:       true,
 		},
 		{
 			name:       "clar with no double bonds left",

@@ -312,7 +312,8 @@ func nonTouchingSets(touching []uint32, visit func(set, blocked uint32)) {
 
 // TestClarPolynomialFromTouching reaches the published polynomial without any
 // matching at all: its coefficients are the sets of non-touching hexagons that
-// have no room for one more. This is how Shiu, Lam and Zhang frame the problem.
+// have no room for one more. This fits the "maximal independent set polynomial"
+// named in the abstract of Shiu, Lam and Zhang.
 func TestClarPolynomialFromTouching(t *testing.T) {
 	t.Parallel()
 
