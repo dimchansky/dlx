@@ -1,5 +1,7 @@
 package dlx
 
+import "fmt"
+
 // SolutionAccepter accepts solutions for the given exact cover problem.
 // Each solution is passed to AcceptSolution. Solver stops immediately when AcceptSolution returns true.
 type SolutionAccepter interface {
@@ -40,6 +42,9 @@ type columnObject struct {
 	dataObject
 	size  int
 	index int
+	// lastRow is the serial of the last row that AddRow validated against this
+	// column. A row that meets its own serial here names the column twice.
+	lastRow uint64
 }
 
 // matrixObject is a toroidal doubly-linked list
@@ -47,11 +52,19 @@ type matrixObject struct {
 	columns []columnObject
 	head    *columnObject
 
+	// rowSerial identifies the most recent AddRow call that had a nonempty row.
+	rowSerial uint64
+
 	partialSolution []*dataObject
 }
 
 // NewMatrix creates the Matrix with the given number of columns.
+// It panics if nColumns is negative.
 func NewMatrix(nColumns int) Matrix {
+	if nColumns < 0 {
+		panic(fmt.Sprintf("dlx: NewMatrix: negative column count %d", nColumns))
+	}
+
 	columns := make([]columnObject, nColumns+1)
 	// initializing head
 	head := &columns[0]
@@ -76,15 +89,17 @@ func NewMatrix(nColumns int) Matrix {
 		prevColumn.right = columnDO
 		prevColumn = column
 	}
-	return &matrixObject{columns, head, nil}
+	return &matrixObject{columns: columns, head: head}
 }
 
-// AddRow adds row of constraints
+// AddRow implements Matrix.
 func (m *matrixObject) AddRow(constraintsRow ...int) {
 	constraintsCount := len(constraintsRow)
 	if constraintsCount == 0 {
 		return
 	}
+	m.validateRow(constraintsRow)
+
 	rowDOs := make([]dataObject, constraintsCount)
 	rowStart := &rowDOs[0]
 	for i, c := range constraintsRow {
@@ -106,6 +121,24 @@ func (m *matrixObject) AddRow(constraintsRow ...int) {
 		do.rowStart = rowStart
 		// change links of the neighbors
 		prevUpDO.down, downDO.up, leftDO.right, rightDO.left = do, do, do, do
+	}
+}
+
+// validateRow panics unless row holds distinct valid column indices. It runs
+// before any linking, so a rejected row leaves no trace in the matrix: the
+// lastRow marks it may leave behind differ from every later serial.
+func (m *matrixObject) validateRow(row []int) {
+	nColumns := len(m.columns) - 1
+	m.rowSerial++
+	for _, c := range row {
+		if c < 0 || c >= nColumns {
+			panic(fmt.Sprintf("dlx: AddRow: column %d out of range [0, %d)", c, nColumns))
+		}
+		column := &m.columns[c+1]
+		if column.lastRow == m.rowSerial {
+			panic(fmt.Sprintf("dlx: AddRow: duplicate column %d", c))
+		}
+		column.lastRow = m.rowSerial
 	}
 }
 

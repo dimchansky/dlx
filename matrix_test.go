@@ -2,10 +2,128 @@ package dlx
 
 import (
 	"fmt"
+	"math"
 	"sort"
 	"strings"
 	"testing"
 )
+
+func TestNewMatrix_NegativeColumnsPanics(t *testing.T) {
+	t.Parallel()
+
+	assertPanicsWith(t, "dlx: NewMatrix: negative column count -1", func() { NewMatrix(-1) })
+}
+
+func TestAddRow_InvalidRowPanics(t *testing.T) {
+	t.Parallel()
+
+	tests := []struct {
+		name     string
+		nColumns int
+		row      []int
+		want     string
+	}{
+		{
+			name:     "negative index",
+			nColumns: 3,
+			row:      []int{-1},
+			want:     "dlx: AddRow: column -1 out of range [0, 3)",
+		},
+		{
+			name:     "lowest index",
+			nColumns: 3,
+			row:      []int{math.MinInt},
+			want:     fmt.Sprintf("dlx: AddRow: column %d out of range [0, 3)", math.MinInt),
+		},
+		{
+			name:     "index equal to column count",
+			nColumns: 3,
+			row:      []int{3},
+			want:     "dlx: AddRow: column 3 out of range [0, 3)",
+		},
+		{
+			name:     "highest index",
+			nColumns: 3,
+			row:      []int{math.MaxInt},
+			want:     fmt.Sprintf("dlx: AddRow: column %d out of range [0, 3)", math.MaxInt),
+		},
+		{
+			name:     "invalid index after valid ones",
+			nColumns: 3,
+			row:      []int{0, 2, 7},
+			want:     "dlx: AddRow: column 7 out of range [0, 3)",
+		},
+		{
+			name:     "any index without columns",
+			nColumns: 0,
+			row:      []int{0},
+			want:     "dlx: AddRow: column 0 out of range [0, 0)",
+		},
+		{
+			name:     "adjacent duplicates",
+			nColumns: 3,
+			row:      []int{0, 0},
+			want:     "dlx: AddRow: duplicate column 0",
+		},
+		{
+			name:     "separated duplicates",
+			nColumns: 3,
+			row:      []int{2, 0, 1, 2},
+			want:     "dlx: AddRow: duplicate column 2",
+		},
+	}
+
+	for _, tt := range tests {
+		tt := tt
+		t.Run(tt.name, func(t *testing.T) {
+			t.Parallel()
+
+			var rows [][]int
+			if tt.nColumns > 0 {
+				rows = [][]int{{0, 1, 2}, {0}, {1, 2}}
+			}
+			m := newTestMatrix(tt.nColumns, rows)
+			before := takeSnapshot(t, m)
+			want := toString(allSolutions(m))
+
+			assertPanicsWith(t, tt.want, func() { m.AddRow(tt.row...) })
+
+			assertUnchanged(t, m, before)
+			if got := toString(allSolutions(m)); got != want {
+				t.Errorf("solutions changed after the panic\ngot:\n%s\nwant:\n%s", got, want)
+			}
+		})
+	}
+}
+
+func TestAddRow_UsableAfterPanic(t *testing.T) {
+	t.Parallel()
+
+	m := newTestMatrix(2, nil)
+	assertPanicsWith(t, "dlx: AddRow: duplicate column 1", func() { m.AddRow(0, 1, 1) })
+	m.AddRow(0, 1)
+
+	got := toString(allSolutions(m))
+	want := toString([][][]int{{{0, 1}}})
+	if got != want {
+		t.Errorf("wrong solutions\ngot:\n%s\nwant:\n%s", got, want)
+	}
+}
+
+func TestAddRow_DoesNotAllocateForValidation(t *testing.T) {
+	const rowLength = 256
+
+	row := make([]int, rowLength)
+	for i := range row {
+		row[i] = i
+	}
+	m := NewMatrix(rowLength)
+
+	// The one allocation is the block of data objects for the row.
+	if got := testing.AllocsPerRun(100, func() { m.AddRow(row...) }); got != 1 {
+		t.Errorf("AddRow made %v allocations, want 1", got)
+	}
+}
 
 var solveTests = []struct {
 	name      string
