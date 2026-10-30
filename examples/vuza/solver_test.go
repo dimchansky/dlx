@@ -399,8 +399,8 @@ func TestSolve_PaperExamples(t *testing.T) {
 // entering there stays. A complement has exactly one of those voices, and a shift
 // moves that job from one to another, so this finds 1/notes of every total. The
 // other rows check that argument against totals enumerated in full, with dlx and
-// with the separate search, which share no code. The separate search is too slow
-// for the 144-beat row, which runs dlx alone.
+// with the separate search, which share no code. The 144-beat row is compared with
+// the separate search too, except with -short, which skips the whole row.
 func TestSolve_EntryOnBeatZero(t *testing.T) {
 	t.Parallel()
 
@@ -408,7 +408,7 @@ func TestSolve_EntryOnBeatZero(t *testing.T) {
 		name          string
 		n             int
 		tile          []int
-		slow          bool // skipped with -short, and dlx only otherwise
+		slow          bool // skipped with -short
 		wantTotal     int
 		wantAperiodic int
 	}{
@@ -442,9 +442,6 @@ func TestSolve_EntryOnBeatZero(t *testing.T) {
 			}))
 			if total != wantTotal || aperiodic != wantAperiodic {
 				t.Errorf("dlx found %d complements, %d aperiodic, want %d and %d", total, aperiodic, wantTotal, wantAperiodic)
-			}
-			if tt.slow {
-				return
 			}
 
 			total, aperiodic = 0, 0
