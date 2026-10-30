@@ -46,8 +46,13 @@ func TestParseReader(t *testing.T) {
 			expected: validBoardResult,
 		},
 		{
-			name:     "text after the board is ignored",
-			input:    validBoard + "\nnot a board line",
+			name:     "blank lines after the board",
+			input:    validBoard + "\n\n  \t\n\n",
+			expected: validBoardResult,
+		},
+		{
+			name:     "line just under the scanner limit",
+			input:    strings.Repeat(" ", bufio.MaxScanTokenSize-1-len("1 _ 3 _ _ 6 _ 8 _")) + validBoard,
 			expected: validBoardResult,
 		},
 		{
@@ -88,7 +93,7 @@ func TestParseReader(t *testing.T) {
 		{
 			name:    "short line",
 			input:   "1 2 3 4 _",
-			wantErr: "line 1: unexpected end of input",
+			wantErr: "line 1: expected 9 cells, got 5",
 		},
 		{
 			name:    "long line",
@@ -110,7 +115,17 @@ func TestParseReader(t *testing.T) {
 		{
 			name:    "blank line",
 			input:   "1 2 3 4 5 6 7 8 9\n\n",
-			wantErr: "line 2: unexpected end of input",
+			wantErr: "line 2: expected 9 cells, got 0",
+		},
+		{
+			name:    "content after the board",
+			input:   validBoard + "\n1 2 3 4 5 6 7 8 9",
+			wantErr: "line 10: unexpected content after the board",
+		},
+		{
+			name:    "content after blank lines",
+			input:   validBoard + "\n\n\nnot a board line\n",
+			wantErr: "line 12: unexpected content after the board",
 		},
 	}
 
@@ -146,7 +161,7 @@ func TestParseReader_ReadFailures(t *testing.T) {
 	}{
 		{
 			name:    "line beyond the scanner limit",
-			input:   strings.NewReader(strings.Repeat(" ", bufio.MaxScanTokenSize+1)),
+			input:   strings.NewReader(strings.Repeat(" ", bufio.MaxScanTokenSize)),
 			wantErr: bufio.ErrTooLong,
 			wantMsg: "line 1: reading input: bufio.Scanner: token too long",
 		},
@@ -170,6 +185,18 @@ func TestParseReader_ReadFailures(t *testing.T) {
 			),
 			wantErr: errRead,
 			wantMsg: "line 9: reading input: read failure",
+		},
+		{
+			name:    "reader fails after the board",
+			input:   io.MultiReader(strings.NewReader(validBoard+"\n"), iotest.ErrReader(errRead)),
+			wantErr: errRead,
+			wantMsg: "line 10: reading input: read failure",
+		},
+		{
+			name:    "line beyond the scanner limit after the board",
+			input:   strings.NewReader(validBoard + "\n" + strings.Repeat(" ", bufio.MaxScanTokenSize)),
+			wantErr: bufio.ErrTooLong,
+			wantMsg: "line 10: reading input: bufio.Scanner: token too long",
 		},
 	}
 
