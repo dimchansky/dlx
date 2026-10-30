@@ -16,14 +16,14 @@ You turn your problem into a table, and dlx reports the sets of rows that solve 
 
 ## Example programs
 
-Each one is a small command with a README that explains how the problem maps to exact cover.
+Each one is a small command with a README that explains how the problem maps to exact cover. If exact cover is new to you, start with the [gentle introduction](examples/README.md). It also explains [slack rows](examples/README.md#at-most-once-slack-rows), the way to say "at most once".
 
 ### Puzzles
 
 | Example | Problem | What it teaches |
 |---------|---------|-----------------|
 | [sudoku](examples/sudoku) | Solve a Sudoku board. | The standard introduction to exact cover: one move meets four requirements at once. |
-| [pentomino](examples/pentomino) | Tile a rectangle with the 12 pentominoes. | Two kinds of column in one matrix, and counting tilings up to symmetry. |
+| [pentomino](examples/pentomino) | Tile a rectangle with the 12 pentominoes. | Two kinds of column in one matrix, and counting a tiling's flips and half turns as one. |
 | [queens](examples/queens) | Place n queens so that no two attack each other. | "At most once" with slack rows, and what slack rows cost the search. |
 | [langford](examples/langford) | Line up two copies of each number, with k numbers between the copies of k. | Removing mirror-image solutions from the matrix itself. |
 | [cardtrick](examples/cardtrick) | Find a strategy for a trick where the assistant picks which card to hide and how to lay out the rest, so the magician can name it. | Slack rows for spare messages, counting that rules out a deck with no search, and a recipe that reaches decks the search can't. |
@@ -32,10 +32,10 @@ Each one is a small command with a README that explains how the problem maps to 
 
 | Example | Problem | What it teaches |
 |---------|---------|-----------------|
-| [kochenspecker](examples/kochenspecker) | Show that Peres's 33 rays can't be painted by the rules behind the Kochen-Specker theorem. | Proof by zero solutions: the search finds no answer, and that empty result is the theorem. |
+| [kochenspecker](examples/kochenspecker) | Show that Peres's 33 rays can't be painted green or red so that no two perpendicular rays are both green and every three perpendicular rays include one green. | Proof by zero solutions: the search finds no answer, and that empty result is the Kochen-Specker theorem. |
 | [fullerene](examples/fullerene) | Find the double bonds of the C60 molecule. | A scientific count: the 12500 structures found by search match a published total and a calculation that needs no search. |
 | [witt](examples/witt) | Find Steiner systems, such as 132 committees of six drawn from twelve people, where any five people share exactly one. | A matrix that is the definition itself, and totals that measure symmetry, cross-checked by a division. |
-| [hat](examples/hat) | Cover a disk with copies of the hat, the shape that covers the plane only without repeating. | Slack rows for the kites outside the disk, and a zero result: turned copies alone can't cover a disk of radius 6. |
+| [hat](examples/hat) | Cover a disk with copies of the hat, the shape that covers the plane only without repeating. | Slack rows for the kites outside the disk, and a zero result: turned copies alone can't cover this disk of radius 6. |
 | [hamming](examples/hamming) | Find perfect codes: sets of words of 0s and 1s where every word is at most one flip from exactly one chosen word. Use one to win a hat game 7 times out of 8. | One row per neighbourhood, with the search's 240 codes rebuilt by Hamming's recipe. |
 | [coveringsystems](examples/coveringsystems) | Split all whole numbers into groups like "every 3rd number", so that each number is in exactly one group. | A finite matrix for an infinite question, totals checked against a known sequence, and zero solutions backing a theorem. |
 
@@ -44,8 +44,8 @@ Each one is a small command with a README that explains how the problem maps to 
 | Example | Problem | What it teaches |
 |---------|---------|-----------------|
 | [twelvetone](examples/twelvetone) | Order the twelve notes so that every interval appears exactly once. | The equality trick, which makes two rows agree on a value. The totals match the published counts. |
-| [vuza](examples/vuza) | Find where copies of a rhythm must enter so that every beat is struck once, and neither rhythm nor entries repeat. | Post-filtering in the accepter: dlx finds every list of entries, and those that repeat are dropped. The results match published counts. |
-| [bells](examples/bells) | Ring all 24 orders of four bells exactly once under the rules of change ringing. | Post-filtering in the accepter for a rule no column states: with all four changes allowed, 10792 of 2655552 covers pass, which is the published total. |
+| [vuza](examples/vuza) | Find where copies of a rhythm must enter so that every beat is struck once, and neither rhythm nor entries repeat. | Filtering in the callback that receives each solution: dlx finds every list of entries, and those that repeat are dropped. The results match published counts. |
+| [bells](examples/bells) | Ring all 24 orders of four bells exactly once under the rules of change ringing. | Filtering in the callback that receives each solution, for a rule no column states: the steps must form a single loop. With all four kinds of swap allowed, 10792 of 2655552 covers pass, which is the published total. |
 
 ### Computing and scheduling
 
@@ -57,7 +57,7 @@ Each one is a small command with a README that explains how the problem maps to 
 
 ## What it doesn't do
 
-- There are no secondary columns: every column must be covered exactly once, so "at most once" can't be stated directly. You can get that effect by adding a row with that column alone, and dropping such rows from the solutions you receive. This assumes no real row consists of that column alone, since the two could not be told apart. A problem where many requirements are optional, such as scheduling with free time slots, may suit another tool better.
+- There are no secondary columns: every column must be covered exactly once, so "at most once" can't be stated directly. You can get that effect by adding a row with that column alone, called a slack row, and dropping such rows from the solutions you receive. This assumes no real row consists of that column alone, since the two could not be told apart. A problem where many requirements are optional, such as scheduling with free time slots, may suit another tool better.
 - It doesn't optimize. Rows have no costs or weights, so it finds solutions but doesn't rank them.
 - It can't be cancelled or timed out. Exact cover is NP-complete, so a search can take very long, and your code only runs when a solution is found.
 - It doesn't identify rows. A solution lists each picked row's column indices, not its position, so your columns must let you tell the rows apart. The sudoku solver decodes each placement from its column indices.

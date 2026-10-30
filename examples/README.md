@@ -13,7 +13,7 @@ The [dlx README](../README.md#example-programs) says what each example teaches.
 | Puzzles | [cardtrick](cardtrick) | Let the assistant pick which card to hide and how to lay out the rest, so the magician can name it |
 | Science and maths | [kochenspecker](kochenspecker) | Show that a set of rays can't be painted |
 | Science and maths | [fullerene](fullerene) | Find the double bonds of C60 |
-| Science and maths | [witt](witt) | Form 132 committees of six from twelve people, so that any five share exactly one |
+| Science and maths | [witt](witt) | Form 132 committees of six from twelve people, so that any five people sit together on exactly one |
 | Science and maths | [hat](hat) | Cover a disk with copies of the hat |
 | Science and maths | [hamming](hamming) | Choose words of 0s and 1s so that every word is at most one flip from exactly one chosen word, and use them to win a hat game |
 | Science and maths | [coveringsystems](coveringsystems) | Split all whole numbers into groups like "every 3rd number", so that each number is in exactly one group |
