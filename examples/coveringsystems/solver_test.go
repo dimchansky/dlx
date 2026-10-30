@@ -10,8 +10,9 @@ import (
 )
 
 // publishedPowersOfTwo holds OEIS A003095 from a(1): the first terms of the
-// sequence are also the totals for n = 1, 2, 4, 8, 16 and 32.
-var publishedPowersOfTwo = []uint64{1, 2, 5, 26, 677, 458330}
+// sequence are also the totals for n = 1, 2, 4, 8, 16, 32 and 64. The last one
+// is checked against the rule only, since nothing can enumerate it.
+var publishedPowersOfTwo = []uint64{1, 2, 5, 26, 677, 458330, 210066388901}
 
 // publishedSplittable holds OEIS A353860 for n = 1 to 30.
 var publishedSplittable = []uint64{
@@ -140,6 +141,29 @@ func TestDivisors(t *testing.T) {
 	for _, tt := range tests {
 		if got := divisors(tt.n); !reflect.DeepEqual(got, tt.want) {
 			t.Errorf("divisors(%d) = %v, want %v", tt.n, got, tt.want)
+		}
+	}
+}
+
+// TestDivisors_RowCounts checks the README's table of matrix sizes: buildMatrix
+// adds one row for each class, and a modulus m has m classes.
+func TestDivisors_RowCounts(t *testing.T) {
+	t.Parallel()
+
+	tests := []struct{ n, rows int }{
+		{n: 4, rows: 7},
+		{n: 8, rows: 15},
+		{n: 16, rows: 31},
+		{n: 30, rows: 72},
+		{n: 32, rows: 63},
+	}
+	for _, tt := range tests {
+		sum := 0
+		for _, modulus := range divisors(tt.n) {
+			sum += modulus
+		}
+		if sum != tt.rows {
+			t.Errorf("n=%d has %d rows, want %d", tt.n, sum, tt.rows)
 		}
 	}
 }
