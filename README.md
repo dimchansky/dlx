@@ -14,6 +14,16 @@ You turn your problem into a table, and dlx reports the sets of rows that solve 
 - Tiling and pentomino puzzles where every cell is filled and, for pentominoes, every piece is used: each cell and piece is a column; each placement of a piece is a row.
 - Assignment problems where every task and every slot is used exactly once: each task and slot is a column; each allowed pairing is a row.
 
+## Example programs
+
+Each one is a small command with a README that explains how the problem maps to exact cover:
+
+- [sudoku](examples/sudoku): solve a Sudoku board. The standard introduction to exact cover.
+- [pentomino](examples/pentomino): tile a rectangle with the 12 pentominoes. Two kinds of column in one matrix, and counting tilings up to symmetry.
+- [queens](examples/queens): the n-queens problem. "At most once" constraints with slack rows.
+- [langford](examples/langford): Langford pairings. Removing mirror-image solutions from the matrix itself.
+- [crew](examples/crew): choose crew pairings so that each flight is flown exactly once, at the lowest cost. Picking the cheapest solution, and telling apart rows with equal columns.
+
 ## What it doesn't do
 
 - There are no secondary columns: every column must be covered exactly once, so "at most once" can't be stated directly. You can get that effect by adding a row with that column alone, and dropping such rows from the solutions you receive. This assumes no real row consists of that column alone, since the two could not be told apart. A problem where many requirements are optional, such as scheduling with free time slots, may suit another tool better.
