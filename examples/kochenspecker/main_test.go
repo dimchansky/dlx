@@ -23,6 +23,16 @@ Colouring 1: green rays 2 4 8 12 14 16 19 23 27 30
 Colourings: 152
 `
 
+const twoWithoutRayOne = `Set peres33: 33 rays in 3 dimensions
+Removed: ray 1 (1, 0, 0)
+Bases: 12
+Pairs: 28
+Matrix: 40 columns, 60 rows
+Colouring 1: green rays 2 4 8 12 14 16 19 23 27 30
+Colouring 2: green rays 2 4 8 12 14 16 19 23 27
+Colourings: 152
+`
+
 const basesOnly = `Set peres33: 33 rays in 3 dimensions
 Bases: 16
 Pairs: 0
@@ -67,6 +77,11 @@ func TestRun(t *testing.T) {
 			name:       "removing a ray allows colourings",
 			args:       []string{"-remove", "1"},
 			wantStdout: withoutRayOne,
+		},
+		{
+			name:       "the second colouring is the one in the paper",
+			args:       []string{"-remove", "1", "-limit", "2"},
+			wantStdout: twoWithoutRayOne,
 		},
 		{
 			name:     "limit prints more colourings",
@@ -150,6 +165,24 @@ func TestRun(t *testing.T) {
 			args:       []string{"-bases-only", "-remove", "1"},
 			wantCode:   2,
 			wantStderr: "kochenspecker: -bases-only cannot be combined with -remove\n",
+		},
+		{
+			name:       "limit with bases only",
+			args:       []string{"-limit", "5", "-bases-only"},
+			wantCode:   2,
+			wantStderr: "kochenspecker: -limit cannot be combined with -bases-only, -rays or -critical\n",
+		},
+		{
+			name:       "limit with rays",
+			args:       []string{"-rays", "-limit", "5"},
+			wantCode:   2,
+			wantStderr: "kochenspecker: -limit cannot be combined",
+		},
+		{
+			name:       "limit with critical",
+			args:       []string{"-critical", "-limit", "1"},
+			wantCode:   2,
+			wantStderr: "kochenspecker: -limit cannot be combined",
 		},
 		{
 			name:       "unknown flag",

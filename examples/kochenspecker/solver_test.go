@@ -124,8 +124,7 @@ func TestSmallExample(t *testing.T) {
 	}
 }
 
-// removals lists every set with every choice of ray to leave out, or none. With
-// -short it stops after the first ray, because the sweep is slow with -race.
+// removals lists every set with every choice of ray to leave out, or none.
 func removals() []struct {
 	name    string
 	set     raySet
@@ -137,11 +136,7 @@ func removals() []struct {
 		removed int
 	}
 	for _, set := range raySets {
-		last := len(set.rays) - 1
-		if testing.Short() {
-			last = 0
-		}
-		for removed := noRay; removed <= last; removed++ {
+		for removed := noRay; removed < len(set.rays); removed++ {
 			all = append(all, struct {
 				name    string
 				set     raySet
@@ -319,7 +314,7 @@ func TestColourings_AgainstBacktracking(t *testing.T) {
 
 			last := tt.rays - 1
 			if testing.Short() {
-				last = 0 // the search is slow with -race
+				last = 0 // the whole sweep takes over a second with -race
 			}
 			for removed := noRay; removed <= last; removed++ {
 				got := len(colourings(newProblem(tt.set.rays, tt.set.dimension, removed)))

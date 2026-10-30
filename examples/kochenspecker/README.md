@@ -32,9 +32,9 @@ This section is the background. You don't need it to follow the matrix.
 
 Quantum physics predicts the results of measurements. It does not say what a particle was "really like" beforehand. A natural hope is that it was like something: that hidden inside the particle are fixed answers to every question you could ask, and a measurement only reads them out. Such fixed answers are called hidden variables.
 
-Here is how the puzzle meets that hope. For one kind of particle, called spin 1, you can pick a direction and measure the square of the particle's spin along it, which gives the answer 0 or 1. Three perpendicular directions can be asked about at the same moment, and quantum physics says the three answers always add up to 2. So exactly one of the three answers is 0, and that direction is the odd one out. Paint it green.
+Here is how the puzzle meets that hope. Spin is a built-in property of a particle that gives a number when you measure it along a chosen direction. For one kind of particle, called spin 1, you can pick a direction and measure the square of that number, which gives the answer 0 or 1. Three perpendicular directions can be asked about at the same moment, and quantum physics says the three answers always add up to 2. So exactly one of the three answers is 0, and that direction is the odd one out. Paint it green.
 
-If the answers were fixed in advance, each direction would have one colour that does not depend on which two other directions you measure with it. Those are rules 1 and 2. So a fixed answer for every direction would be a valid painting, and Kochen and Specker proved in 1967 that no such painting exists. A set of rays with no painting is a small, checkable proof of their theorem. Theirs used 117 rays. Peres got that down to 33.
+If the answers were fixed in advance, each direction would have one colour that does not depend on which two other directions you measure with it. Those are rules 1 and 2. So a fixed answer for every direction would be a valid painting, and Kochen and Specker proved in 1967 that no such painting exists. A set of rays with no painting is a small, checkable proof of their theorem. Theirs used 117 rays. Peres got that down to 33, which is small but not the smallest known: Conway and Kochen found a set of 31.
 
 ```mermaid
 flowchart TD
@@ -66,7 +66,7 @@ The [Stanford Encyclopedia entry](https://plato.stanford.edu/entries/kochen-spec
 
 That gives 40 columns and 57 rows. The word basis is the usual name for a full set of perpendicular directions: 3 rays in three dimensions, and 4 rays in four.
 
-"Exactly one green in a triple" is exactly what a matrix column demands, which is why this puzzle fits exact cover so well. A pair may have no green ray at all, so it needs a [slack row](../README.md#at-most-once-slack-rows), a stand-in row that covers only that column. The second rule above is the whole reason for pairs: the third ray of the triple exists in space, but it isn't one of the 33.
+"Exactly one green in a triple" is exactly what a matrix column demands, which is why this puzzle fits exact cover so well. A pair may have no green ray at all, so it needs a [slack row](../README.md#at-most-once-slack-rows), a stand-in row that covers only that column. Rule 3 is the whole reason for pairs: the third ray of the triple exists in space, but it isn't one of the 33.
 
 Here is a small piece of the 33 rays that you can check by hand. It has two bases and one pair:
 
@@ -94,7 +94,9 @@ The full matrix works the same way, only more tangled, because most rays are in 
 
 ## A proof you can check yourself
 
-For most sets, only the search shows that nothing fits. One set is small enough to see why. Cabello, Estebaranz and García-Alcaine found 18 rays in four dimensions, where a ray has four coordinates. You can't picture those directions, but the arithmetic test for perpendicular works the same way, and a basis now has 4 rays.
+For most sets, the proof is a case-by-case argument. One set is small enough to see why at a glance. Cabello, Estebaranz and García-Alcaine found 18 rays in four dimensions, where a ray has four coordinates. You can't picture those directions, but the arithmetic test for perpendicular works the same way, and a basis now has 4 rays.
+
+These four dimensions are not extra directions of ordinary space. They describe a pair of simple particles with two states each, and a full measurement of the pair gives "yes" for exactly one of the 4 directions in a basis. So the rule is still exactly one green ray in each basis.
 
 Here are its 9 bases as a matrix. Each column is a basis and each row is a ray. This is what `-set cabello18 -bases-only` builds:
 
@@ -145,7 +147,7 @@ dlx reports the columns of each picked row and not ray numbers. In the small exa
 - `-set name` picks the rays: `peres33` (33 rays in three dimensions, the default), `peres24` (24 rays in four dimensions) or `cabello18` (18 rays in four dimensions).
 - `-remove ray` leaves out one ray, counted from 1. A basis that held it stops being a basis, and its other rays become pairs. Zero, the default, keeps all rays.
 - `-bases-only` drops the rule for pairs and prints only the total. It cannot be combined with `-remove`.
-- `-limit n` sets how many colourings to print, 1 by default. Zero prints all of them. The total is always printed, so the search always runs to the end.
+- `-limit n` sets how many colourings to print, 1 by default. Zero prints all of them. The total is always printed, so the search always runs to the end. It cannot be combined with `-bases-only`, `-rays` or `-critical`, which print no colourings.
 - `-rays` lists the rays, bases and pairs instead of solving.
 - `-critical` removes each ray in turn and prints how many colourings remain. It cannot be combined with `-remove`, `-bases-only` or `-rays`.
 
@@ -240,16 +242,16 @@ A result of zero is only as good as the data, and the ray coordinates were writt
 
 - **Exact arithmetic.** Coordinates are stored as whole numbers a and b in a + b√2, so the test for perpendicular has no rounding. It needs that: with ordinary computer numbers, √2·√2 - 1 - 1 gives 0.00000000000000044 and not 0, and rays 10 and 13 would wrongly count as not perpendicular.
 - **The published tables.** The 16 bases and 24 pairs computed from the coordinates are compared with table 1 of Gould and Aravind. The 24 bases of the four-dimensional set are compared with figure 1 of Waegell and Aravind, and the 18-ray set with the nine equations of Cabello and others, whose rays are also checked to be among the 24.
-- **Published facts.** Each of the 24 rays is in 4 bases, with 9 companions. Each of the 18 rays is perpendicular to 7 others. The 33 and 18 rays are critical and the 24 are not. A test also walks through all 2^24 groups of the 24 bases and finds the 512 odd-sized groups that use each ray an even number of times, sorted the way table 2 of Waegell and Aravind lists them: 16, 240, 240 and 16.
+- **Published facts.** Each of the 24 rays is in 4 bases and has 9 companions, meaning other rays that share a basis with it. Each of the 18 rays is perpendicular to 7 others. The 33 and 18 rays are critical and the 24 are not. A test also walks through all 2^24 groups of the 24 bases and finds the 512 groups with an odd number of bases that use each ray an even number of times. Each of them is a counting proof of the same kind as the 18-ray one: the rows can only give an even number of 1s, and the bases need an odd number. Sorted the way table 2 of Waegell and Aravind lists them, they come to 16, 240, 240 and 16.
 - **The defining rule.** The 33 and 24 rays are rebuilt from the rule that describes them, every order and sign of a few patterns, and compared.
 - **A separate search.** Every total above, for every removal, is recounted by a plain [backtracking](../README.md#how-dlx-searches) search that doesn't use dlx and takes its groups from the papers' tables, not from the solver.
 - **Every painting is checked.** Each colouring found, for every removal, is tested again: no two green rays may be perpendicular, going by the coordinates, and each basis must hold exactly one.
 
-`go test -short` skips the walk through 2^24 groups, and it runs the separate search and the two checks that sweep every removal for only one removal, because they are slow with `-race`. Use `-short` with `-race`.
+`go test -short` runs the separate search for only one removal. It is the slowest test here, at over a second with `-race`.
 
 ## Limits
 
-These sets are small: all 33 removals together took about 20 milliseconds on the machine used to write this. The command only checks a set it is given, and it doesn't find new ones.
+These sets are small: all 33 removals together took about 20 milliseconds on the machine used to write this. The command only checks its three built-in sets. It doesn't read a set from you, and it doesn't find new ones.
 
 A zero from a search is a proof only if you trust the program. It gives no short reason a person could read, except where a counting argument like the one above exists.
 
@@ -261,4 +263,5 @@ The rays and the claim that they are the rays of Peres were compared with the pa
 - E. Gould and P. K. Aravind, ["Isomorphism between the Peres and Penrose proofs of the BKS theorem in three dimensions"](https://arxiv.org/abs/0909.4502).
 - M. Waegell and P. K. Aravind, ["Parity proofs of the Kochen-Specker theorem based on the 24 rays of Peres"](https://arxiv.org/abs/1103.6058).
 - A. Cabello, J. M. Estebaranz and G. García-Alcaine, ["Bell-Kochen-Specker theorem: a proof with 18 vectors"](https://arxiv.org/abs/quant-ph/9706009), Phys. Lett. A 212 (1996) 183.
+- F. Arends, J. Ouaknine and C. W. Wampler, ["On searching for small Kochen-Specker vector systems"](https://arxiv.org/abs/1111.3301), which gives 31 as the smallest known size.
 - ["The Kochen-Specker Theorem"](https://plato.stanford.edu/entries/kochen-specker/), Stanford Encyclopedia of Philosophy.

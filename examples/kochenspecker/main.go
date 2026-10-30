@@ -12,9 +12,10 @@
 // -remove flag leaves out one ray, counted from 1. The -bases-only flag drops
 // the at-most-one rule for pairs. It prints the total only, and cannot be
 // combined with -remove. The -limit flag sets how many colourings to print, 1 by
-// default. Zero prints all of them. The -rays flag lists the rays and their
+// default. Zero prints all of them. It cannot be combined with -bases-only, -rays
+// or -critical, which print no colourings. The -rays flag lists the rays and their
 // groups instead of solving. The -critical flag removes each ray in turn and
-// reports what remains. It cannot be combined with the other flags except -set.
+// reports what remains. It cannot be combined with -remove, -bases-only or -rays.
 //
 // The exit status is 0 if at least one colouring exists or -help or -rays was
 // given, 1 if no colouring exists, and 2 for invalid usage or an I/O failure.
@@ -78,6 +79,12 @@ func run(args []string, stdout, stderr io.Writer) int {
 	}
 	if *basesOnly && *remove != 0 {
 		report(stderr, "-bases-only cannot be combined with -remove")
+		return exitFailure
+	}
+	limitGiven := false
+	flags.Visit(func(f *flag.Flag) { limitGiven = limitGiven || f.Name == "limit" })
+	if limitGiven && (*basesOnly || *list || *critical) {
+		report(stderr, "-limit cannot be combined with -bases-only, -rays or -critical")
 		return exitFailure
 	}
 

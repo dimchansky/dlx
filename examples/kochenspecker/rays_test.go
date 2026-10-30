@@ -401,9 +401,6 @@ func TestCabello18_IsInsidePeres24(t *testing.T) {
 // This walks through all 2^24 groups of bases, changing one basis at a time.
 func TestPeres24_ParityProofs(t *testing.T) {
 	t.Parallel()
-	if testing.Short() {
-		t.Skip("walks through 2^24 groups, which is slow with -race")
-	}
 
 	masks := make([]uint32, len(waegellAravindBases))
 	for i, basis := range waegellAravindBases {
