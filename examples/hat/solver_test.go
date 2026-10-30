@@ -623,8 +623,19 @@ func kiteCentres(q, r int) [turns]spot {
 // the scale of 4 that kiteCentres uses. It is written out again here so that the
 // independent search takes nothing from the solver, not even this list.
 var checkedOutline = []spot{
-	{0, 0}, {-3, -1}, {-2, -2}, {2, -2}, {3, -1}, {6, -2}, {9, -1},
-	{8, 0}, {6, 0}, {6, 2}, {3, 3}, {2, 2}, {0, 2},
+	{0, 0},
+	{-3, -1},
+	{-2, -2},
+	{2, -2},
+	{3, -1},
+	{6, -2},
+	{9, -1},
+	{8, 0},
+	{6, 0},
+	{6, 2},
+	{3, 3},
+	{2, 2},
+	{0, 2},
 }
 
 // checkedHat is a hat of the independent search: the kite centres it holds.

@@ -5,11 +5,23 @@
 
 # Compiled example commands (go build inside an example directory)
 *.exe
+/examples/bells/bells
+/examples/cardtrick/cardtrick
+/examples/coveringsystems/coveringsystems
 /examples/crew/crew
+/examples/fullerene/fullerene
+/examples/hamming/hamming
+/examples/hat/hat
+/examples/instrselect/instrselect
+/examples/kochenspecker/kochenspecker
 /examples/langford/langford
 /examples/pentomino/pentomino
+/examples/perfecthash/perfecthash
 /examples/queens/queens
 /examples/sudoku/sudoku
+/examples/twelvetone/twelvetone
+/examples/vuza/vuza
+/examples/witt/witt
 
 # Editors and OS
 .idea/
