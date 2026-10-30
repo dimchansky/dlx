@@ -20,7 +20,7 @@ The blocks are:
 
     0 1 2    0 3 4    0 5 6    1 3 5    1 4 6    2 3 6    2 4 5
 
-The circle is `1 3 5`. Pick any two points, say 4 and 6, and exactly one line runs through both: `1 4 6`.
+The circle is `1 3 5`. Pick any two points, say 4 and 6, and exactly one block holds both: `1 4 6`. The circle counts as much as the straight lines: points 1 and 3 share only the circle.
 
 ## How many blocks
 
@@ -66,7 +66,7 @@ The full matrix for S(2,3,7) has 21 columns and 35 rows. This table shows the 7 
 | 2 4 5 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 1 | 1 | 0 | 0 | 0 | 0 | 1 | 0 | 0 |
 | 0 1 3 | 1 | 0 | 1 | 0 | 0 | 0 | 0 | 1 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 |
 
-The last row, `0 1 3`, can't join the solution. It has a 1 under `01`, and so does the row `0 1 2`: the pair 0, 1 would be in two blocks. No column may have two 1s, which is the "never twice" half of the rule, and no column may be left without a 1, which is the "never missed" half. Exact cover says both at once, so the matrix is the definition of a Steiner system with nothing added. No slack rows are needed.
+The last row, `0 1 3`, can't join the solution. It has a 1 under `01`, and so does the row `0 1 2`: the pair 0, 1 would be in two blocks. No column may have two 1s, which is the "never twice" half of the rule, and no column may be left without a 1, which is the "never missed" half. Exact cover says both at once, so the matrix is the definition of a Steiner system with nothing added. No [slack rows](../README.md#at-most-once-slack-rows) are needed, because those are for "at most once", and here every column needs exactly one.
 
 ## How a solution decodes back
 
@@ -88,7 +88,7 @@ The solver finds 30 Fano planes, not one. Yet they are all the same picture with
 
 Start with a case you can check by hand. S(1,2,4) splits four people into two pairs. There are 3 ways: `01 23`, `02 13` and `03 12`.
 
-A **shuffle** gives each point a new name. Four points have 4·3·2·1 = 24 shuffles. Apply them all to `01 23`. Some change nothing: you can swap the two people in the first pair, swap the two in the second, and swap the pairs themselves. Those are 3 yes-or-no choices, so 2·2·2 = 8 shuffles leave `01 23` unchanged. The 24 shuffles fall into packs of 8, and each pack produces one split. So there are 24 / 8 = 3 splits.
+A **shuffle** gives each point a new name. Four points have 4·3·2·1 = 24 shuffles. Apply them all to `01 23`. Some change nothing: you can swap the two people in the first pair, swap the two in the second, and swap the pairs themselves. Those are 3 yes-or-no choices, so 2·2·2 = 8 shuffles leave `01 23` unchanged. The 24 shuffles fall into packs of 8, and each pack produces one split. The packs are equal for this reason: if a shuffle A gives some split, then doing any of the 8 unchanging shuffles first and A afterwards gives the same split, and no other shuffle does. So there are 24 / 8 = 3 splits.
 
 ```mermaid
 flowchart LR
@@ -125,7 +125,7 @@ S(5,6,12) and S(4,5,11) are [known to be unique](https://en.wikipedia.org/wiki/S
 
 Spot It, also sold as Dobble, deals cards with symbols on them, and any two cards share exactly one symbol. Decks like this come from systems of the form S(2,n+1,n²+n+1), which are called **projective planes** of order n. The points are the symbols and the blocks are the cards, so there are as many cards as symbols.
 
-The Fano plane is the plane of order 2: 7 cards with 3 symbols each. Cards `0 1 2` and `1 3 5` share the symbol 1. The system's own rule is about symbols: any two symbols sit on exactly one card. In a projective plane that also gives the rule of the game, which is about cards. This is a known result, and the tests confirm it pair by pair on the first solution found for each of the orders 2 to 5.
+The Fano plane is the plane of order 2: 7 cards with 3 symbols each. Cards `0 1 2` and `1 3 5` share the symbol 1. The system's own rule is about symbols: any two symbols sit on exactly one card. In a projective plane that also gives the rule of the game, which is about cards, and a short count shows why. A symbol pairs with n²+n other symbols and each card holding it supplies n of them, so it is on n+1 cards. Now take one card. Each of its n+1 symbols is on n other cards, which makes n(n+1) other cards. They are all different, because two cards sharing two symbols would put that pair on two cards. The whole deck has exactly n²+n = n(n+1) other cards, so every one of them shares exactly one symbol with the card you took. The tests also confirm this pair by pair on the first solution found for each of the orders 2 to 5, or only 2 and 3 with `-short`.
 
 The plane of order 5 is the largest deck this example builds: 31 cards with 6 symbols each.
 
@@ -233,9 +233,9 @@ Output, on standard error:
 
 Each total in the table above is checked in these ways:
 
-1. **The solver.** It must find the total. Every system except those of S(2,4,13), which are too many to decode, is also checked by a different rule from the matrix: the right number of blocks, and no two blocks sharing t points. Those two facts together force a Steiner system.
+1. **The solver.** It must find the total. Every system except those of S(2,4,13), whose 1108800 systems are costly to decode, is also checked by a different rule from the matrix: the right number of blocks, k points in each, and no two blocks sharing t points. Those three facts together force a Steiner system.
 2. **The division.** The tests build one system by arithmetic, with no search, and count the shuffles that leave it unchanged. All shuffles divided by that count must equal the total. This also shows that every system is a renaming of one: the renamings of the built system are all valid and they number exactly the total, so there is no room for any other.
-3. **A second search.** A separate [backtracking](../README.md#how-dlx-searches) search that doesn't use dlx must find the same total, for every system except S(2,4,13).
+3. **A second search.** A separate [backtracking](../README.md#how-dlx-searches) search that doesn't use dlx must find the same total.
 
 The system built by arithmetic must also appear among the solver's results, again except for S(2,4,13). For S(1,2,4) and S(2,3,7) the tests apply every shuffle and confirm that they give exactly the systems listed.
 

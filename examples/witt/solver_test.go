@@ -185,9 +185,9 @@ func countSymmetries(s spec, blocks []uint64, visit func(image []int)) int {
 }
 
 // countByBacktracking counts systems without exact cover. It finds the first
-// t-set no picked block contains, tries every block through that t-set that
-// overlaps the picked blocks in fewer than t points, and backs out of dead ends.
-// Unlike dlx it has a fixed order and no links to undo.
+// t-set no picked block contains, tries every block through that t-set whose
+// t-sets are all still free, and backs out of dead ends. Unlike dlx it has a
+// fixed order and plain flags instead of links.
 func countByBacktracking(s spec) int {
 	subsetsOf := func(size int) []uint64 {
 		var subsets []uint64
@@ -198,49 +198,50 @@ func countByBacktracking(s spec) int {
 		}
 		return subsets
 	}
-	tSets, allBlocks := subsetsOf(s.t), subsetsOf(s.k)
-	through := make([][]uint64, len(tSets))
-	for i, tSet := range tSets {
-		for _, block := range allBlocks {
+	tSets, blocks := subsetsOf(s.t), subsetsOf(s.k)
+
+	// inside[b] lists the t-sets of block b, and through[i] the blocks of t-set i.
+	inside := make([][]int, len(blocks))
+	through := make([][]int, len(tSets))
+	for b, block := range blocks {
+		for i, tSet := range tSets {
 			if block&tSet == tSet {
-				through[i] = append(through[i], block)
+				inside[b] = append(inside[b], i)
+				through[i] = append(through[i], b)
 			}
 		}
 	}
 
-	var picked []uint64
-	isCovered := func(tSet uint64) bool {
-		for _, block := range picked {
-			if block&tSet == tSet {
-				return true
-			}
-		}
-		return false
-	}
-	isCompatible := func(candidate uint64) bool {
-		for _, block := range picked {
-			if bits.OnesCount64(block&candidate) >= s.t {
+	isCovered := make([]bool, len(tSets))
+	isFree := func(b int) bool {
+		for _, i := range inside[b] {
+			if isCovered[i] {
 				return false
 			}
 		}
 		return true
 	}
+	setCovered := func(b int, covered bool) {
+		for _, i := range inside[b] {
+			isCovered[i] = covered
+		}
+	}
 
 	total := 0
 	var search func(next int)
 	search = func(next int) {
-		for next < len(tSets) && isCovered(tSets[next]) {
+		for next < len(tSets) && isCovered[next] {
 			next++
 		}
 		if next == len(tSets) {
 			total++
 			return
 		}
-		for _, candidate := range through[next] {
-			if isCompatible(candidate) {
-				picked = append(picked, candidate)
+		for _, b := range through[next] {
+			if isFree(b) {
+				setCovered(b, true)
 				search(next + 1)
-				picked = picked[:len(picked)-1]
+				setCovered(b, false)
 			}
 		}
 	}
@@ -372,15 +373,15 @@ func TestSolve_KnownCounts(t *testing.T) {
 				t.Errorf("%d! / %d = %d, want %d", tt.spec.v, shuffles, got, tt.wantSolutions)
 			}
 
+			if got := uint64(countByBacktracking(tt.spec)); got != tt.wantSolutions {
+				t.Errorf("backtracking found %d systems, want %d", got, tt.wantSolutions)
+			}
+
 			if tt.isHuge {
 				if got := countSolutions(tt.spec); got != tt.wantSolutions {
 					t.Errorf("countSolutions = %d, want %d", got, tt.wantSolutions)
 				}
 				return
-			}
-
-			if got := uint64(countByBacktracking(tt.spec)); got != tt.wantSolutions {
-				t.Errorf("backtracking found %d systems, want %d", got, tt.wantSolutions)
 			}
 
 			found := map[string]bool{}
