@@ -156,6 +156,21 @@ func TestParseReader_ReadFailures(t *testing.T) {
 			wantErr: errRead,
 			wantMsg: "line 1: reading input: read failure",
 		},
+		{
+			name:    "reader fails after a partial line",
+			input:   io.MultiReader(strings.NewReader("1 2 3"), iotest.ErrReader(errRead)),
+			wantErr: errRead,
+			wantMsg: "line 1: reading input: read failure",
+		},
+		{
+			name: "reader fails after a ninth line without a newline",
+			input: io.MultiReader(
+				strings.NewReader(strings.Repeat("1 2 3 4 5 6 7 8 9\n", 8)+"1 2 3 4 5 6 7 8 9"),
+				iotest.ErrReader(errRead),
+			),
+			wantErr: errRead,
+			wantMsg: "line 9: reading input: read failure",
+		},
 	}
 
 	for _, tt := range tests {

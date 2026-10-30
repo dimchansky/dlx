@@ -26,10 +26,13 @@ func ParseReader(r io.Reader) (string, error) {
 
 	s := bufio.NewScanner(r)
 	for l := 1; l <= boardSize; l++ {
-		if !s.Scan() {
-			if err := s.Err(); err != nil {
-				return "", fmt.Errorf("line %d: reading input: %w", l, err)
-			}
+		// Err comes first: a reader that fails mid-line still yields the partial
+		// line, with Scan returning true and Err already set.
+		scanned := s.Scan()
+		if err := s.Err(); err != nil {
+			return "", fmt.Errorf("line %d: reading input: %w", l, err)
+		}
+		if !scanned {
 			return "", fmt.Errorf("line %d: unexpected end of input", l)
 		}
 
