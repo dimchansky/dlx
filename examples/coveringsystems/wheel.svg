@@ -1,0 +1,32 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 480 280" width="480" height="280" role="img" aria-label="A wheel of the numbers 0 to 7 coloured by class: 0 mod 2, 1 mod 4, 3 mod 8 and 7 mod 8" font-family="Helvetica, Arial, sans-serif">
+<title>A wheel of the numbers 0 to 7 coloured by class: 0 mod 2, 1 mod 4, 3 mod 8 and 7 mod 8</title>
+<rect x="0.5" y="0.5" width="479" height="279" rx="8" fill="#ffffff" stroke="#8c959f"/>
+<path d="M 89.8 43.0 A 105 105 0 0 1 170.2 43.0 L 149.9 92.0 A 52 52 0 0 0 110.1 92.0 Z" fill="#0969da" stroke="#ffffff" stroke-width="2"/>
+<text x="130.0" y="68.5" font-size="20" font-weight="bold" fill="#ffffff" text-anchor="middle">0</text>
+<path d="M 170.2 43.0 A 105 105 0 0 1 227.0 99.8 L 178.0 120.1 A 52 52 0 0 0 149.9 92.0 Z" fill="#cf222e" stroke="#ffffff" stroke-width="2"/>
+<text x="185.5" y="91.5" font-size="20" font-weight="bold" fill="#ffffff" text-anchor="middle">1</text>
+<path d="M 227.0 99.8 A 105 105 0 0 1 227.0 180.2 L 178.0 159.9 A 52 52 0 0 0 178.0 120.1 Z" fill="#0969da" stroke="#ffffff" stroke-width="2"/>
+<text x="208.5" y="147.0" font-size="20" font-weight="bold" fill="#ffffff" text-anchor="middle">2</text>
+<path d="M 227.0 180.2 A 105 105 0 0 1 170.2 237.0 L 149.9 188.0 A 52 52 0 0 0 178.0 159.9 Z" fill="#1a7f37" stroke="#ffffff" stroke-width="2"/>
+<text x="185.5" y="202.5" font-size="20" font-weight="bold" fill="#ffffff" text-anchor="middle">3</text>
+<path d="M 170.2 237.0 A 105 105 0 0 1 89.8 237.0 L 110.1 188.0 A 52 52 0 0 0 149.9 188.0 Z" fill="#0969da" stroke="#ffffff" stroke-width="2"/>
+<text x="130.0" y="225.5" font-size="20" font-weight="bold" fill="#ffffff" text-anchor="middle">4</text>
+<path d="M 89.8 237.0 A 105 105 0 0 1 33.0 180.2 L 82.0 159.9 A 52 52 0 0 0 110.1 188.0 Z" fill="#cf222e" stroke="#ffffff" stroke-width="2"/>
+<text x="74.5" y="202.5" font-size="20" font-weight="bold" fill="#ffffff" text-anchor="middle">5</text>
+<path d="M 33.0 180.2 A 105 105 0 0 1 33.0 99.8 L 82.0 120.1 A 52 52 0 0 0 82.0 159.9 Z" fill="#0969da" stroke="#ffffff" stroke-width="2"/>
+<text x="51.5" y="147.0" font-size="20" font-weight="bold" fill="#ffffff" text-anchor="middle">6</text>
+<path d="M 33.0 99.8 A 105 105 0 0 1 89.8 43.0 L 110.1 92.0 A 52 52 0 0 0 82.0 120.1 Z" fill="#8250df" stroke="#ffffff" stroke-width="2"/>
+<text x="74.5" y="91.5" font-size="20" font-weight="bold" fill="#ffffff" text-anchor="middle">7</text>
+<rect x="270" y="62" width="20" height="20" rx="3" fill="#0969da"/>
+<text x="300" y="77" font-size="16" font-weight="bold" fill="#24292f">0 mod 2</text>
+<text x="375" y="77" font-size="16" fill="#24292f">0, 2, 4, 6</text>
+<rect x="270" y="112" width="20" height="20" rx="3" fill="#cf222e"/>
+<text x="300" y="127" font-size="16" font-weight="bold" fill="#24292f">1 mod 4</text>
+<text x="375" y="127" font-size="16" fill="#24292f">1, 5</text>
+<rect x="270" y="162" width="20" height="20" rx="3" fill="#1a7f37"/>
+<text x="300" y="177" font-size="16" font-weight="bold" fill="#24292f">3 mod 8</text>
+<text x="375" y="177" font-size="16" fill="#24292f">3</text>
+<rect x="270" y="212" width="20" height="20" rx="3" fill="#8250df"/>
+<text x="300" y="227" font-size="16" font-weight="bold" fill="#24292f">7 mod 8</text>
+<text x="375" y="227" font-size="16" fill="#24292f">7</text>
+</svg>
