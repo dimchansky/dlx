@@ -1,0 +1,48 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 640 320" width="640" height="320" role="img" aria-label="Two circles of pitches. On twelve notes, going from A to C is 3 steps clockwise. On four pitches, the series 0 3 1 2 makes steps of 3, 2 and 1." font-family="Helvetica, Arial, sans-serif">
+<title>Two circles of pitches. On twelve notes, going from A to C is 3 steps clockwise. On four pitches, the series 0 3 1 2 makes steps of 3, 2 and 1.</title>
+<defs><marker id="head" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M 0 0 L 10 5 L 0 10 z" fill="#0969da"/></marker></defs>
+<rect x="0.5" y="0.5" width="639" height="319" rx="8" fill="#ffffff" stroke="#8c959f"/>
+<circle cx="165" cy="158" r="100" fill="none" stroke="#8c959f" stroke-width="2"/>
+<path d="M 65.0 158.0 A 100 100 0 0 1 150.4 59.1" fill="none" stroke="#0969da" stroke-width="4" marker-end="url(#head)"/>
+<circle cx="165.0" cy="58.0" r="5" fill="#24292f"/>
+<text x="165.0" y="41.0" text-anchor="middle" font-size="15" fill="#24292f">C</text>
+<circle cx="215.0" cy="71.4" r="5" fill="#24292f"/>
+<text x="226.0" y="57.3" text-anchor="middle" font-size="15" fill="#24292f">C#</text>
+<circle cx="251.6" cy="108.0" r="5" fill="#24292f"/>
+<text x="270.7" y="102.0" text-anchor="middle" font-size="15" fill="#24292f">D</text>
+<circle cx="265.0" cy="158.0" r="5" fill="#24292f"/>
+<text x="287.0" y="163.0" text-anchor="middle" font-size="15" fill="#24292f">D#</text>
+<circle cx="251.6" cy="208.0" r="5" fill="#24292f"/>
+<text x="270.7" y="224.0" text-anchor="middle" font-size="15" fill="#24292f">E</text>
+<circle cx="215.0" cy="244.6" r="5" fill="#24292f"/>
+<text x="226.0" y="268.7" text-anchor="middle" font-size="15" fill="#24292f">F</text>
+<circle cx="165.0" cy="258.0" r="5" fill="#24292f"/>
+<text x="165.0" y="285.0" text-anchor="middle" font-size="15" fill="#24292f">F#</text>
+<circle cx="115.0" cy="244.6" r="5" fill="#24292f"/>
+<text x="104.0" y="268.7" text-anchor="middle" font-size="15" fill="#24292f">G</text>
+<circle cx="78.4" cy="208.0" r="5" fill="#24292f"/>
+<text x="59.3" y="224.0" text-anchor="middle" font-size="15" fill="#24292f">G#</text>
+<circle cx="65.0" cy="158.0" r="5" fill="#24292f"/>
+<text x="43.0" y="163.0" text-anchor="middle" font-size="15" fill="#24292f">A</text>
+<circle cx="78.4" cy="108.0" r="5" fill="#24292f"/>
+<text x="59.3" y="102.0" text-anchor="middle" font-size="15" fill="#24292f">A#</text>
+<circle cx="115.0" cy="71.4" r="5" fill="#24292f"/>
+<text x="104.0" y="57.3" text-anchor="middle" font-size="15" fill="#24292f">B</text>
+<text x="165" y="154" text-anchor="middle" font-size="14" fill="#0969da">A to C:</text>
+<text x="165" y="173" text-anchor="middle" font-size="14" fill="#0969da">3 steps</text>
+<circle cx="475" cy="158" r="90" fill="none" stroke="#8c959f" stroke-width="2"/>
+<line x1="465.8" y1="77.2" x2="394.2" y2="148.8" stroke="#0969da" stroke-width="3" marker-end="url(#head)"/>
+<text x="412.0" y="101.0" text-anchor="middle" font-size="14" fill="#0969da">3 steps</text>
+<line x1="398.0" y1="158.0" x2="552.0" y2="158.0" stroke="#0969da" stroke-width="3" marker-end="url(#head)"/>
+<text x="475.0" y="146.0" text-anchor="middle" font-size="14" fill="#0969da">2 steps</text>
+<line x1="555.8" y1="167.2" x2="484.2" y2="238.8" stroke="#0969da" stroke-width="3" marker-end="url(#head)"/>
+<text x="540.0" y="215.0" text-anchor="middle" font-size="14" fill="#0969da">1 step</text>
+<circle cx="475.0" cy="68.0" r="5" fill="#24292f"/>
+<text x="475.0" y="51.0" text-anchor="middle" font-size="15" fill="#24292f">0</text>
+<circle cx="565.0" cy="158.0" r="5" fill="#24292f"/>
+<text x="587.0" y="163.0" text-anchor="middle" font-size="15" fill="#24292f">1</text>
+<circle cx="475.0" cy="248.0" r="5" fill="#24292f"/>
+<text x="475.0" y="275.0" text-anchor="middle" font-size="15" fill="#24292f">2</text>
+<circle cx="385.0" cy="158.0" r="5" fill="#24292f"/>
+<text x="363.0" y="163.0" text-anchor="middle" font-size="15" fill="#24292f">3</text>
+</svg>
