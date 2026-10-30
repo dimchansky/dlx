@@ -46,8 +46,13 @@ func membership(code []int, words int) []bool {
 	return isCodeWord
 }
 
-// playAll plays the strategy against every pattern of hats. The team wins a
-// pattern if at least one prisoner guesses and every guess is right.
+// teamWins is the rule of the game: at least one prisoner guesses and every guess
+// is right.
+func teamWins(right, wrong int) bool {
+	return right > 0 && wrong == 0
+}
+
+// playAll plays the strategy against every pattern of hats.
 func playAll(code []int, length int) outcome {
 	patterns := 1 << length
 	isCodeWord := membership(code, patterns)
@@ -66,7 +71,7 @@ func playAll(code []int, length int) outcome {
 		}
 		total.right += right
 		total.wrong += wrong
-		if right > 0 && wrong == 0 {
+		if teamWins(right, wrong) {
 			total.wins++
 		} else {
 			total.losses++

@@ -1,5 +1,5 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 360 300" width="360" height="300" role="img" aria-label="A cube whose eight corners are the words of three bits. The corner 000 and its three neighbours form one group, and the corner 111 and its three neighbours form the other." font-family="Helvetica, Arial, sans-serif">
-<title>The eight words of three bits as corners of a cube, split into the neighbourhoods of 000 and 111</title>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 360 300" width="360" height="300" role="img" aria-label="A cube whose eight corners are the words of three digits. The corner 000 and its three neighbours form one group, and the corner 111 and its three neighbours form the other." font-family="Helvetica, Arial, sans-serif">
+<title>The eight words of three digits as corners of a cube, split into the neighbourhoods of 000 and 111</title>
 <rect x="0.5" y="0.5" width="359" height="299" rx="8" fill="#ffffff" stroke="#8c959f"/>
 <line x1="70" y1="240" x2="230" y2="240" stroke="#0969da" stroke-width="5"/>
 <line x1="70" y1="240" x2="70" y2="100" stroke="#0969da" stroke-width="5"/>

@@ -36,14 +36,24 @@ import (
 )
 
 const (
-	exitOK     = 0
-	exitNoCode = 1
-	exitFailed = 2
+	exitOK         = 0
+	exitNoSolution = 1
+	exitFailure    = 2
 )
 
 // maxWords stops the length at 14 digits in base 2. Length 15 is the next one
 // that has perfect codes, and the search does not find one in useful time.
 const maxWords = 1 << 14
+
+// options holds the parsed flags. playing tells whether -play was given at all,
+// because an empty value must be rejected rather than taken for no flag.
+type options struct {
+	base, length int
+	limit        uint64
+	count, hat   bool
+	playing      bool
+	hats         string
+}
 
 func main() {
 	os.Exit(run(os.Args[1:], os.Stdout, os.Stderr))
@@ -65,69 +75,75 @@ func run(args []string, stdout, stderr io.Writer) int {
 		if errors.Is(err, flag.ErrHelp) {
 			return exitOK
 		}
-		return exitFailed
+		return exitFailure
 	}
-	if err := validate(flags, *base, *length, *hat, *count, *play); err != nil {
+	opts := options{base: *base, length: *length, limit: *limit, count: *count, hat: *hat, hats: *play}
+	flags.Visit(func(f *flag.Flag) {
+		if f.Name == "play" {
+			opts.playing = true
+		}
+	})
+	if err := validate(flags, opts); err != nil {
 		report(stderr, "%v", err)
 		flags.Usage()
-		return exitFailed
+		return exitFailure
 	}
 
-	found, err := execute(stdout, *base, *length, *limit, *count, *hat, *play)
+	found, err := execute(stdout, opts)
 	if err != nil {
 		report(stderr, "writing output: %v", err)
-		return exitFailed
+		return exitFailure
 	}
 	if found == 0 {
 		report(stderr, "no perfect code found")
-		return exitNoCode
+		return exitNoSolution
 	}
 	return exitOK
 }
 
 // execute runs the selected mode and returns how many codes it found.
-func execute(w io.Writer, base, length int, limit uint64, count, hat bool, play string) (uint64, error) {
+func execute(w io.Writer, opts options) (uint64, error) {
 	switch {
-	case count:
-		return printTotal(w, base, length)
-	case hat:
-		return printWithGame(w, length, func(code []int) error {
-			return printScore(w, playAll(code, length))
+	case opts.count:
+		return printTotal(w, opts.base, opts.length)
+	case opts.hat:
+		return printWithGame(w, opts.length, func(code []int) error {
+			return printScore(w, playAll(code, opts.length))
 		})
-	case play != "":
-		return printWithGame(w, length, func(code []int) error {
-			return printRound(w, code, length, play)
+	case opts.playing:
+		return printWithGame(w, opts.length, func(code []int) error {
+			return printRound(w, code, opts.length, opts.hats)
 		})
 	default:
-		return printCodes(w, base, length, limit)
+		return printCodes(w, opts.base, opts.length, opts.limit)
 	}
 }
 
 // validate checks everything the flags can get wrong before any work starts.
-func validate(flags *flag.FlagSet, base, length int, hat, count bool, play string) error {
+func validate(flags *flag.FlagSet, opts options) error {
 	if flags.NArg() != 0 {
 		return fmt.Errorf("unexpected argument %q", flags.Arg(0))
 	}
-	if base != 2 && base != 3 {
-		return fmt.Errorf("invalid base %d: want 2 or 3", base)
+	if opts.base != 2 && opts.base != 3 {
+		return fmt.Errorf("invalid base %d: want 2 or 3", opts.base)
 	}
-	if maxLength := longestWord(base); length < 1 || length > maxLength {
-		return fmt.Errorf("invalid length %d: want 1 to %d for base %d", length, maxLength, base)
+	if maxLength := longestWord(opts.base); opts.length < 1 || opts.length > maxLength {
+		return fmt.Errorf("invalid length %d: want 1 to %d for base %d", opts.length, maxLength, opts.base)
 	}
-	if !hat && play == "" {
+	if !opts.hat && !opts.playing {
 		return nil
 	}
-	if count || (hat && play != "") {
+	if opts.count || (opts.hat && opts.playing) {
 		return errors.New("use only one of -count, -hat and -play")
 	}
-	if base != 2 {
+	if opts.base != 2 {
 		return errors.New("the hat game needs base 2")
 	}
-	if play == "" {
+	if !opts.playing {
 		return nil
 	}
-	if len(play) != length || strings.Trim(play, "01") != "" {
-		return fmt.Errorf("invalid hats %q: want %d digits, each 0 or 1", play, length)
+	if len(opts.hats) != opts.length || strings.Trim(opts.hats, "01") != "" {
+		return fmt.Errorf("invalid hats %q: want %d digits, each 0 or 1", opts.hats, opts.length)
 	}
 	return nil
 }
@@ -216,7 +232,7 @@ func printWithGame(w io.Writer, length int, game func(code []int) error) (uint64
 }
 
 func printScore(w io.Writer, score outcome) error {
-	_, err := fmt.Fprintf(w, "Hat patterns: %d\nTeam wins:    %d\nTeam loses:   %d\nRight guesses: %d\nWrong guesses: %d\n",
+	_, err := fmt.Fprintf(w, "Hat patterns:  %d\nTeam wins:     %d\nTeam loses:    %d\nRight guesses: %d\nWrong guesses: %d\n",
 		score.wins+score.losses, score.wins, score.losses, score.right, score.wrong)
 	return err
 }
@@ -251,7 +267,7 @@ func printRound(w io.Writer, code []int, length int, play string) error {
 	}
 
 	verdict := "Team loses"
-	if right > 0 && wrong == 0 {
+	if teamWins(right, wrong) {
 		verdict = "Team wins"
 	}
 	_, err := fmt.Fprintln(w, verdict)

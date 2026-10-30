@@ -50,20 +50,49 @@ func TestPlayAll_EveryCode(t *testing.T) {
 	}
 }
 
+// TestPlayAll_PlansThatAreNotCodes checks the win rule on the two kinds of pattern
+// a perfect code never produces: everybody passing, and a right guess next to a
+// wrong one. Both must lose. The code 000, 001 has both: on 001 prisoner 3 is right
+// and the others are wrong, and on 110 and 111 everybody passes.
+func TestPlayAll_PlansThatAreNotCodes(t *testing.T) {
+	t.Parallel()
+
+	tests := []struct {
+		name string
+		code []int
+		want outcome
+	}{
+		{name: "empty plan", want: outcome{losses: 8}},
+		{name: "code words one flip apart", code: []int{0, 1}, want: outcome{wins: 4, losses: 4, right: 5, wrong: 5}},
+	}
+	for _, tt := range tests {
+		tt := tt
+		t.Run(tt.name, func(t *testing.T) {
+			t.Parallel()
+
+			if got := playAll(tt.code, 3); got != tt.want {
+				t.Errorf("got %+v, want %+v", got, tt.want)
+			}
+		})
+	}
+}
+
 // TestGuess_IgnoresOwnHat proves the strategy is one prisoners can really follow:
-// changing a prisoner's own hat never changes what that prisoner does.
+// for every code, changing a prisoner's own hat never changes what that prisoner
+// does.
 func TestGuess_IgnoresOwnHat(t *testing.T) {
 	t.Parallel()
 
 	const length = 7
-	code := allCodes(length)[0]
-	isCodeWord := membership(code, 1<<length)
-	for hats := 0; hats < 1<<length; hats++ {
-		for prisoner := 0; prisoner < length; prisoner++ {
-			white, whiteSpeaks := guess(isCodeWord, withHat(hats, length, prisoner, 0), length, prisoner)
-			black, blackSpeaks := guess(isCodeWord, withHat(hats, length, prisoner, 1), length, prisoner)
-			if white != black || whiteSpeaks != blackSpeaks {
-				t.Fatalf("hats %07b prisoner %d: answer depends on own hat", hats, prisoner)
+	for _, code := range allCodes(length) {
+		isCodeWord := membership(code, 1<<length)
+		for hats := 0; hats < 1<<length; hats++ {
+			for prisoner := 0; prisoner < length; prisoner++ {
+				white, whiteSpeaks := guess(isCodeWord, withHat(hats, length, prisoner, 0), length, prisoner)
+				black, blackSpeaks := guess(isCodeWord, withHat(hats, length, prisoner, 1), length, prisoner)
+				if white != black || whiteSpeaks != blackSpeaks {
+					t.Fatalf("code %v hats %07b prisoner %d: answer depends on own hat", code, hats, prisoner)
+				}
 			}
 		}
 	}

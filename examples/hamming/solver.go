@@ -22,8 +22,8 @@ func solve(base, length int, accept func(code []int) bool) {
 // sizesFit reports whether the words could be shared out into equal
 // neighbourhoods at all. The neighbourhoods of a perfect code don't overlap and
 // together hold every word, so the neighbourhood size must divide the number of
-// words. Without this check the search would spend a very long time proving the
-// same thing for lengths such as 8.
+// words. The search proves the same thing quickly up to length 10 in base 2, but
+// takes over a minute for length 14 and over three minutes for lengths 11 and 13.
 func sizesFit(base, length int) bool {
 	return wordCount(base, length)%neighbourhoodSize(base, length) == 0
 }

@@ -2,6 +2,7 @@ package main
 
 import (
 	"fmt"
+	"math/bits"
 	"sort"
 	"testing"
 
@@ -99,12 +100,24 @@ func TestSolve_Totals(t *testing.T) {
 }
 
 // TestSizesFit_AgreesWithSearch shows the shortcut in solve loses nothing: the
-// matrix itself has no exact cover whenever sizesFit says so.
+// matrix itself has no exact cover whenever sizesFit says so. Lengths 11, 13 and 14
+// in base 2 and 7 and 8 in base 3 are left out: each takes from half a minute to
+// more than three minutes.
 func TestSizesFit_AgreesWithSearch(t *testing.T) {
 	t.Parallel()
 
-	for _, tt := range []struct{ base, maxLength int }{{2, 7}, {3, 5}} {
-		for length := 1; length <= tt.maxLength; length++ {
+	tests := []struct {
+		base    int
+		lengths []int
+	}{
+		{base: 2, lengths: []int{1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 12}},
+		{base: 3, lengths: []int{1, 2, 3, 4, 5, 6}},
+	}
+	for _, tt := range tests {
+		for _, length := range tt.lengths {
+			if length == 12 && testing.Short() {
+				continue // about two seconds, and much longer with -race
+			}
 			covers := 0
 			buildMatrix(tt.base, length).Solve(dlx.SolutionAccepterFunc(func([][]int) bool {
 				covers++
@@ -351,34 +364,36 @@ func TestCountCodesWithZero(t *testing.T) {
 }
 
 // TestHammingLength15 shows a code of length 15 exists, which the search does not
-// find in useful time. The recipe of binaryHammingCodes makes one directly.
+// find in useful time. The recipe of binaryHammingCodes makes one directly, and the
+// check is the definition, sharing no code with the solver.
 func TestHammingLength15(t *testing.T) {
 	t.Parallel()
 
 	const length = 15
-	covered := make([]int, 1<<length)
-	words := 0
-	for word := range covered {
+	var code []int
+	for word := 0; word < 1<<length; word++ {
 		sum := 0
 		for position := 0; position < length; position++ {
 			if word>>position&1 == 1 {
 				sum ^= position + 1
 			}
 		}
-		if sum != 0 {
-			continue
-		}
-		words++
-		for _, near := range neighbourhood(2, length, word) {
-			covered[near]++
+		if sum == 0 {
+			code = append(code, word)
 		}
 	}
-	if words != 2048 {
-		t.Errorf("got %d code words, want 2048", words)
+	if len(code) != 2048 {
+		t.Errorf("got %d code words, want 2048", len(code))
 	}
-	for word, times := range covered {
-		if times != 1 {
-			t.Fatalf("word %d covered %d times, want once", word, times)
+	for word := 0; word < 1<<length; word++ {
+		near := 0
+		for _, codeWord := range code {
+			if bits.OnesCount(uint(word^codeWord)) <= 1 {
+				near++
+			}
+		}
+		if near != 1 {
+			t.Fatalf("word %d is near %d code words, want 1", word, near)
 		}
 	}
 }

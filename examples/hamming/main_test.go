@@ -71,7 +71,7 @@ func TestRun(t *testing.T) {
 		{
 			name:       "hat score",
 			args:       []string{"-hat"},
-			wantStdout: firstCode + "Hat patterns: 128\nTeam wins:    112\nTeam loses:   16\nRight guesses: 112\nWrong guesses: 112\n",
+			wantStdout: firstCode + "Hat patterns:  128\nTeam wins:     112\nTeam loses:    16\nRight guesses: 112\nWrong guesses: 112\n",
 		},
 		{
 			name: "round won",
@@ -104,6 +104,10 @@ func TestRun(t *testing.T) {
 		{name: "hat needs base 2", args: []string{"-base", "3", "-n", "4", "-hat"}, wantCode: 2, wantStderr: "needs base 2"},
 		{name: "hats too short", args: []string{"-play", "01"}, wantCode: 2, wantStderr: `invalid hats "01": want 7 digits`},
 		{name: "hats not binary", args: []string{"-n", "3", "-play", "012"}, wantCode: 2, wantStderr: `invalid hats "012"`},
+		{name: "empty hats", args: []string{"-play="}, wantCode: 2, wantStderr: `invalid hats "": want 7 digits`},
+		{name: "empty hats with count", args: []string{"-play=", "-count"}, wantCode: 2, wantStderr: "use only one of"},
+		{name: "empty hats with hat", args: []string{"-play=", "-hat"}, wantCode: 2, wantStderr: "use only one of"},
+		{name: "empty hats need base 2", args: []string{"-play=", "-base", "3", "-n", "4"}, wantCode: 2, wantStderr: "needs base 2"},
 		{name: "help", args: []string{"-help"}, wantStderr: "usage: hamming"},
 	}
 	for _, tt := range tests {
@@ -124,6 +128,53 @@ func TestRun(t *testing.T) {
 			}
 			if !strings.Contains(stderr.String(), tt.wantStderr) {
 				t.Errorf("stderr %q does not contain %q", stderr.String(), tt.wantStderr)
+			}
+		})
+	}
+}
+
+// TestPrintRound_WinRule plays plans that are not perfect codes, the only ones
+// that can produce these two losses.
+func TestPrintRound_WinRule(t *testing.T) {
+	t.Parallel()
+
+	tests := []struct {
+		name string
+		code []int
+		hats string
+		want string
+	}{
+		{
+			name: "everybody passes",
+			hats: "000",
+			want: "Hats: 000\n" +
+				"Prisoner 1 sees ?00 and passes\n" +
+				"Prisoner 2 sees 0?0 and passes\n" +
+				"Prisoner 3 sees 00? and passes\n" +
+				"Team loses\n",
+		},
+		{
+			name: "right and wrong guesses mixed",
+			code: []int{0, 1},
+			hats: "001",
+			want: "Hats: 001\n" +
+				"Prisoner 1 sees ?01 and says 1: wrong\n" +
+				"Prisoner 2 sees 0?1 and says 1: wrong\n" +
+				"Prisoner 3 sees 00? and says 1: right\n" +
+				"Team loses\n",
+		},
+	}
+	for _, tt := range tests {
+		tt := tt
+		t.Run(tt.name, func(t *testing.T) {
+			t.Parallel()
+
+			var out bytes.Buffer
+			if err := printRound(&out, tt.code, 3, tt.hats); err != nil {
+				t.Fatal(err)
+			}
+			if out.String() != tt.want {
+				t.Errorf("got:\n%s\nwant:\n%s", out.String(), tt.want)
 			}
 		})
 	}
