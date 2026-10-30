@@ -1,0 +1,22 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 300 270" width="300" height="270" role="img" aria-label="The six rows of three bells in a ring: 123, 213, 231, 321, 312, 132, and back to 123. Neighbours in the ring are joined by change a or change b, in turn." font-family="Helvetica, Arial, sans-serif">
+<title>The six rows of three bells form a ring of allowed changes</title>
+<rect x="0.5" y="0.5" width="299" height="269" rx="8" fill="#ffffff" stroke="#8c959f"/>
+<line x1="150.0" y1="40.0" x2="232.3" y2="87.5" stroke="#0969da" stroke-width="3"/>
+<text x="183.1" y="82.6" text-anchor="middle" font-size="15" font-weight="bold" fill="#0969da">a</text>
+<line x1="232.3" y1="87.5" x2="232.3" y2="182.5" stroke="#bc4c00" stroke-width="3"/>
+<text x="216.3" y="140.0" text-anchor="middle" font-size="15" font-weight="bold" fill="#bc4c00">b</text>
+<line x1="232.3" y1="182.5" x2="150.0" y2="230.0" stroke="#0969da" stroke-width="3"/>
+<text x="183.1" y="197.4" text-anchor="middle" font-size="15" font-weight="bold" fill="#0969da">a</text>
+<line x1="150.0" y1="230.0" x2="67.7" y2="182.5" stroke="#bc4c00" stroke-width="3"/>
+<text x="116.9" y="197.4" text-anchor="middle" font-size="15" font-weight="bold" fill="#bc4c00">b</text>
+<line x1="67.7" y1="182.5" x2="67.7" y2="87.5" stroke="#0969da" stroke-width="3"/>
+<text x="83.7" y="140.0" text-anchor="middle" font-size="15" font-weight="bold" fill="#0969da">a</text>
+<line x1="67.7" y1="87.5" x2="150.0" y2="40.0" stroke="#bc4c00" stroke-width="3"/>
+<text x="116.9" y="82.6" text-anchor="middle" font-size="15" font-weight="bold" fill="#bc4c00">b</text>
+<circle cx="150.0" cy="40.0" r="24" fill="#ffffff" stroke="#24292f" stroke-width="1.5"/><text x="150.0" y="45.0" text-anchor="middle" font-size="14" fill="#24292f">123</text>
+<circle cx="232.3" cy="87.5" r="24" fill="#ffffff" stroke="#24292f" stroke-width="1.5"/><text x="232.3" y="92.5" text-anchor="middle" font-size="14" fill="#24292f">213</text>
+<circle cx="232.3" cy="182.5" r="24" fill="#ffffff" stroke="#24292f" stroke-width="1.5"/><text x="232.3" y="187.5" text-anchor="middle" font-size="14" fill="#24292f">231</text>
+<circle cx="150.0" cy="230.0" r="24" fill="#ffffff" stroke="#24292f" stroke-width="1.5"/><text x="150.0" y="235.0" text-anchor="middle" font-size="14" fill="#24292f">321</text>
+<circle cx="67.7" cy="182.5" r="24" fill="#ffffff" stroke="#24292f" stroke-width="1.5"/><text x="67.7" y="187.5" text-anchor="middle" font-size="14" fill="#24292f">312</text>
+<circle cx="67.7" cy="87.5" r="24" fill="#ffffff" stroke="#24292f" stroke-width="1.5"/><text x="67.7" y="92.5" text-anchor="middle" font-size="14" fill="#24292f">132</text>
+</svg>
