@@ -39,14 +39,18 @@ func isPerfect(code []int, base, length int) bool {
 	return true
 }
 
-// collect enumerates every code and returns them as a set of printed codes.
-func collect(t *testing.T, base, length int) map[string]bool {
+// collect enumerates every code, checks each one has wantWords words and meets the
+// definition, and returns them as a set of printed codes.
+func collect(t *testing.T, base, length, wantWords int) map[string]bool {
 	t.Helper()
 	found := map[string]bool{}
 	total := 0
 	solve(base, length, func(code []int) bool {
 		total++
 		found[fmt.Sprint(code)] = true
+		if len(code) != wantWords {
+			t.Errorf("code has %d words, want %d", len(code), wantWords)
+		}
 		if !isPerfect(code, base, length) {
 			t.Errorf("not a perfect code: %v", code)
 		}
@@ -84,15 +88,9 @@ func TestSolve_Totals(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			t.Parallel()
 
-			if codes := len(collect(t, tt.base, tt.length)); codes != tt.wantCodes {
+			if codes := len(collect(t, tt.base, tt.length, tt.wantWords)); codes != tt.wantCodes {
 				t.Errorf("found %d codes, want %d", codes, tt.wantCodes)
 			}
-			solve(tt.base, tt.length, func(code []int) bool {
-				if len(code) != tt.wantWords {
-					t.Errorf("code has %d words, want %d", len(code), tt.wantWords)
-				}
-				return false
-			})
 		})
 	}
 }
@@ -269,9 +267,10 @@ func TestSolve_MatchesConstruction(t *testing.T) {
 		base, length int
 		construct    func() map[string]bool
 		wantCodes    int
+		wantWords    int
 	}{
-		{name: "binary length 7", base: 2, length: 7, construct: binaryHammingCodes, wantCodes: 240},
-		{name: "ternary length 4", base: 3, length: 4, construct: ternaryCodes, wantCodes: 72},
+		{name: "binary length 7", base: 2, length: 7, construct: binaryHammingCodes, wantCodes: 240, wantWords: 16},
+		{name: "ternary length 4", base: 3, length: 4, construct: ternaryCodes, wantCodes: 72, wantWords: 9},
 	}
 	for _, tt := range tests {
 		tt := tt
@@ -282,7 +281,7 @@ func TestSolve_MatchesConstruction(t *testing.T) {
 			if len(built) != tt.wantCodes {
 				t.Fatalf("built %d codes, want %d", len(built), tt.wantCodes)
 			}
-			found := collect(t, tt.base, tt.length)
+			found := collect(t, tt.base, tt.length, tt.wantWords)
 			for code := range built {
 				if !found[code] {
 					t.Errorf("search missed %s", code)
