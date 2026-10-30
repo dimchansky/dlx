@@ -133,7 +133,9 @@ func TestSolve_KnownCounts(t *testing.T) {
 
 // TestSolve_AnyFirst checks that the series from each starting pitch are
 // shifted copies of the series from pitch 0, and that the totals add up. For 12
-// pitches that total is the published 46272.
+// pitches that total is the published 46272. Running dlx from all twelve pitches
+// would take too long there, so it runs from one other pitch, and the plain
+// search covers all twelve.
 func TestSolve_AnyFirst(t *testing.T) {
 	t.Parallel()
 
@@ -170,7 +172,14 @@ func TestSolve_AnyFirst(t *testing.T) {
 				t.Errorf("independent search found %d series, want %d", independent, tt.want)
 			}
 
-			for first := 0; first < tt.n; first++ {
+			firsts := make([]int, tt.n)
+			for first := range firsts {
+				firsts[first] = first
+			}
+			if tt.n == 12 {
+				firsts = []int{5}
+			}
+			for _, first := range firsts {
 				first := first
 				t.Run(fmt.Sprintf("first=%d", first), func(t *testing.T) {
 					t.Parallel()
@@ -214,24 +223,13 @@ func TestBacktrack_LastPitch(t *testing.T) {
 	}
 }
 
-// TestSolve_FindsBergRow checks that the historical row passes the definition
-// and is among the series the matrix finds.
-func TestSolve_FindsBergRow(t *testing.T) {
+// TestBergRow checks the historical row against the definition. TestRun checks
+// that the program prints it.
+func TestBergRow(t *testing.T) {
 	t.Parallel()
-	if testing.Short() {
-		t.Skip("slow: searches many series")
-	}
 
 	if !isAllInterval(12, bergRow) {
 		t.Errorf("%v is not all-interval", bergRow)
-	}
-	found := false
-	solve(12, bergRow[0], func(series []int) bool {
-		found = reflect.DeepEqual(series, bergRow)
-		return found
-	})
-	if !found {
-		t.Errorf("%v was not found", bergRow)
 	}
 }
 
@@ -314,6 +312,21 @@ func TestBuildRows_Sizes(t *testing.T) {
 				}
 			}
 		})
+	}
+}
+
+// TestBuildRows_StepSizes checks the row counts behind the table of reductions
+// in the README: 132 rows for a free step, and 11 for each fixed end.
+func TestBuildRows_StepSizes(t *testing.T) {
+	t.Parallel()
+
+	got := make([]int, 11)
+	for _, row := range buildRows(12, 0) {
+		got[row[0]]++
+	}
+	want := []int{11, 132, 132, 132, 132, 132, 132, 132, 132, 132, 11}
+	if !reflect.DeepEqual(got, want) {
+		t.Errorf("rows per step = %v, want %v", got, want)
 	}
 }
 

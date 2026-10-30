@@ -1,5 +1,5 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 640 320" width="640" height="320" role="img" aria-label="Two circles of pitches. On twelve notes, going from A to C is 3 steps clockwise. On four pitches, the series 0 3 1 2 makes steps of 3, 2 and 1." font-family="Helvetica, Arial, sans-serif">
-<title>Two circles of pitches. On twelve notes, going from A to C is 3 steps clockwise. On four pitches, the series 0 3 1 2 makes steps of 3, 2 and 1.</title>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 640 320" width="640" height="320" role="img" aria-label="Two circles of pitches. On twelve notes, going from A to C is 3 steps clockwise. On four pitches, the series 0 3 1 2 walks clockwise in steps of 3, 2 and 1." font-family="Helvetica, Arial, sans-serif">
+<title>Two circles of pitches. On twelve notes, going from A to C is 3 steps clockwise. On four pitches, the series 0 3 1 2 walks clockwise in steps of 3, 2 and 1.</title>
 <defs><marker id="head" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M 0 0 L 10 5 L 0 10 z" fill="#0969da"/></marker></defs>
 <rect x="0.5" y="0.5" width="639" height="319" rx="8" fill="#ffffff" stroke="#8c959f"/>
 <circle cx="165" cy="158" r="100" fill="none" stroke="#8c959f" stroke-width="2"/>
@@ -31,12 +31,15 @@
 <text x="165" y="154" text-anchor="middle" font-size="14" fill="#0969da">A to C:</text>
 <text x="165" y="173" text-anchor="middle" font-size="14" fill="#0969da">3 steps</text>
 <circle cx="475" cy="158" r="90" fill="none" stroke="#8c959f" stroke-width="2"/>
-<line x1="465.8" y1="77.2" x2="394.2" y2="148.8" stroke="#0969da" stroke-width="3" marker-end="url(#head)"/>
-<text x="412.0" y="101.0" text-anchor="middle" font-size="14" fill="#0969da">3 steps</text>
-<line x1="398.0" y1="158.0" x2="552.0" y2="158.0" stroke="#0969da" stroke-width="3" marker-end="url(#head)"/>
-<text x="475.0" y="146.0" text-anchor="middle" font-size="14" fill="#0969da">2 steps</text>
-<line x1="555.8" y1="167.2" x2="484.2" y2="238.8" stroke="#0969da" stroke-width="3" marker-end="url(#head)"/>
-<text x="540.0" y="215.0" text-anchor="middle" font-size="14" fill="#0969da">1 step</text>
+<path d="M 486.7 74.8 L 492.5 77.1 L 498.1 79.9 L 503.4 82.9 L 508.3 86.4 L 512.9 90.1 L 517.2 94.1 L 521.0 98.3 L 524.5 102.7 L 527.7 107.3 L 530.4 112.0 L 532.8 116.9 L 534.8 121.8 L 536.4 126.8 L 537.7 131.7 L 538.6 136.7 L 539.1 141.7 L 539.3 146.6 L 539.3 151.5 L 538.8 156.3 L 538.1 160.9 L 537.2 165.5 L 535.9 170.0 L 534.4 174.3 L 532.6 178.5 L 530.6 182.6 L 528.4 186.5 L 526.0 190.2 L 523.3 193.8 L 520.5 197.2 L 517.4 200.4 L 514.2 203.5 L 510.8 206.3 L 507.2 209.0 L 503.5 211.4 L 499.6 213.6 L 495.5 215.6 L 491.3 217.4 L 487.0 218.9 L 482.5 220.2 L 477.9 221.1 L 473.3 221.8 L 468.5 222.3 L 463.6 222.3 L 458.7 222.1 L 453.7 221.6 L 448.7 220.7 L 443.8 219.4 L 438.8 217.8 L 433.9 215.8 L 429.0 213.4 L 424.3 210.7 L 419.7 207.5 L 415.3 204.0 L 411.1 200.2 L 407.1 195.9 L 403.4 191.3 L 399.9 186.4 L 396.9 181.1 L 394.1 175.5 L 391.8 169.7" fill="none" stroke="#0969da" stroke-width="3" stroke-linejoin="round" marker-end="url(#head)"/>
+<text x="475" y="154" text-anchor="middle" font-size="14" fill="#0969da">0 to 3:</text>
+<text x="475" y="173" text-anchor="middle" font-size="14" fill="#0969da">3 steps</text>
+<path d="M 378.0 144.4 L 377.3 139.5 L 376.8 134.5 L 376.7 129.4 L 376.8 124.3 L 377.2 119.1 L 377.9 113.9 L 378.9 108.7 L 380.1 103.5 L 381.7 98.4 L 383.6 93.2 L 385.8 88.2 L 388.4 83.2 L 391.2 78.4 L 394.3 73.7 L 397.7 69.1 L 401.4 64.7 L 405.4 60.5 L 409.6 56.6 L 414.1 52.9 L 418.9 49.4 L 423.8 46.2 L 429.0 43.3 L 434.3 40.7 L 439.8 38.4 L 445.5 36.5 L 451.2 34.9 L 457.1 33.6 L 463.0 32.7 L 469.0 32.2 L 475.0 32.0 L 481.0 32.2 L 487.0 32.7 L 492.9 33.6 L 498.8 34.9 L 504.5 36.5 L 510.2 38.4 L 515.7 40.7 L 521.0 43.3 L 526.2 46.2 L 531.1 49.4 L 535.9 52.9 L 540.4 56.6 L 544.6 60.5 L 548.6 64.7 L 552.3 69.1 L 555.7 73.7 L 558.8 78.4 L 561.6 83.2 L 564.2 88.2 L 566.4 93.2 L 568.3 98.4 L 569.9 103.5 L 571.1 108.7 L 572.1 113.9 L 572.8 119.1 L 573.2 124.3 L 573.3 129.4 L 573.2 134.5 L 572.7 139.5 L 572.0 144.4" fill="none" stroke="#0969da" stroke-width="3" stroke-linejoin="round" marker-end="url(#head)"/>
+<text x="586" y="44" text-anchor="middle" font-size="14" fill="#0969da">3 to 1:</text>
+<text x="586" y="62" text-anchor="middle" font-size="14" fill="#0969da">2 steps</text>
+<path d="M 572.0 171.6 L 572.7 173.9 L 573.2 176.1 L 573.7 178.4 L 574.2 180.8 L 574.5 183.1 L 574.8 185.5 L 575.1 187.9 L 575.2 190.3 L 575.3 192.7 L 575.3 195.2 L 575.3 197.6 L 575.1 200.1 L 574.8 202.5 L 574.5 205.0 L 574.1 207.4 L 573.6 209.8 L 573.0 212.2 L 572.3 214.6 L 571.5 217.0 L 570.6 219.3 L 569.7 221.6 L 568.6 223.9 L 567.4 226.1 L 566.2 228.2 L 564.9 230.4 L 563.5 232.4 L 562.0 234.4 L 560.4 236.4 L 558.8 238.2 L 557.0 240.0 L 555.2 241.8 L 553.4 243.4 L 551.4 245.0 L 549.4 246.5 L 547.4 247.9 L 545.2 249.2 L 543.1 250.4 L 540.9 251.6 L 538.6 252.7 L 536.3 253.6 L 534.0 254.5 L 531.6 255.3 L 529.2 256.0 L 526.8 256.6 L 524.4 257.1 L 522.0 257.5 L 519.5 257.8 L 517.1 258.1 L 514.6 258.3 L 512.2 258.3 L 509.7 258.3 L 507.3 258.2 L 504.9 258.1 L 502.5 257.8 L 500.1 257.5 L 497.8 257.2 L 495.4 256.7 L 493.1 256.2 L 490.9 255.7 L 488.6 255.0" fill="none" stroke="#0969da" stroke-width="3" stroke-linejoin="round" marker-end="url(#head)"/>
+<text x="590" y="250" text-anchor="middle" font-size="14" fill="#0969da">1 to 2:</text>
+<text x="590" y="268" text-anchor="middle" font-size="14" fill="#0969da">1 step</text>
 <circle cx="475.0" cy="68.0" r="5" fill="#24292f"/>
 <text x="475.0" y="51.0" text-anchor="middle" font-size="15" fill="#24292f">0</text>
 <circle cx="565.0" cy="158.0" r="5" fill="#24292f"/>

@@ -74,7 +74,7 @@ func solveFrom(n, first int, accept func(series []int) bool) {
 // first+n/2: the n-1 intervals add up to n(n-1)/2, which for even n is n/2 more
 // than a whole number of turns round the circle of pitches. No series exists
 // for odd n, so the rule can't lose one there either. Fixing the last pitch
-// removes few rows but lets the search work inwards from both ends.
+// removes few rows but makes the search much faster.
 func buildRows(n, first int) [][]int {
 	c := columns{n}
 	lastStep := n - 2

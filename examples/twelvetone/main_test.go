@@ -17,10 +17,27 @@ func TestRun(t *testing.T) {
 		wantLines  int
 		wantStdout string
 		wantStderr string
+		// wantLine is a line stdout must contain, for long output.
+		wantLine string
+		slow     bool
 	}{
 		{
-			name:      "first series by default",
-			wantLines: 1,
+			name:       "first series by default",
+			wantLines:  1,
+			wantStdout: "C C# G# B E A# G A F D# D F#\n",
+		},
+		{
+			name:       "every series for six pitches",
+			args:       []string{"-n", "6", "-limit", "0"},
+			wantLines:  4,
+			wantStdout: "0 1 5 2 4 3\n0 2 1 4 5 3\n0 4 5 2 1 3\n0 5 1 4 2 3\n",
+		},
+		{
+			name:      "finds Berg's series",
+			args:      []string{"-first", "5", "-limit", "0"},
+			wantLines: 3856,
+			wantLine:  "F E C A G D G# C# D# F# A# B",
+			slow:      true,
 		},
 		{
 			name:       "other sizes print numbers",
@@ -139,6 +156,9 @@ func TestRun(t *testing.T) {
 		tt := tt
 		t.Run(tt.name, func(t *testing.T) {
 			t.Parallel()
+			if tt.slow && testing.Short() {
+				t.Skip("slow: enumerates every series")
+			}
 
 			var stdout, stderr bytes.Buffer
 			code := run(tt.args, &stdout, &stderr)
@@ -151,6 +171,9 @@ func TestRun(t *testing.T) {
 			}
 			if tt.wantStdout != "" && stdout.String() != tt.wantStdout {
 				t.Errorf("stdout:\n%s\nwant:\n%s", stdout.String(), tt.wantStdout)
+			}
+			if tt.wantLine != "" && !strings.Contains("\n"+stdout.String(), "\n"+tt.wantLine+"\n") {
+				t.Errorf("stdout has no line %q", tt.wantLine)
 			}
 			if !strings.Contains(stderr.String(), tt.wantStderr) {
 				t.Errorf("stderr:\n%s\nwant it to contain:\n%s", stderr.String(), tt.wantStderr)

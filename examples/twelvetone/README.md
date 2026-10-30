@@ -6,11 +6,11 @@ This example teaches one trick: how to make two rows of a matrix agree on a valu
 
 ## The problem
 
-A piano repeats the same twelve notes over and over: C, C#, D, D#, E, F, F#, G, G#, A, A#, B, then C again, one octave higher. Music calls a C the same note in any octave, so the twelve notes sit on a circle, like the hours on a clock.
+A piano repeats the same twelve notes over and over: C, C#, D, D#, E, F, F#, G, G#, A, A#, B, then C again. The distance up to the next note of the same name is an **octave**, and music calls a C the same note in any octave, so the twelve notes sit on a circle, like the hours on a clock.
 
-![Two circles. On the circle of twelve notes, going from A to C is 3 steps clockwise. On a circle of four pitches, the series 0 3 1 2 makes steps of 3, 2 and 1.](circle.svg)
+![Two circles. On the circle of twelve notes, going from A to C is 3 steps clockwise. On a circle of four pitches, the series 0 3 1 2 walks clockwise in steps of 3, 2 and 1.](circle.svg)
 
-We number the notes from 0 (C) to 11 (B), and call each one a **pitch**.
+The sign # is read "sharp" and ♭ is read "flat": C# is one step above C, and A♭ is one step below A, which makes it the same note as G#. We number the notes from 0 (C) to 11 (B), and call each one a **pitch**.
 
 An **interval** is how many steps clockwise you walk from one pitch to the next. Going from C (0) to E (4) is 4 steps. Going from A (9) to C (0) passes the top of the circle: 10, 11, 0 is 3 steps. As a formula, the interval is the second pitch minus the first, plus 12 if that is negative. For A to C: 0 - 9 + 12 = 3. Two different pitches are always 1 to 11 steps apart.
 
@@ -18,24 +18,24 @@ A **twelve-tone row** is an ordering of all twelve pitches, each used once. Comp
 
 In this README a twelve-tone row is called a **series**, because "row" also means a row of the matrix.
 
-Alban Berg used one in his Lyric Suite (1926):
+Alban Berg used one in his Lyric Suite (1926), a string quartet in six movements:
 
 | Note             | F | E  | C | A | G  | D | A♭ | D♭ | E♭ | G♭ | B♭ | B  |
 |------------------|---|----|---|---|----|---|----|----|----|----|----|----|
 | Pitch            | 5 | 4  | 0 | 9 | 7  | 2 | 8  | 1  | 3  | 6  | 10 | 11 |
 | Interval to next | 11 | 8 | 9 | 10 | 7 | 6 | 5  | 2  | 3  | 4  | 1  |    |
 
-Each of 1 to 11 appears once in the bottom line. A♭ is another name for G#, D♭ for C#, E♭ for D#, G♭ for F# and B♭ for A#, and the program prints the sharp names.
+Each of 1 to 11 appears once in the bottom line. The notes are the ones the [Wikipedia page on these rows](https://en.wikipedia.org/wiki/All-interval_twelve-tone_row) gives, which spells the last one C♭, another name for B. A♭ is another name for G#, D♭ for C#, E♭ for D#, G♭ for F# and B♭ for A#, and the program prints the sharp names.
 
-The same question works for any number of pitches n on a circle. For n=4 there are 3 steps and the intervals are 1, 2 and 3. The series `0 3 1 2`, drawn on the right of the picture, is all-interval: 0 to 3 is 3 steps, 3 to 1 is 2 steps (3 to 0 is one step, 0 to 1 is another), and 1 to 2 is 1 step. We use n=4 as the small example below.
+The same question works for any number of pitches n on a circle. For n=4 there are 3 steps and the intervals are 1, 2 and 3. The series `0 3 1 2`, drawn on the right of the picture, is all-interval: 0 to 3 is 3 steps (through 1 and 2), 3 to 1 is 2 steps (through 0), and 1 to 2 is 1 step. We use n=4 as the small example below.
 
 ## Two facts from adding up the intervals
 
 Walking along a series takes you from its first pitch to its last. The steps add up to 1 + 2 + ... + 11 = 66 for twelve pitches, and 66 is five full turns of the circle (60) plus 6 more. So **the last pitch is always 6 steps past the first**, in every all-interval series. On n=4 the same sum gives 1 + 2 + 3 = 6, one full turn plus 2, and `0 3 1 2` does end 2 past its start.
 
-For an even n, the steps add up to a whole number of turns plus n/2, so the last pitch is always n/2 past the first. The matrix below uses this.
+The same holds for every even n. Pair 1 with n-1, 2 with n-2 and so on: each pair adds up to n, one full turn, and only the middle number n/2 is left over. For n=6 that is (1 + 5) + (2 + 4) + 3, two turns plus 3. So the last pitch is always n/2 past the first. The matrix below uses this.
 
-For an odd n, the sum is a whole number of turns. For n=11 it is 1 + 2 + ... + 10 = 55, exactly 5 turns. The walk would end on the pitch it started from, which is used only once, so **no series exists for odd n**. The program finds none, as it should.
+For an odd n, every number has a partner, so the sum is a whole number of turns. For n=11 it is 1 + 2 + ... + 10 = 55, exactly 5 turns. The walk would end on the pitch it started from, which is used only once, so **no series exists for odd n**. The program finds none, as it should.
 
 Every even n has a series: `0, n-1, 1, n-2, 2, ...` is one. For n=4 that is `0 3 1 2`, and for n=12 it is `0 11 1 10 2 9 3 8 4 7 5 6`.
 
@@ -76,18 +76,18 @@ The first two rows fit perfectly: each of the four columns has exactly one 1. Th
 
 The reason is a counting one. The arriving row has one 1 and the leaving row has n-1 of them, which makes n in total for n columns. They cover everything exactly once only if they don't overlap, and that happens only when the one column the leaving row skips is the one column the arriving row covers. So:
 
-> When exactly two rows share a variable, let one cover (variable, value), and let the other cover (variable, v) for every v except its own value. Exact cover then forces the two values to be equal.
+> When every solution picks exactly two rows that touch a variable, one forced by each of two other columns, let one cover (variable, value), and let the other cover (variable, v) for every v except its own value. Exact cover then forces the two values to be equal.
 
 ```mermaid
 flowchart LR
     A["Step 0 arrives on pitch 3: covers L1.3"] --> P["Position 1: the four columns L1.0 to L1.3 must each be covered once"]
     B["Step 1 leaves from pitch 3: covers L1.0, L1.1, L1.2"] --> P
-    C["Step 1 leaves from pitch 2: covers L1.0, L1.1, L1.3"] -. "clash on L1.3" .-> P
+    C["Step 1 leaves from pitch 2: covers L1.0, L1.1, L1.3"] -. "with the first box" .-> R["Rejected: L1.3 covered twice, L1.2 not at all"]
 ```
 
-Only inner positions need links, because only they are shared by two steps. That gives n-2 positions with n columns each. Exactly two steps touch a position, which is what the trick needs.
+Only inner positions need links, because only they are shared by two steps. That gives n-2 positions with n columns each. Many rows touch a position's links, 15 of them at position 1 for n=4, but a solution picks only one row for each step, so exactly two of the rows it picks touch them. That is what the trick needs.
 
-The trick is not specific to music. It also works where neighbouring tiles must agree along a shared edge, as in MacMahon's squares, a puzzle of 24 tiles with coloured edges: the tile on one side of an edge covers its colour, and the tile on the other side covers every other colour. A throwaway program that isn't in this repository used it on the 6 by 4 board with every outer edge in one chosen colour, and counted 106624 arrangements. That is exactly 8 times the [13,328 solutions quoted](https://www.gamepuzzles.com/edgemtch.htm) for this board, which would fit a count that treats rotations, mirror images and swapping the other two colours as the same. The source doesn't say so, and a plain search meant to confirm the number was stopped before it finished, so treat this as a good match and not a proof. `go test` doesn't check it.
+The trick is not specific to music. It also works where neighbouring tiles must agree along a shared edge, as in MacMahon's squares, a puzzle of 24 tiles with coloured edges: the tile on one side of an edge covers its colour, and the tile on the other side covers every other colour. A dlx program built this way counted 106624 arrangements of the 6 by 4 board with every outer edge in one chosen colour, and a plain cell-by-cell search with no dlx ran to the end and also gave 106624. That is exactly 8 times the [13,328 solutions quoted](https://www.gamepuzzles.com/edgemtch.htm) for this board. The source doesn't say how it counts, so reading the 8 as rotations, mirror images and swapping the other two colours is an inference. Neither program is in this repository, so `go test` doesn't check this number.
 
 ## Fixing both ends
 
@@ -95,7 +95,7 @@ Two reductions make the search much faster.
 
 **Fix the first pitch.** Add the same number to every pitch of a series and all the intervals stay the same, so each series has one copy per starting pitch. The program looks only at series that start on pitch 0 unless asked otherwise, by giving step 0 rows only for that pitch.
 
-**Fix the last pitch.** The sum above says where a series must end, so step n-2 gets rows only for that pitch. This removes few rows, but it lets the search close in from both ends, which helps far more than the count suggests:
+**Fix the last pitch.** The sum above says where a series must end, so step n-2 gets rows only for that pitch. This removes few rows, but the search gets far faster than the count suggests:
 
 | Matrix for n=12                | Rows | Series found | Time to find them all |
 |--------------------------------|------|--------------|-----------------------|
@@ -103,7 +103,7 @@ Two reductions make the search much faster.
 | First pitch fixed              | 1331 | 3856         | 2.9 s                 |
 | First and last pitch fixed     | 1210 | 3856         | 0.5 s                 |
 
-Those times were taken once on the machine used to write this. The first two rows of the table come from throwaway versions of the matrix that aren't in this directory. [solver.go](solver.go) always builds the third.
+Each step of the full matrix has 12 × 11 = 132 rows, and each fix cuts one step to 11, which gives the three row counts. The tests check those step sizes on the third matrix, the one [solver.go](solver.go) always builds. The first two matrices and all the times come from one run of throwaway code that isn't in this directory, so `go test` doesn't check those times.
 
 ## The whole matrix for n=4
 
@@ -199,7 +199,7 @@ Output:
     0 4 5 2 1 3
     0 5 1 4 2 3
 
-Find Berg's row among the series that start on F, which is pitch 5:
+Find Berg's series among those that start on F, which is pitch 5:
 
     twelvetone -first 5 -limit 0 | grep '^F E C A G D'
 
@@ -238,19 +238,19 @@ The totals for n=12 match the [published counts](https://en.wikipedia.org/wiki/A
 
 ## How the results are checked
 
-The tests check every total above, and they compare every series with a separate [backtracking](../README.md#how-dlx-searches) search that doesn't use dlx. That search extends a series one pitch at a time and rejects a repeated pitch or interval. It knows nothing about where a series ends, so it also proves the rule for the last pitch, for these sizes.
+The tests check every total above, and they compare every series from pitch 0 with a separate [backtracking](../README.md#how-dlx-searches) search that doesn't use dlx. That search extends a series one pitch at a time and rejects a repeated pitch or interval. It knows nothing about where a series ends, so it also proves the rule for the last pitch, for these sizes.
 
 The tests also check that:
 
 - each series passes a direct check of the definition,
 - odd sizes up to 9 have no series,
-- the series from each starting pitch are shifted copies of those from pitch 0,
-- Berg's row passes the definition and is found by the search,
+- the series from each starting pitch are shifted copies of those from pitch 0, for every pitch up to n=10 and for pitch 5 at n=12,
+- Berg's series passes the definition and the program prints it,
 - the `0, n-1, 1, n-2, ...` construction is a series for every even size up to 32,
 - the equality trick accepts a pair of rows exactly when the two values are equal,
 - the matrix sizes and the column lists in this README are right.
 
-`go test` checks every total. `go test -short` skips n=10 and n=12, which are much slower with `-race`. Use `-short` with `-race`.
+`go test` checks every total. For n=12 the total over all starting pitches comes from the plain search and from 12 times the 3856 found by dlx, to keep the tests quick. `go test -short` skips n=10 and n=12, which are much slower with `-race`. Use `-short` with `-race`.
 
 ## Limits
 
