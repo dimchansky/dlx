@@ -286,22 +286,22 @@ func TestColourings_AgainstBacktracking(t *testing.T) {
 	cabelloBases, cabelloPairs := cabelloGroups()
 	tests := []struct {
 		name  string
-		rays  int
+		count int
 		bases [][]int
 		pairs [][]int
 		set   raySet
 	}{
 		{
-			name: "peres33", rays: 33, set: raySets[0],
+			name: "peres33", count: 33, set: raySets[0],
 			bases: fromOne(gouldAravindTriads),
 			pairs: fromOne(gouldAravindDyads),
 		},
 		{
-			name: "peres24", rays: 24, set: raySets[1],
+			name: "peres24", count: 24, set: raySets[1],
 			bases: fromOne(waegellAravindBases),
 		},
 		{
-			name: "cabello18", rays: 18, set: raySets[2],
+			name: "cabello18", count: 18, set: raySets[2],
 			bases: cabelloBases,
 			pairs: cabelloPairs,
 		},
@@ -312,13 +312,13 @@ func TestColourings_AgainstBacktracking(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			t.Parallel()
 
-			last := tt.rays - 1
+			last := tt.count - 1
 			if testing.Short() {
-				last = 0 // the whole sweep takes over a second with -race
+				last = 0 // one removal is enough here; the full run tries them all
 			}
 			for removed := noRay; removed <= last; removed++ {
 				got := len(colourings(newProblem(tt.set.rays, tt.set.dimension, removed)))
-				if want := countByBacktracking(tt.rays, tt.bases, tt.pairs, removed); got != want {
+				if want := countByBacktracking(tt.count, tt.bases, tt.pairs, removed); got != want {
 					t.Errorf("without ray %d: %d colourings, want %d", removed+1, got, want)
 				}
 			}
@@ -326,7 +326,7 @@ func TestColourings_AgainstBacktracking(t *testing.T) {
 			p := newProblem(tt.set.rays, tt.set.dimension, noRay)
 			p.pairs = nil
 			got := len(colourings(p))
-			if want := countByBacktracking(tt.rays, tt.bases, nil, noRay); got != want {
+			if want := countByBacktracking(tt.count, tt.bases, nil, noRay); got != want {
 				t.Errorf("bases only: %d colourings, want %d", got, want)
 			}
 		})
@@ -376,7 +376,7 @@ func inSameGroup(groups [][]int, i, j int) bool {
 // countByBacktracking colours the rays one at a time and counts the colourings
 // that break no rule. A removed ray takes no colour, a basis that held it stops
 // being a basis, and the rest of that basis must hold at most one green ray.
-func countByBacktracking(rays int, bases, pairs [][]int, removed int) int {
+func countByBacktracking(rayCount int, bases, pairs [][]int, removed int) int {
 	var exactlyOne, atMostOne [][]int
 	for _, basis := range bases {
 		if contains(basis, removed) {
@@ -388,7 +388,7 @@ func countByBacktracking(rays int, bases, pairs [][]int, removed int) int {
 	atMostOne = append(atMostOne, pairs...)
 
 	const unknown, red, green = 0, 1, 2
-	colour := make([]int, rays)
+	colour := make([]int, rayCount)
 	if removed != noRay {
 		colour[removed] = red
 	}
@@ -425,7 +425,7 @@ func countByBacktracking(rays int, bases, pairs [][]int, removed int) int {
 	total := 0
 	var paint func(r int)
 	paint = func(r int) {
-		if r == rays {
+		if r == rayCount {
 			total++
 			return
 		}

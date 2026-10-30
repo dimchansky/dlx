@@ -110,9 +110,9 @@ func TestSurd_Times(t *testing.T) {
 		want surd
 	}{
 		{name: "by zero", x: root, y: zero, want: zero},
-		{name: "by one", x: negative, y: one, want: negative},
+		{name: "by one", x: negativeRoot, y: one, want: negativeRoot},
 		{name: "root squared", x: root, y: root, want: surd{a: 2}},
-		{name: "signs cancel", x: negative, y: negative, want: surd{a: 2}},
+		{name: "signs cancel", x: negativeRoot, y: negativeRoot, want: surd{a: 2}},
 		{name: "mixed", x: surd{1, 1}, y: surd{1, -1}, want: surd{a: -1}},
 	}
 
@@ -138,7 +138,7 @@ func TestSurd_String(t *testing.T) {
 		{x: zero, want: "0"},
 		{x: minus, want: "-1"},
 		{x: root, want: "√2"},
-		{x: negative, want: "-√2"},
+		{x: negativeRoot, want: "-√2"},
 		{x: surd{3, -2}, want: "3-2√2"},
 	}
 

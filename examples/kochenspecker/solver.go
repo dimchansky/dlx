@@ -12,10 +12,10 @@ const noRay = -1
 
 // problem is the colouring rule of a set of rays. Rays are numbered from 0 here.
 type problem struct {
-	rays    int     // how many rays the set has, the removed one included
-	removed int     // the ray left out, or noRay
-	bases   [][]int // groups of dimension rays, each needing exactly one green
-	pairs   [][]int // perpendicular rays in no shared basis: at most one green
+	rayCount int     // how many rays the set has, the removed one included
+	removed  int     // the ray left out, or noRay
+	bases    [][]int // groups of dimension rays, each needing exactly one green
+	pairs    [][]int // perpendicular rays in no shared basis: at most one green
 }
 
 // newProblem finds the groups of a set of rays with one ray left out, or with
@@ -30,10 +30,10 @@ func newProblem(rays []ray, dimension, removed int) problem {
 	}
 	bases := findBases(perpendicular, dimension)
 	return problem{
-		rays:    len(rays),
-		removed: removed,
-		bases:   bases,
-		pairs:   findPairs(perpendicular, bases),
+		rayCount: len(rays),
+		removed:  removed,
+		bases:    bases,
+		pairs:    findPairs(perpendicular, bases),
 	}
 }
 
@@ -100,7 +100,7 @@ func (p problem) columns() int {
 // matrixRows returns the number of matrix rows: one per ray, plus one slack row
 // per pair.
 func (p problem) matrixRows() int {
-	rows := p.rays + len(p.pairs)
+	rows := p.rayCount + len(p.pairs)
 	if p.removed != noRay {
 		rows--
 	}
@@ -140,14 +140,14 @@ func (p problem) solve(accept func(green []int) bool) {
 // Slack rows are not in it.
 func (p problem) buildMatrix() (dlx.Matrix, map[string]int) {
 	matrix := dlx.NewMatrix(p.columns())
-	groupsOfRay := make([][]int, p.rays)
+	groupsOfRay := make([][]int, p.rayCount)
 	for column, group := range append(append([][]int(nil), p.bases...), p.pairs...) {
 		for _, r := range group {
 			groupsOfRay[r] = append(groupsOfRay[r], column)
 		}
 	}
 
-	rayOfRow := make(map[string]int, p.rays)
+	rayOfRow := make(map[string]int, p.rayCount)
 	for r, groups := range groupsOfRay {
 		matrix.AddRow(groups...)
 		rayOfRow[fmt.Sprint(groups)] = r

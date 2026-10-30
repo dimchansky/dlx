@@ -188,7 +188,7 @@ func printSummary(w io.Writer, set raySet, p problem) error {
 // It reports whether any removal leaves a colouring.
 func printCritical(w io.Writer, set raySet) (bool, error) {
 	colourable := 0
-	for r, ray := range set.rays {
+	for r, u := range set.rays {
 		var total uint64
 		newProblem(set.rays, set.dimension, r).solve(func([]int) bool {
 			total++
@@ -197,7 +197,7 @@ func printCritical(w io.Writer, set raySet) (bool, error) {
 		if total > 0 {
 			colourable++
 		}
-		if _, err := fmt.Fprintf(w, "Without ray %d %s: %d colourings\n", r+1, ray, total); err != nil {
+		if _, err := fmt.Fprintf(w, "Without ray %d %s: %d colourings\n", r+1, u, total); err != nil {
 			return false, err
 		}
 	}
@@ -209,9 +209,9 @@ func printCritical(w io.Writer, set raySet) (bool, error) {
 func printGroups(w io.Writer, set raySet, p problem) error {
 	var text strings.Builder
 	text.WriteString("Rays:\n")
-	for r, ray := range set.rays {
+	for r, u := range set.rays {
 		if r != p.removed {
-			fmt.Fprintf(&text, "%d %s\n", r+1, ray)
+			fmt.Fprintf(&text, "%d %s\n", r+1, u)
 		}
 	}
 	text.WriteString("Bases:\n")

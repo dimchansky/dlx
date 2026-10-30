@@ -6,7 +6,7 @@ Most examples here look for solutions. This one is about the opposite: the searc
 
 ## The puzzle
 
-Take a list of lines through one point, like spokes through the hub of a wheel. The lines are called **rays**. A ray has no direction, so the point (1, 2, 0) and the point (-1, -2, 0) lie on the same ray. Some rays meet at right angles, and those are called **perpendicular**.
+Take a list of lines through one point, like spokes through the hub of a wheel. The lines are called **rays**. Unlike a ray in school geometry, which starts at a point and goes one way, these run both ways, so the point (1, 2, 0) and the point (-1, -2, 0) lie on the same ray. Some rays meet at right angles, and those are called **perpendicular**.
 
 You can test this with arithmetic. Multiply the matching coordinates of two rays and add the results. The rays are perpendicular exactly when the sum is 0. For (0, 1, 1) and (0, 1, -1), the sum is 0·0 + 1·1 + 1·(-1) = 0, so they are.
 
@@ -25,6 +25,14 @@ The difficulty is that a ray usually belongs to several triples, and rule 1 ties
 A few triples are easy to paint. In 1991 Asher Peres published 33 rays in ordinary three-dimensional space for which it can't be done. This command proves that with dlx.
 
 Rays are numbered from 1 in this README and in the output, because the papers do that. The first few of the 33 are ray 1 (1, 0, 0), ray 2 (0, 1, 0), ray 4 (0, 1, 1) and ray 10 (√2, -1, 1). Use `-rays` to list them all.
+
+The 33 rays follow a short rule. Take each of these four patterns, write its numbers in every order, and try every choice of plus and minus signs:
+
+    (0, 0, 1)    (0, 1, 1)    (0, 1, √2)    (1, 1, √2)
+
+Two results that differ only by an overall sign are the same ray, so the patterns give 3, 6, 12 and 12 rays. The 24 rays of the set in four dimensions, which comes up later, follow the same rule with 4, 12 and 8 rays from these patterns:
+
+    (0, 0, 0, 1)    (0, 0, 1, 1)    (1, 1, 1, 1)
 
 ## Why physicists care
 
@@ -46,7 +54,7 @@ flowchart TD
 
 What this does **not** show matters just as much:
 
-- It does not rule out all hidden variables. It rules out those where a direction's answer ignores what else is measured with it. A theory whose answers depend on that context is not touched, and neither is one that gives up fixed answers for some questions. Bohmian mechanics, a known alternative version of quantum theory, is of this second kind.
+- It does not rule out all hidden variables. It rules out those where a direction's answer ignores what else is measured with it. A theory whose answers depend on that context is not touched, and neither is one that gives up fixed answers for some questions. Bohmian mechanics, a known alternative version of quantum theory, is often described in both ways: a particle has a definite position, but a spin result depends on the apparatus used.
 - It is not an experiment. It is a fact about geometry, and it says nothing until you add the predictions of quantum physics. Experiments test statistical consequences of those predictions, and how much those tests settle is still argued about.
 - It assumes perfectly exact directions. Real instruments have limited accuracy, and Meyer, Kent and Clifton argued that this leaves a way out, which others have disputed.
 - It is not Bell's theorem, which is about particles far apart.
@@ -134,7 +142,7 @@ So there is no painting, and no search was needed. Peres's 24 rays in four dimen
 
 dlx reports the columns of each picked row and not ray numbers. In the small example, numbering the columns A=0, B=1, P=2, ray 10 comes back as `[0 2]`.
 
-[solver.go](solver.go) keeps a table from each row's column list to its ray. A list not in the table is a slack row, and it is dropped. This works only if no two rays have the same row, and only if no ray's row matches a slack row. In the small example rays 4 and 13 do have the same row. In the real sets every ray has its own row, with up to one ray removed, and a test proves it. That no longer holds once the pairs are dropped, so `-bases-only` prints only the total, which stays right.
+[solver.go](solver.go) keeps a table from each row's column list to its ray. A list not in the table is a slack row, and it is dropped. This works only if no two rays have the same row, and only if no ray's row matches a slack row. In the small example rays 4 and 13 do have the same row. In the full sets every ray has a row of its own, even after one ray is removed, and a test proves it. Dropping the pairs breaks this for `peres33`, where rays 10 and 13 then have the same row, because each is only in the basis 4, 10, 13. So `-bases-only` prints only the total, which stays right.
 
 ## Installation
 
@@ -243,17 +251,17 @@ A result of zero is only as good as the data, and the ray coordinates were writt
 - **Exact arithmetic.** Coordinates are stored as whole numbers a and b in a + b√2, so the test for perpendicular has no rounding. It needs that: with ordinary computer numbers, √2·√2 - 1 - 1 gives 0.00000000000000044 and not 0, and rays 10 and 13 would wrongly count as not perpendicular.
 - **The published tables.** The 16 bases and 24 pairs computed from the coordinates are compared with table 1 of Gould and Aravind. The 24 bases of the four-dimensional set are compared with figure 1 of Waegell and Aravind, and the 18-ray set with the nine equations of Cabello and others, whose rays are also checked to be among the 24.
 - **Published facts.** Each of the 24 rays is in 4 bases and has 9 companions, meaning other rays that share a basis with it. Each of the 18 rays is perpendicular to 7 others. The 33 and 18 rays are critical and the 24 are not. A test also walks through all 2^24 groups of the 24 bases and finds the 512 groups with an odd number of bases that use each ray an even number of times. Each of them is a counting proof of the same kind as the 18-ray one: the rows can only give an even number of 1s, and the bases need an odd number. Sorted the way table 2 of Waegell and Aravind lists them, they come to 16, 240, 240 and 16.
-- **The defining rule.** The 33 and 24 rays are rebuilt from the rule that describes them, every order and sign of a few patterns, and compared.
+- **The defining rule.** The 33 and 24 rays are rebuilt from the patterns under [The puzzle](#the-puzzle), in every order and sign, and compared.
 - **A separate search.** Every total above, for every removal, is recounted by a plain [backtracking](../README.md#how-dlx-searches) search that doesn't use dlx and takes its groups from the papers' tables, not from the solver.
 - **Every painting is checked.** Each colouring found, for every removal, is tested again: no two green rays may be perpendicular, going by the coordinates, and each basis must hold exactly one.
 
-`go test -short` runs the separate search for only one removal. It is the slowest test here, at over a second with `-race`.
+`go test -short` runs the separate search for only one removal. The full run tries them all.
 
 ## Limits
 
 These sets are small: all 33 removals together took about 20 milliseconds on the machine used to write this. The command only checks its three built-in sets. It doesn't read a set from you, and it doesn't find new ones.
 
-A zero from a search is a proof only if you trust the program. It gives no short reason a person could read, except where a counting argument like the one above exists.
+A zero from a search is a proof only if you trust the program. On its own it gives no short reason a person could read. A counting argument like the one above gives such a reason for the sets in four dimensions. For the 33 rays, table 2 of Gould and Aravind is a proof in seven steps, short enough to follow by hand, that uses the symmetry of a cube to cut down the cases.
 
 The rays and the claim that they are the rays of Peres were compared with the papers listed below, which restate them. The tables of Peres's own 1991 paper were not checked directly.
 

@@ -13,11 +13,11 @@ import (
 type surd struct{ a, b int }
 
 var (
-	zero     = surd{}
-	one      = surd{a: 1}
-	minus    = surd{a: -1}
-	root     = surd{b: 1}
-	negative = surd{b: -1}
+	zero         = surd{}
+	one          = surd{a: 1}
+	minus        = surd{a: -1}
+	root         = surd{b: 1}
+	negativeRoot = surd{b: -1}
 )
 
 func (x surd) plus(y surd) surd {
@@ -33,7 +33,7 @@ func (x surd) String() string {
 	switch x {
 	case root:
 		return "√2"
-	case negative:
+	case negativeRoot:
 		return "-√2"
 	}
 	if x.b == 0 {
