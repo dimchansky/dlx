@@ -159,7 +159,7 @@ If the real result is `2222`, the coupon `0222` has one match wrong. Other resul
 
 `-count`, `-hat` and `-play` can't be combined. `-help` prints the usage text to standard error.
 
-Results go to standard output. Error messages go to standard error and start with `hamming:`.
+Results go to standard output. Error messages go to standard error, and most start with `hamming:`.
 
 | Exit code | Meaning                                       |
 |-----------|-----------------------------------------------|
@@ -269,7 +269,7 @@ Every other length the command accepts has none. Any of the 240 codes gives the 
 
 - **Every code is checked against the definition.** The tests count, for each word, the code words at distance 0 or 1, without using the matrix.
 - **The two totals are rebuilt with no search.** [Hamming's recipe](#hammings-recipe) gives the same 240 codes the search finds, and a [recipe for the football pool](#a-recipe-for-the-football-pool) gives the same 72.
-- **Nothing is missing.** A separate search, with no matrix and no neighbourhoods, [counts the codes another way](#counting-the-codes-another-way) and gets the same totals.
+- **Nothing is missing.** A separate search, with no matrix and no neighbourhoods, [counts the codes another way](#counting-the-codes-another-way) and gets the same totals, for all five rows of the [table](#number-of-codes).
 - **The hat game.** The tests play all 128 patterns with each of the 240 codes and get 112 wins, 16 losses, 112 right guesses and 112 wrong guesses every time. For each of the 240 codes, they check that no prisoner's answer ever depends on their own hat. They also check that the team loses when everybody passes, and when a right guess comes with a wrong one. For three prisoners, they try all 531441 fixed plans, with no code involved, and the best one wins 6 of 8 patterns, as the plan here does.
 - **The shortcut for impossible lengths.** The tests confirm that the matrix itself has no exact cover for lengths 2, 4, 5, 6, 8, 9, 10 and 12 in base 2, and for lengths 2, 3, 5 and 6 in base 3.
 
@@ -304,7 +304,7 @@ Take the nine words made of c, d, c + d and c - d, where c and d are 0, 1 or 2. 
 
 ### Counting the codes another way
 
-The separate search tries sets of words at least 3 apart, and finds 30 codes that contain `0000000` and 8 that contain `0000`.
+The separate search tries sets of words at least 3 apart, and finds 30 codes that contain `0000000` and 8 that contain `0000`. For the three shortest rows of the [table](#number-of-codes) it finds 1 code each.
 
 To **shift** a code, add one fixed word to all of its words, digit by digit with wrap-around, so that `0111` shifted by `0012` is `0120`. Two words differ in the same places before and after, so the result is another code. Any word can be shifted onto any other, so every word lies in equally many codes: 30 in base 2 and 8 in base 3.
 

@@ -97,7 +97,7 @@ func TestRun(t *testing.T) {
 		{name: "length too large", args: []string{"-n", "15"}, wantCode: 2, wantStderr: "invalid length 15: want 1 to 14 for base 2"},
 		{name: "ternary length too large", args: []string{"-base", "3", "-n", "9"}, wantCode: 2, wantStderr: "invalid length 9: want 1 to 8 for base 3"},
 		{name: "stray argument", args: []string{"extra"}, wantCode: 2, wantStderr: `unexpected argument "extra"`},
-		{name: "unknown flag", args: []string{"-x"}, wantCode: 2, wantStderr: "flag provided but not defined"},
+		{name: "unknown flag", args: []string{"-x"}, wantCode: 2, wantStderr: "flag provided but not defined: -x\nusage: hamming"},
 		{name: "hat with count", args: []string{"-hat", "-count"}, wantCode: 2, wantStderr: "use only one of"},
 		{name: "hat with play", args: []string{"-hat", "-play", "0000000"}, wantCode: 2, wantStderr: "use only one of"},
 		{name: "play with count", args: []string{"-count", "-play", "0000000"}, wantCode: 2, wantStderr: "use only one of"},
@@ -124,6 +124,42 @@ func TestRun(t *testing.T) {
 			}
 			if !strings.Contains(stderr.String(), tt.wantStderr) {
 				t.Errorf("stderr %q does not contain %q", stderr.String(), tt.wantStderr)
+			}
+		})
+	}
+}
+
+// TestRun_FlagErrors pins the exception to the hamming: prefix that the README
+// states: the flag package writes its own parse errors, followed by the usage text.
+func TestRun_FlagErrors(t *testing.T) {
+	t.Parallel()
+
+	tests := []struct {
+		name string
+		args []string
+		want string
+	}{
+		{name: "unknown flag", args: []string{"-x"}, want: "flag provided but not defined: -x\n"},
+		{name: "negative limit", args: []string{"-limit", "-1"}, want: `invalid value "-1" for flag -limit: `},
+		{name: "length not a number", args: []string{"-n", "abc"}, want: `invalid value "abc" for flag -n: `},
+	}
+	for _, tt := range tests {
+		tt := tt
+		t.Run(tt.name, func(t *testing.T) {
+			t.Parallel()
+
+			var stdout, stderr bytes.Buffer
+			if code := run(tt.args, &stdout, &stderr); code != 2 {
+				t.Errorf("exit code %d, want 2", code)
+			}
+			if stdout.Len() != 0 {
+				t.Errorf("unexpected stdout: %s", stdout.String())
+			}
+			if !strings.HasPrefix(stderr.String(), tt.want) {
+				t.Errorf("stderr %q does not start with %q", stderr.String(), tt.want)
+			}
+			if !strings.Contains(stderr.String(), "usage: hamming") {
+				t.Errorf("stderr %q has no usage text", stderr.String())
 			}
 		})
 	}

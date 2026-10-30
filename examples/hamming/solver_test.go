@@ -84,17 +84,15 @@ func TestSolve_Totals(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			t.Parallel()
 
-			codes := 0
+			if codes := len(collect(t, tt.base, tt.length)); codes != tt.wantCodes {
+				t.Errorf("found %d codes, want %d", codes, tt.wantCodes)
+			}
 			solve(tt.base, tt.length, func(code []int) bool {
-				codes++
 				if len(code) != tt.wantWords {
 					t.Errorf("code has %d words, want %d", len(code), tt.wantWords)
 				}
 				return false
 			})
-			if codes != tt.wantCodes {
-				t.Errorf("found %d codes, want %d", codes, tt.wantCodes)
-			}
 		})
 	}
 }
@@ -356,17 +354,21 @@ func TestCountCodesWithZero(t *testing.T) {
 		name         string
 		base, length int
 		size         int
+		slow         bool // skipped with -short
 		wantWithZero int
 		wantCodes    int
 	}{
-		{name: "binary length 7", base: 2, length: 7, size: 16, wantWithZero: 30, wantCodes: 240},
+		{name: "binary length 1", base: 2, length: 1, size: 1, wantWithZero: 1, wantCodes: 2},
+		{name: "binary length 3", base: 2, length: 3, size: 2, wantWithZero: 1, wantCodes: 4},
+		{name: "binary length 7", base: 2, length: 7, size: 16, slow: true, wantWithZero: 30, wantCodes: 240},
+		{name: "ternary length 1", base: 3, length: 1, size: 1, wantWithZero: 1, wantCodes: 3},
 		{name: "ternary length 4", base: 3, length: 4, size: 9, wantWithZero: 8, wantCodes: 72},
 	}
 	for _, tt := range tests {
 		tt := tt
 		t.Run(tt.name, func(t *testing.T) {
 			t.Parallel()
-			if tt.base == 2 && testing.Short() {
+			if tt.slow && testing.Short() {
 				t.Skip("slow: tries every set of far apart words")
 			}
 
