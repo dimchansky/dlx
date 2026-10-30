@@ -14,6 +14,8 @@ For n=3, one answer is:
 
 The two 1s have one number between them, the two 2s have two, and the two 3s have three. Having k numbers between them puts the two copies of k exactly k+1 places apart. Counting positions from 0, the 3s sit at positions 0 and 4.
 
+The puzzle is interesting because such a simple rule behaves so unevenly: n=3 and n=4 have an answer, while n=5 and n=6 have none at all.
+
 It is a good example here because its matrix is tiny, which leaves room for a new idea: removing mirror images from the matrix itself.
 
 ## How it becomes a matrix
@@ -82,7 +84,17 @@ The trick needs a number with a middle cell. An even number doesn't have one: it
 
 ## How a solution decodes back
 
-Each row of a solution lists three columns: the number, then its two positions, in the order they were given to `AddRow`. [solver.go](solver.go) writes the number into both positions, and the arrangement is complete.
+dlx reports column numbers, so the labels in the table above need numbers too. Counting from 0, the numbers 1 to n are columns 0 to n-1, and position p is column n+p.
+
+Each row of a solution lists three columns, in the order they were given to `AddRow`: the number, then its two positions. For n=3, the row `3 at 0, 4` is `AddRow(2, 3, 7)`, and it comes back from dlx as `[2 3 7]`:
+
+| Column | Calculation | Meaning |
+|--------|-------------|---------|
+| 2 | 2 + 1 | the number 3 |
+| 3 | 3 - 3 | position 0 |
+| 7 | 7 - 3 | position 4 |
+
+[solver.go](solver.go) writes the number into both positions, and the arrangement is complete.
 
 ## Number of arrangements
 
@@ -104,7 +116,7 @@ Arrangements exist only when dividing n by 4 leaves a remainder of 0 or 3, as th
 
 - `-n size` sets the largest number, 7 by default, from 1 to 64. That cap only stops the program building a huge matrix: sizes near it are not practical.
 - `-limit n` sets how many arrangements to print, 1 by default. Zero prints all of them.
-- `-count` goes through every arrangement and prints the total instead, so `-limit` has no effect with it. The total grows quickly: n=12 took under a second on the machine used to write this, and n=15 took about two minutes. Large n can take very long even when no arrangement exists, because the search has to rule them all out.
+- `-count` goes through every arrangement and prints the total instead, so `-limit` has no effect with it. The total grows quickly: n=12 took under a second on the machine used to write this, and n=15 took a minute or two. Large n can take very long even when no arrangement exists, because the search has to rule them all out.
 - `-mirrors` counts an arrangement and its reversal as two.
 
 `-help` prints the usage text to standard error.

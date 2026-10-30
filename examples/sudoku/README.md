@@ -93,9 +93,11 @@ dlx knows each column of its matrix only by a number, so each fact needs a numbe
 | Column has digit | 162 to 242 | `162 + column*9 + digit` |
 | Box has digit | 243 to 323 | `243 + box*9 + digit` |
 
+These formulas work because each row of cells takes a fresh block of nine numbers: in `row*9 + column`, row 0 uses 0 to 8, row 1 uses 9 to 17, and so on, so no two cells share a number. The other three families use the same idea, then add 81, 162 or 243 to start after the family before.
+
 The box number comes from `box = row/3*3 + column/3`. Each division is rounded down, and this happens before the multiplication, so the two 3s don't cancel: `row/3*3` is 0, 3 or 6, the number of the leftmost box in that row of boxes. For `row` 4 and `column` 7, `row/3` is 1 and `column/3` is 2, so the box is 1\*3 + 2 = 5. This gives boxes numbered from 0 to 8, one less than in the picture above.
 
-For example, the solved board above has the digit 5 at the third row and seventh column. That is `row` 2, `column` 6 and `digit` 4. It lies in box 0\*3 + 2 = 2, so its move is `AddRow(24, 103, 220, 265)`: `row` 2, `column` 6 and `digit` 4. It lies in box 0\*3 + 2 = 2, so its move is `AddRow(24, 103, 220, 265)`:
+For example, the solved board above has the digit 5 at the third row and seventh column. That is `row` 2, `column` 6 and `digit` 4. It lies in box 0\*3 + 2 = 2, so its move is `AddRow(24, 103, 220, 265)`:
 
 | Family | Calculation | Fact number |
 |--------|-------------|-------------|
@@ -111,7 +113,7 @@ A solution is a list of 81 moves, one per cell, each given by its four fact numb
 - The first number is the cell: 24 means cell 24, counting left to right and top to bottom from 0.
 - The second number gives the digit. Dividing 103 by 9 gives 11, with a remainder of 4. The remainder is the digit in the code's numbering, so the real digit is 4 + 1 = 5.
 
-This works because `AddRow` keeps the numbers in the order given, and because the "row has digit" numbers go up in blocks of nine.
+This works because `AddRow` keeps the numbers in the order given, and because the "row has digit" numbers go up in blocks of nine. The family starts at 81, which is itself a multiple of 9, and `row*9` is a multiple of 9 too. So only `digit`, which is below 9, is left over as the remainder.
 
 ## Installation
 

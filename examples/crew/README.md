@@ -24,6 +24,8 @@ E  450 F4
 L 1500 F1 F2 F3 F4
 ```
 
+The first line lists the flights. Each line after it is one pairing: its name, its cost, and the flights it covers. So pairing A costs 900 and covers F1 and F2. The [Input](#input) section has the full rules.
+
 ## How it becomes a matrix
 
 The mapping is direct, and it's the simplest one in these examples. **One column of the matrix is one flight.** **One row of the matrix is one candidate pairing**, with a 1 under each flight it covers. The cost isn't in the matrix at all, so it is shown here only in the row label:
@@ -37,7 +39,7 @@ The mapping is direct, and it's the simplest one in these examples. **One column
 | E (450)        | 0 | 0 | 0 | 1 |
 | L (1500)       | 1 | 1 | 1 | 1 |
 
-Picking rows so that each column has exactly one 1 is the same as staffing each flight exactly once. This matrix has three exact covers, and adding up each one's costs gives the ranking:
+Picking rows so that each column has exactly one 1 is the same as staffing each flight exactly once. A flight that no pairing covers would leave its column empty, so there would be no rosters at all, and the command reports that. This matrix has three exact covers, and adding up each one's costs gives the ranking:
 
 | Roster  | Sum                | Total |
 |---------|--------------------|-------|
@@ -111,8 +113,6 @@ That means listing every roster, which is fine for a few dozen candidates and us
 ## How a solution decodes back
 
 Each row of a solution is a list of flights. The solver uses that list as a key to look up the cheapest pairing with those flights, then adds its cost to the roster's total.
-
-The number of solutions depends on the data. A flight that no pairing covers leaves its column empty, so there are no rosters at all, and that is reported as such.
 
 ## Installation
 

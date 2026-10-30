@@ -42,10 +42,10 @@ dlx requires every column of the matrix to be covered exactly once, so diagonals
 | Row         | A queen on one square, covering its four lines        | 16            | 64            |
 | Row         | A slack row for one diagonal or antidiagonal          | 14            | 30            |
 
-Rows and columns are counted from 0. All the squares of a diagonal share a simple number, which gives it a name:
+Board rows and columns are counted from 0. All the squares of a diagonal share a simple number, which gives it a name:
 
-- A **diagonal** runs from bottom left to top right, and its squares have the same value of row+column.
-- An **antidiagonal** runs from top left to bottom right, and its squares have the same value of row-column. Adding n-1 keeps the number from being negative.
+- A **diagonal** runs from bottom left to top right, and its squares have the same value of row+column. One step down and to the left adds 1 to the row and takes 1 from the column, so the sum stays the same.
+- An **antidiagonal** runs from top left to bottom right, and its squares have the same value of row-column. One step down and to the right adds 1 to both, so the difference stays the same. Adding n-1 keeps the number from being negative.
 
 For n=4, these are the numbers on each square:
 
@@ -76,7 +76,7 @@ The full matrix for n=4 has 22 columns and 30 rows. This table shows only the 10
 | slack a3 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 1 | 0 | 0 | 0 |
 | slack a6 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 1 |
 
-Two queens on the same diagonal would both have a 1 in that diagonal's column, so they can't both be picked. That single rule is the whole "no attacks" condition.
+This table shows a solution, so nothing in it clashes. Two queens on the same diagonal would both have a 1 in that diagonal's column, so they can't both be picked. For example, the queens r0 c1 and r1 c0 attack each other, and both rows have a 1 under `d1`, because 0+1 and 1+0 are both 1. That single rule is the whole "no attacks" condition.
 
 Two facts make slack rows safe here, and both must hold whenever you use the recipe:
 
@@ -85,7 +85,9 @@ Two facts make slack rows safe here, and both must hold whenever you use the rec
 
 ## How a solution decodes back
 
-[solver.go](solver.go) skips the rows with one column, because those are slack rows. In each remaining row, the first column is the board row and the second is the board column plus n, since the column family comes after the n row columns. That is enough to draw the board.
+dlx reports column numbers, not the labels used above. The families are laid out one after another: `r` first, then `c` from n, `d` from 2n, and `a` from 4n-1.
+
+[solver.go](solver.go) skips the rows with one column, because those are slack rows. In each remaining row, the first column is the board row and the second is the board column plus n, since the column family comes after the n row columns. For n=4, the queen r1 c3 comes back as `[1 7 12 16]`: the 1 is board row 1, and 7 - 4 = 3 is board column 3. The last two numbers are its diagonals, `d4` and `a1`, which the decoder doesn't need. That is enough to draw the board.
 
 ## Installation
 
