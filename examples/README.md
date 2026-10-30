@@ -45,9 +45,9 @@ Picking Ann and Ben fails, because both would cook. Picking Ann and Eve fails, b
 
 ## How dlx searches
 
-dlx tries choices and backs out of dead ends, as you would with a pencil and eraser. At each step it takes the column with the fewest rows left, because that is the most constrained requirement, and on a tie it takes the leftmost. It tries each row of that column in turn. Picking a row removes every other row that clashes with it.
+dlx tries choices and backs out of dead ends, as you would with a pencil and eraser. This way of searching is called backtracking. At each step it takes the column with the fewest rows left, because that is the most constrained requirement, and on a tie it takes the leftmost. It tries each row of that column in turn. Picking a row removes every other row that clashes with it.
 
-All four chores start with two offers each, so the search starts with wash, and this is the whole search for the table above:
+All four chores start with two offers each, so the search starts with wash. Trying Ann leads to the solution Ann, Cat. Backing out and trying Dan leads to the solution Dan, Ben, Eve. This is the whole search for the table above:
 
 ```mermaid
 flowchart TD
@@ -60,7 +60,7 @@ flowchart TD
     G --> H["Everything is covered: solution Dan, Ben, Eve"]
 ```
 
-Undoing a choice is the expensive part of most searches. The "dancing links" of the name are a way of storing the matrix so that undoing is very cheap. You don't need the details to use dlx, and Knuth's paper ["Dancing Links"](https://arxiv.org/abs/cs/0011047) has them.
+A search undoes choices constantly, so undoing has to be cheap. The "dancing links" of the name are a way of storing the matrix so that undoing is very cheap. You don't need the details to use dlx, and Knuth's paper ["Dancing Links"](https://arxiv.org/abs/cs/0011047) has them.
 
 ## From a problem to a matrix and back
 
@@ -81,7 +81,7 @@ flowchart LR
 
 Most of the thinking is in steps 1 and 2. Once the matrix is right, the rest is short.
 
-In code, columns are numbered from 0, and each `AddRow` call lists the columns where that row has a 1:
+In code, columns are numbered from 0, and each `AddRow` call lists the columns where that row has a 1. `Solve` then calls your function once per exact cover:
 
 ```go
 m := dlx.NewMatrix(4)   // wash=0, cook=1, sweep=2, shop=3
@@ -90,9 +90,14 @@ m.AddRow(1, 2)          // Ben
 m.AddRow(2, 3)          // Cat
 m.AddRow(0)             // Dan
 m.AddRow(3)             // Eve
+
+m.Solve(dlx.SolutionAccepterFunc(func(cover [][]int) bool {
+    fmt.Println(cover)  // prints each exact cover
+    return false        // false means keep searching
+}))
 ```
 
-dlx reports a solution as the column lists of the picked rows, such as `[[0 1] [2 3]]`, and not as "rows 1 and 3". So the columns of a row must be enough to tell you what that row meant. Each example chooses its columns with this in mind, and each README has a section on how a solution is decoded.
+dlx reports a solution as the column lists of the picked rows, such as `[[0 1] [2 3]]`, and not as "Ann and Cat". So the columns of a row must be enough to tell you what that row meant. Each example chooses its columns with this in mind, and each README has a section on how a solution is decoded.
 
 ## "At most once": slack rows
 
@@ -120,7 +125,7 @@ Slack rows also have a cost. The search treats an optional column like any other
 
 ## How to read the example READMEs
 
-Each one has the same order, and you can stop when you have what you need:
+Each one has roughly the same order, and you can stop when you have what you need:
 
 1. **The problem**, with a small example.
 2. **How it becomes a matrix**: what one column means, what one row means, and a small matrix drawn as a table. This is the main thing to read.

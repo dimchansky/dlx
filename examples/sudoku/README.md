@@ -22,13 +22,31 @@ The boxes are numbered like this, left to right and top to bottom:
 7 7 7 | 8 8 8 | 9 9 9
 ```
 
+Here is the sample board used throughout this page, with `_` for a blank, and one way to fill it in:
+
+```
+The board                One way to fill it
+
+_ 8 _ | _ _ 9 | 7 4 3    2 8 6 | 1 5 9 | 7 4 3
+_ 5 _ | _ _ 8 | _ 1 _    4 5 7 | 6 3 8 | 2 1 9
+_ 1 _ | _ _ _ | _ _ _    3 1 9 | 7 4 2 | 5 6 8
+------+-------+------    ------+-------+------
+8 _ _ | _ _ 5 | _ _ _    8 2 1 | 9 6 5 | 4 3 7
+_ _ _ | 8 _ 4 | _ _ _    6 9 3 | 8 7 4 | 1 2 5
+_ _ _ | 3 _ _ | _ _ 6    7 4 5 | 3 2 1 | 8 9 6
+------+-------+------    ------+-------+------
+_ _ _ | _ _ _ | _ 7 _    5 6 8 | 2 1 3 | 9 7 4
+_ 3 _ | 5 _ _ | _ 8 _    1 3 4 | 5 9 7 | 6 8 2
+9 7 2 | 4 _ _ | _ 5 _    9 7 2 | 4 8 6 | 3 5 1
+```
+
 Sudoku is the standard introduction to exact cover because nearly every rule already says "exactly once".
 
 ## How it becomes a matrix
 
-**One row of the matrix is one possible move:** "put digit d in the cell at row r, column c". To avoid confusion, a matrix row is called a *move* below, and "row" and "column" on their own mean the board.
+**One row of the matrix is one possible move:** "put digit d in the cell at row r, column c". **One column of the matrix is one fact that must end up true exactly once.** To avoid confusion, a matrix row is called a *move* below, a matrix column is called a *fact*, and "row" and "column" on their own always mean the board.
 
-**One column of the matrix is one fact that must end up true exactly once.** There are four families, with 81 facts each:
+There are four families, with 81 facts each:
 
 | Family | Example fact | How many |
 |--------|--------------|----------|
@@ -37,7 +55,7 @@ Sudoku is the standard introduction to exact cover because nearly every rule alr
 | Each column has each digit | "column 3 has a 2" | 9 x 9 = 81 |
 | Each box has each digit | "box 1 has a 2" | 9 x 9 = 81 |
 
-That gives 324 columns. Every move makes exactly four facts true, one from each family:
+That gives 324 facts. Every move makes exactly four facts true, one from each family:
 
 ```mermaid
 flowchart LR
@@ -47,7 +65,7 @@ flowchart LR
     M --> D["Box 1 has a 2"]
 ```
 
-The whole matrix is too big to draw, so here is a small part of it. It shows three moves and the nine facts they touch:
+The whole matrix is too big to draw, so here is a small part of it. Take the top left of the sample board, where the cells at row 1, column 1 and row 1, column 3 are both blank. This table shows three moves for those cells and the nine facts they touch, with r1c3 short for "row 1, column 3":
 
 | Move | cell r1c1 | cell r1c3 | row 1 has 2 | row 1 has 6 | col 1 has 2 | col 1 has 6 | col 3 has 2 | box 1 has 2 | box 1 has 6 |
 |------|:-:|:-:|:-:|:-:|:-:|:-:|:-:|:-:|:-:|
@@ -55,32 +73,32 @@ The whole matrix is too big to draw, so here is a small part of it. It shows thr
 | 6 at r1c1 | 1 | 0 | 0 | 1 | 0 | 1 | 0 | 0 | 1 |
 | 2 at r1c3 | 0 | 1 | 1 | 0 | 0 | 0 | 1 | 1 | 0 |
 
-The rules of Sudoku appear as clashes between rows of the matrix:
+The rules of Sudoku appear as clashes between moves:
 
 - The first two moves both have a 1 under "cell r1c1". Only one can be picked, so a cell can't hold two digits.
 - The first and third moves both have a 1 under "row 1 has 2" and "box 1 has 2". Only one can be picked, so a digit can't appear twice in a row or box.
 
-A blank cell adds nine moves, one per digit. A cell that already holds a digit adds only one move, which is how the given digits enter the problem. An empty board would have 9 x 9 x 9 = 729 moves. The sample board [sudoku.txt](sudoku.txt) has 24 given digits and 57 blanks, so it has 24 + 57 x 9 = 537.
+A blank cell adds nine moves, one per digit. A cell that already holds a digit adds only one move, which is how the given digits enter the problem. An empty board would have 9 x 9 x 9 = 729 moves. The sample board has 24 given digits and 57 blanks, so it has 24 + 57 x 9 = 537.
 
 Moves are added for every digit in a blank cell, even digits that visibly clash with a given. The search rules those out at once, so the code stays short.
 
-### The column numbers
+### The fact numbers
 
-The code counts rows, columns, boxes and digits from 0, so its row 0 is the top row and its digit 1 means the digit 2. The four families are laid out one after another:
+dlx knows each column of its matrix only by a number, so each fact needs a number. The code counts rows, columns, boxes and digits from 0, so its row 0 is the top row and its digit 1 means the digit 2. The four families are laid out one after another:
 
-| Family | Column numbers | Formula |
+| Family | Fact numbers | Formula |
 |--------|----------------|---------|
 | Cell filled | 0 to 80 | `row*9 + column` |
 | Row has digit | 81 to 161 | `81 + row*9 + digit` |
 | Column has digit | 162 to 242 | `162 + column*9 + digit` |
 | Box has digit | 243 to 323 | `243 + box*9 + digit` |
 
-The box number comes from `box = row/3*3 + column/3`, where each division is rounded down. This gives boxes numbered from 0 to 8.
+The box number comes from `box = row/3*3 + column/3`. Each division is rounded down, and this happens before the multiplication, so the two 3s don't cancel: `row/3*3` is 0, 3 or 6, the number of the leftmost box in that row of boxes. For `row` 4 and `column` 7, `row/3` is 1 and `column/3` is 2, so the box is 1\*3 + 2 = 5. This gives boxes numbered from 0 to 8, one less than in the picture above.
 
-For example, the digit 5 at the third row and seventh column has `row` 2, `column` 6 and `digit` 4. It lies in box 0\*3 + 2 = 2, so its move is `AddRow(24, 103, 220, 265)`:
+For example, the solved board above has the digit 5 at the third row and seventh column. That is `row` 2, `column` 6 and `digit` 4. It lies in box 0\*3 + 2 = 2, so its move is `AddRow(24, 103, 220, 265)`: `row` 2, `column` 6 and `digit` 4. It lies in box 0\*3 + 2 = 2, so its move is `AddRow(24, 103, 220, 265)`:
 
-| Family | Calculation | Column |
-|--------|-------------|--------|
+| Family | Calculation | Fact number |
+|--------|-------------|-------------|
 | Cell filled | 2\*9 + 6 | 24 |
 | Row has digit | 81 + 2\*9 + 4 | 103 |
 | Column has digit | 162 + 6\*9 + 4 | 220 |
@@ -88,12 +106,12 @@ For example, the digit 5 at the third row and seventh column has `row` 2, `colum
 
 ## How a solution decodes back
 
-A solution is a list of 81 moves, one per cell, each given by its four column numbers. Only the first two are needed. For the move above, the list is `[24 103 220 265]`:
+A solution is a list of 81 moves, one per cell, each given by its four fact numbers. Only the first two are needed. For the move above, the list is `[24 103 220 265]`:
 
 - The first number is the cell: 24 means cell 24, counting left to right and top to bottom from 0.
 - The second number gives the digit. Dividing 103 by 9 gives 11, with a remainder of 4. The remainder is the digit in the code's numbering, so the real digit is 4 + 1 = 5.
 
-This works because `AddRow` keeps the columns in the order given, and because the "row has digit" numbers go up in blocks of nine.
+This works because `AddRow` keeps the numbers in the order given, and because the "row has digit" numbers go up in blocks of nine.
 
 ## Installation
 
@@ -101,7 +119,7 @@ This works because `AddRow` keeps the columns in the order given, and because th
 
 ## Input
 
-A board is nine lines of nine cells, with whitespace between the cells. A cell is a digit from 1 to 9, or `_` or `0` for a blank:
+A board is nine lines of nine cells, with whitespace between the cells. A cell is a digit from 1 to 9, or `_` or `0` for a blank. This is the sample board as the file [sudoku.txt](sudoku.txt) holds it:
 
 ```
 _ 8 _ _ _ 9 7 4 3
@@ -129,7 +147,7 @@ _ 3 _ 5 _ _ _ 8 _
 
 `-help` prints the usage text to standard error.
 
-Solutions go to standard output. Errors go to standard error, prefixed `sudoku:`, except for the flag package's own message about an invalid flag.
+Solutions go to standard output. Error messages go to standard error, and most start with `sudoku:`.
 
 | Exit code | Meaning                                                        |
 |-----------|----------------------------------------------------------------|
@@ -137,11 +155,9 @@ Solutions go to standard output. Errors go to standard error, prefixed `sudoku:`
 | 1         | The board has no solutions                                     |
 | 2         | Invalid usage, invalid input, or a read or write failure       |
 
-If standard output is a closed pipe, as with `sudoku < sudoku.txt | true`, the command is killed by SIGPIPE instead of exiting with code 2. Shells report that as 141.
-
 ## Examples
 
-These commands use [sudoku.txt](sudoku.txt), the board shown above. Run them from this directory. A published Sudoku normally has one solution, but this board has too few digits to fix the answer, and it has 8 solutions.
+These commands use [sudoku.txt](sudoku.txt), the board shown above. Run them from this directory. A published Sudoku normally has one solution, but the digits on this board don't fix the answer, and it has 8 solutions.
 
 Find the first solution:
 

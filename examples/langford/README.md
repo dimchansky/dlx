@@ -4,7 +4,7 @@ A command-line solver for Langford pairings, written as an example of using pack
 
 ## The problem
 
-Take two copies of each number from 1 to n, and arrange them in a row. The rule: the two copies of a number k must have exactly k other numbers between them.
+Take two copies of each number from 1 to n, and arrange them in a line. The rule: the two copies of a number k must have exactly k other numbers between them.
 
 For n=3, one answer is:
 
@@ -12,7 +12,7 @@ For n=3, one answer is:
 
 ![The arrangement 3 1 2 1 3 2, with an arc joining the two copies of each number](arcs.svg)
 
-The two 1s have one number between them, the two 2s have two, and the two 3s have three. Positions are counted from 0, so the copies of k stand k+1 places apart: 3 sits at positions 0 and 4.
+The two 1s have one number between them, the two 2s have two, and the two 3s have three. Having k numbers between them puts the two copies of k exactly k+1 places apart. Counting positions from 0, the 3s sit at positions 0 and 4.
 
 It is a good example here because its matrix is tiny, which leaves room for a new idea: removing mirror images from the matrix itself.
 
@@ -20,11 +20,13 @@ It is a good example here because its matrix is tiny, which leaves room for a ne
 
 **One column of the matrix is one thing that must happen exactly once:** a number gets placed, or a position gets filled. **One row of the matrix is one number placed at one pair of positions.** A row has three 1s: the number, its first position and its second position.
 
-| Matrix part | Meaning                                                  | Count for n=3 | Count for n=7             |
-|-------------|----------------------------------------------------------|---------------|---------------------------|
-| Column      | A number, which must be placed exactly once              | 3             | 7                         |
-| Column      | A position, which must be filled exactly once            | 6             | 14                        |
-| Row         | A number placed at one pair of positions                 | 9, or 7 without mirrors | 63, or 57 without mirrors |
+| Matrix part | Meaning                                                  | Count for n=3 | Count for n=7 |
+|-------------|----------------------------------------------------------|---------------|---------------|
+| Column      | A number, which must be placed exactly once              | 3             | 7             |
+| Column      | A position, which must be filled exactly once            | 6             | 14            |
+| Row         | A number placed at one pair of positions                 | 9             | 63            |
+
+The section on [removing mirror images](#removing-mirror-images) below cuts those rows to 7 and 57.
 
 Here is the whole matrix for n=3:
 
@@ -65,7 +67,7 @@ Position:   0 1 2 3 4 5
 2 3 1 2 1 3       the 1s are at 2 and 4, so their middle cell is 3 (right half)
 ```
 
-The row has an even number of positions, 2n, so its centre lies between two cells, not on one. That means:
+The line has an even number of positions, 2n, so its centre lies between two cells, not on one. That means:
 
 1. The middle cell of the 1s is always in the left half or the right half, and never on the centre.
 2. Reading the arrangement backwards swaps left and right.
@@ -100,14 +102,14 @@ Arrangements exist only when dividing n by 4 leaves a remainder of 0 or 3, as th
 
     langford [-n size] [-limit n] [-count] [-mirrors]
 
-- `-n size` sets the largest number, 7 by default, from 1 to 64. That limit bounds memory: it is not a usable range.
+- `-n size` sets the largest number, 7 by default, from 1 to 64. That cap only stops the program building a huge matrix: sizes near it are not practical.
 - `-limit n` sets how many arrangements to print, 1 by default. Zero prints all of them.
-- `-count` enumerates every arrangement and prints the total instead, so `-limit` has no effect with it. The total grows quickly: n=12 took under a second on the machine used to write this, and n=15 took about two minutes. Large n can take very long even when no arrangement exists, because the search has to rule them all out.
+- `-count` goes through every arrangement and prints the total instead, so `-limit` has no effect with it. The total grows quickly: n=12 took under a second on the machine used to write this, and n=15 took about two minutes. Large n can take very long even when no arrangement exists, because the search has to rule them all out.
 - `-mirrors` counts an arrangement and its reversal as two.
 
 `-help` prints the usage text to standard error.
 
-Arrangements and totals go to standard output. Errors go to standard error, prefixed `langford:`, except for the flag package's own message about an invalid flag.
+Arrangements and totals go to standard output. Error messages go to standard error, and most start with `langford:`.
 
 | Exit code | Meaning                                                 |
 |-----------|---------------------------------------------------------|
@@ -154,10 +156,10 @@ Output, on standard error:
 
 ## How the results are checked
 
-The tests check these totals and compare every arrangement with an independent backtracking search. They also confirm that the reduced matrix finds half as many arrangements, one of each pair, and that no arrangement is its own mirror.
+The tests check these totals and compare every arrangement with a separate [backtracking](../README.md#how-dlx-searches) search that doesn't use dlx. They also confirm that the reduced matrix finds half as many arrangements, one of each pair, and that no arrangement is its own mirror.
 
 `go test` checks every total. `go test -short` skips n=11 and n=12, which are much slower with `-race`. Use `-short` with `-race`.
 
 ## Limits
 
-The number of arrangements grows very fast, so `-count` is practical only for small n, and `-n 64` is a memory bound and not a size this search can finish.
+The number of arrangements grows very fast, so `-count` is practical only for small n, and `-n 64` is only a cap on the matrix and not a size this search can finish.

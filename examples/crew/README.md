@@ -4,11 +4,11 @@ A command-line solver for a small crew pairing problem, written as an example of
 
 ## The problem
 
-An airline must staff every flight of the day. A **pairing** is a sequence of flights that one crew can work, and it has a cost, such as pay and hotels. A set of pairings that staffs the whole day is called a **roster** here. The task is to pick pairings so that every flight is flown by exactly one crew, at the lowest total cost.
+An airline must staff every flight of the day. A **pairing** is a set of flights that one crew can work, and it has a cost, such as pay and hotels. A set of pairings that staffs the whole day is called a **roster** here. The task is to pick pairings so that every flight is flown by exactly one crew, at the lowest total cost.
 
 This kind of problem is called **set partitioning**. To partition a set means to divide it into groups so that each item lands in exactly one group. Here the items are the flights, and the groups are the pairings. It appears wherever every job must be done exactly once: delivery routes, shifts, machine schedules.
 
-This is a simplified version. Real pairings span several days and must start and end at a crew base, and thousands of flights give vastly more candidate pairings than this search could enumerate.
+This is a simplified version. Real pairings span several days and must start and end at a crew base, and thousands of flights give vastly more candidate pairings than this search could list.
 
 ## A small example
 
@@ -44,6 +44,14 @@ Picking rows so that each column has exactly one 1 is the same as staffing each 
 | L       | 1500               | 1500  |
 | A, B    | 900 + 700          | 1600  |
 | D, C, E | 500 + 1000 + 450   | 1950  |
+
+This chart shows which pairing flies each flight in the three rosters. Every flight has exactly one pairing in every roster, which is what an exact cover means here:
+
+| Roster  | F1 | F2 | F3 | F4 |
+|---------|:-:|:-:|:-:|:-:|
+| L       | L | L | L | L |
+| A, B    | A | A | B | B |
+| D, C, E | D | C | C | E |
 
 For the sample file [pairings.txt](pairings.txt):
 
@@ -96,7 +104,7 @@ flowchart LR
     D --> E["Sort, cheapest first"]
 ```
 
-That is exhaustive, which is fine for a few dozen candidates and useless for a real airline's thousands. Real crew pairing uses integer programming, a family of methods that can steer toward a low cost without listing every solution.
+That means listing every roster, which is fine for a few dozen candidates and useless for a real airline's thousands. Real crew pairing uses integer programming, a family of methods that can steer toward a low cost without listing every solution.
 
 **dlx doesn't identify rows.** A solution lists each row's columns, not which row it was, so two pairings with the same flights look identical. Here that happens for A2 and D1 in [pairings.txt](pairings.txt): both cover F103 and F104, at costs of 700 and 680. The solver gives each set of flights a single matrix row and remembers the cheapest pairing for it, since a dearer one can't be in the cheapest roster. As a result, the rosters are counted by how they divide up the flights, and a dearer duplicate never appears, even with `-limit 0`.
 
@@ -135,7 +143,7 @@ A2  700 F103
 
 `-help` prints the usage text to standard error.
 
-Rosters go to standard output. Errors go to standard error, prefixed `crew:`, except for the flag package's own message about an invalid flag.
+Rosters go to standard output. Error messages go to standard error, and most start with `crew:`.
 
 | Exit code | Meaning                                                    |
 |-----------|------------------------------------------------------------|
@@ -168,7 +176,7 @@ Each line of a roster shows the pairing's name, its cost and its flights.
 
 ## How the results are checked
 
-The tests compare the cost of every roster with a brute-force search over subsets of the candidates, for the sample file and for 500 random problems.
+The tests compare the cost of every roster with a plain check that tries every combination of candidates, for the sample file and for 500 random problems.
 
 ## Limits
 

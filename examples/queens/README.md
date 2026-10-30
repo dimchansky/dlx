@@ -95,13 +95,13 @@ Two facts make slack rows safe here, and both must hold whenever you use the rec
 
     queens [-n size] [-limit n] [-count]
 
-- `-n size` sets the board size, 8 by default, from 1 to 64. That limit bounds memory: it is not a usable range, as the timings below show.
+- `-n size` sets the board size, 8 by default, from 1 to 64. That cap only stops the program building a huge matrix: sizes near it are not practical, as the timings below show.
 - `-limit n` sets how many solutions to print, 1 by default. Zero prints all of them.
-- `-count` enumerates every solution and prints the total instead, so `-limit` has no effect with it.
+- `-count` goes through every solution and prints the total instead, so `-limit` has no effect with it.
 
 `-help` prints the usage text to standard error.
 
-Solutions and totals go to standard output. Errors go to standard error, prefixed `queens:`, except for the flag package's own message about an invalid flag.
+Solutions and totals go to standard output. Error messages go to standard error, and most start with `queens:`.
 
 | Exit code | Meaning                                                 |
 |-----------|---------------------------------------------------------|
@@ -151,10 +151,10 @@ Output, on standard error:
 
 ## How the results are checked
 
-The tests check these totals and compare every solution with an independent backtracking search that doesn't use dlx.
+The tests check these totals and compare every solution with a separate [backtracking](../README.md#how-dlx-searches) search that doesn't use dlx.
 
 `go test` checks every total. `go test -short` skips n=11 and n=12, which are much slower with `-race`. Use `-short` with `-race`.
 
 ## Limits
 
-Slack rows have a cost. dlx branches on the column with the fewest remaining rows, and it treats optional diagonals like any other column, so it can spend its time deciding which diagonals stay empty. On the machine used to write this, the first solution for n=24 took under a second, while n=32 took nearly three minutes. The total for n=13 took about a second.
+Slack rows have a cost. dlx always tries the column with the fewest remaining rows next, and it treats optional diagonals like any other column, so it can spend its time deciding which diagonals stay empty. On the machine used to write this, the first solution for n=24 took under a second, while n=32 took nearly three minutes. The total for n=13 took about a second.

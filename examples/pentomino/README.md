@@ -69,9 +69,26 @@ The piece columns matter. Without them, three dominoes D1, D7 and D3 would also 
 | Orientations | 8 | 2 | 8 | 8 | 8 | 4 | 4 | 4 | 4 | 1 | 8 | 4 |
 | Rows for 6x10 | 256 | 56 | 248 | 248 | 304 | 128 | 152 | 128 | 128 | 32 | 248 | 128 |
 
+### One real row
+
+dlx knows columns only by number. The piece columns come first, numbered 0 to 11 in the order of the table above. The cell columns follow, numbered `12 + boardRow*10 + boardColumn` on a 6 by 10 board, with board rows and columns counted from 0.
+
+Take the X piece in the first tiling under [Examples](#examples). Its centre is at board row 1, column 2:
+
+| Part of the row | Calculation | Matrix column |
+|-----------------|-------------|---------------|
+| Piece X | tenth piece, counting from 0 | 9 |
+| Cell at board row 0, column 2 | 12 + 0\*10 + 2 | 14 |
+| Cell at board row 1, column 1 | 12 + 1\*10 + 1 | 23 |
+| Cell at board row 1, column 2 | 12 + 1\*10 + 2 | 24 |
+| Cell at board row 1, column 3 | 12 + 1\*10 + 3 | 25 |
+| Cell at board row 2, column 2 | 12 + 2\*10 + 2 | 34 |
+
+So this placement is the matrix row `AddRow(9, 14, 23, 24, 25, 34)`.
+
 ## How a solution decodes back
 
-A solution has 12 rows, one per piece, because the piece columns allow no more and no fewer. Each row lists its piece first and then its five cells, because dlx keeps columns in `AddRow` order. The decoder writes the piece's letter into those five cells.
+A solution has 12 rows, one per piece, because the piece columns allow no more and no fewer. Each row lists its piece first and then its five cells, because dlx keeps columns in `AddRow` order. For the row above, 9 means the piece X. Subtracting 12 from each other number gives 2, 11, 12, 13 and 22, which are places on the board counted left to right and top to bottom from 0. The decoder writes the letter X into those five places.
 
 ## Counting duplicates
 
@@ -79,7 +96,7 @@ Take a finished tiling and flip the board top to bottom. The result is still a v
 
 `Tilings` counts all of these as separate. `Distinct` counts each group once. For that to work, each group must have exactly four different members, and it does: the F piece has no symmetry and appears once, so no flip can leave a tiling unchanged.
 
-The code compares each tiling with its three images, and counts it as distinct only if it comes first in alphabetical order. The matrix could remove the images instead, by keeping only two orientations of the F piece, one for each group of orientations under the board's flips. This example wants the full total as well, so it keeps every row. The [Langford example](../langford) shows the other approach, which removes mirror images from the matrix itself.
+The code compares each tiling with its three images, and counts it as distinct only if it comes first in alphabetical order. The matrix could remove the images instead, by limiting the orientations of the F piece. This example wants the full total as well, so it keeps every row. The [Langford example](../langford) shows the other approach, which removes mirror images from the matrix itself.
 
 | Board | Tilings | Distinct |
 |-------|---------|----------|
@@ -102,11 +119,11 @@ Each `Tilings` total is four times its `Distinct` total, as the argument above p
 
 - `-size RxC` sets the board as rows and columns, 6x10 by default. Any size with 60 cells is accepted.
 - `-limit n` sets how many tilings to print, 1 by default. Zero prints all of them.
-- `-count` enumerates every tiling and prints the totals instead, so `-limit` has no effect with it. This took about 4 seconds for 6x10 on the machine used to write this, while finding the first tiling took milliseconds.
+- `-count` goes through every tiling and prints the totals instead, so `-limit` has no effect with it. This took about 4 seconds for 6x10 on the machine used to write this, while finding the first tiling took milliseconds.
 
 `-help` prints the usage text to standard error.
 
-Tilings and totals go to standard output. Errors go to standard error, prefixed `pentomino:`, except for the flag package's own message about an invalid flag.
+Tilings and totals go to standard output. Error messages go to standard error, and most start with `pentomino:`.
 
 | Exit code | Meaning                                                 |
 |-----------|---------------------------------------------------------|
@@ -152,7 +169,7 @@ Output:
 
 ## How the results are checked
 
-The tests check these totals against an independent backtracking search with its own table of pieces.
+The tests check these totals against a separate [backtracking](../README.md#how-dlx-searches) search that doesn't use dlx and has its own table of pieces.
 
 `go test` checks every total. `go test -short` skips the 4x15, 5x12 and 6x10 totals, which take seconds normally and minutes with `-race`. Use `-short` with `-race`.
 
