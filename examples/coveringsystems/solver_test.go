@@ -235,9 +235,10 @@ func TestSolve_PrimePowers(t *testing.T) {
 
 // TestSolve_MatchesBacktrack compares the two searches and tests each system
 // against the definition. The fingerprints add up to the same value in any
-// order, so the systems must match as well as their number. It also counts the
-// systems that splitting builds, which match a published sequence for n up to
-// 30, and which for n=30 are not all of them.
+// order, so equal sums make it overwhelmingly likely, though not certain, that
+// the systems match and not only their number. It also counts the systems that
+// splitting builds, which match a published sequence for n up to 30, and which
+// for n=30 are not all of them.
 func TestSolve_MatchesBacktrack(t *testing.T) {
 	t.Parallel()
 
@@ -368,21 +369,22 @@ func splittable(classes []class, residue, modulus int) bool {
 	}
 	for parts := 2; parts*modulus <= classes[0].modulus; parts++ {
 		next := parts * modulus
-		branches := make(map[int][]class)
+		branches := make([][]class, parts)
 		fits := true
 		for _, c := range classes {
 			if c.modulus%next != 0 {
 				fits = false
 				break
 			}
-			branches[c.residue%next] = append(branches[c.residue%next], c)
+			part := (c.residue%next - residue) / modulus
+			branches[part] = append(branches[part], c)
 		}
-		if !fits || len(branches) != parts {
+		if !fits {
 			continue
 		}
 		all := true
-		for branchResidue, branch := range branches {
-			if !splittable(branch, branchResidue, next) {
+		for part, branch := range branches {
+			if len(branch) == 0 || !splittable(branch, residue+part*modulus, next) {
 				all = false
 				break
 			}

@@ -14,21 +14,21 @@ Divide 13 by 4 and you get 3 with remainder 1, because 13 = 3 × 4 + 1. Dividing
 
 The number after `mod` is the **modulus**. A class has one member in every stretch of that many integers: `1 mod 4` holds one integer in every four. Negative integers belong too, and the remainder is never negative: -1 = -1 × 4 + 3, so -1 is in `3 mod 4`.
 
-These three classes do something neat. The first holds all the even numbers. The other two hold the odd numbers, shared out with none missing and none repeated. So **every integer is in exactly one of the three classes**. A list of classes with this property is called an **exact covering system**. The task is to find all of them, for a given choice of moduli.
+These three classes do something neat. The first holds all the even numbers. The other two hold the odd numbers, shared out with none missing and none repeated. So **every integer is in exactly one of the three classes**. A finite list of classes with this property is called an **exact covering system**. The task is to find all of them, for a given choice of moduli.
 
 Picture the integers wrapped around a wheel. This wheel has 8 spokes and shows the system `0 mod 2`, `1 mod 4`, `3 mod 8`, `7 mod 8`, where each class gets one colour. Going on past 7, the number 8 lands on the spoke of 0, the number 9 on the spoke of 1, and so on:
 
 ![A wheel of the numbers 0 to 7 coloured by class: 0 mod 2, 1 mod 4, 3 mod 8 and 7 mod 8](wheel.svg)
 
-Two things make this interesting. Each class is infinite, yet a finite matrix decides the question. And the answers hold a surprise: however you try, you can't make all the moduli different. See [Can all the moduli be different?](#can-all-the-moduli-be-different).
+Two things make this interesting. Each class is infinite, yet a finite matrix decides the question. And the answers hold a surprise: however you try, a system of two or more classes can't have all its moduli different. See [Can all the moduli be different?](#can-all-the-moduli-be-different).
 
 ## From all the integers to n numbers
 
-There are infinitely many integers, and a matrix needs a finite number of columns. The way out is to pick a number n that every modulus divides. For the first system above, n=4 works, since 2 and 4 both divide 4.
+There are infinitely many integers, and a matrix needs a finite number of columns. The way out is to pick a number n that every modulus divides. For the three classes `0 mod 2`, `1 mod 4` and `3 mod 4` from the table above, n=4 works, since 2 and 4 both divide 4.
 
-Adding n to an integer never changes a remainder when every modulus divides n. For example, 1 and 5 and 9 all leave the same remainder when divided by 2, and also when divided by 4. So an integer behaves just like its own remainder when divided by n, and only the numbers 0 to n-1 need checking. If they are each in exactly one class, then so is every integer. That is what the wheel shows: the integers go round and round on the same n spokes.
+Adding n to an integer never changes a remainder when every modulus divides n. For example, 1 and 5 and 9 all leave the same remainder when divided by 2, and also when divided by 4. So an integer behaves just like its own remainder when divided by n, and only the numbers 0 to n-1 need checking. If they are each in exactly one class, then so is every integer. The wheel is the same idea with n=8: the integers go round and round on the same 8 spokes, so its four classes only need checking on 8 numbers.
 
-This loses nothing. Any list of classes has such an n, because the product of the moduli is one. So `-n` chooses which moduli are allowed: exactly the divisors of n.
+This loses nothing. Any finite list of classes has such an n, because the product of the moduli is one. So the program's `-n` flag chooses which moduli are allowed: exactly the divisors of n.
 
 ## How it becomes a matrix
 
@@ -56,7 +56,7 @@ The class `0 mod 1` holds every integer, since dividing by 1 always leaves 0. It
 | `1 mod 2`, `0 mod 4`, `2 mod 4` | `0 mod 4` | `1 mod 2` | `2 mod 4` | `1 mod 2` |
 | `0 mod 4`, `1 mod 4`, `2 mod 4`, `3 mod 4` | `0 mod 4` | `1 mod 4` | `2 mod 4` | `3 mod 4` |
 
-Each cell names the picked class that holds that column's number. Picking `0 mod 2` with `0 mod 4` is not allowed, because both have a 1 under the number 0. The even numbers would then be counted twice over.
+Each cell names the picked class that holds that column's number. Picking `0 mod 2` with `0 mod 4` is not allowed, because both have a 1 under the number 0. The numbers 0, 4, 8, ... would then be counted twice.
 
 The matrix stays small as n grows, since the number of rows is the sum of the divisors of n:
 
@@ -70,13 +70,13 @@ The matrix stays small as n grows, since the number of rows is the sum of the di
 
 ## How a solution decodes back
 
-dlx reports the column lists of the picked rows. [solver.go](solver.go) adds the numbers of a class in increasing order, so the first column of a row is the smallest member, which is the remainder. A class with modulus m holds n/m of the numbers 0 to n-1, so the length of the row gives m back.
+dlx reports the column lists of the picked rows. [solver.go](solver.go) adds the numbers of a class in increasing order, so the first column of a row is the smallest member, which is the remainder. A class with modulus m holds n/m of the numbers 0 to n-1, so counting them gives m back. The [`-distinct` flag](#can-all-the-moduli-be-different) adds one more column to each row, which stands for no number, so only the columns below n are counted.
 
 For n=8, the row `[1 5]` starts at 1 and has 2 numbers, so its modulus is 8 / 2 = 4, and it means `1 mod 4`. The classes of a system are then sorted by modulus and by remainder, so that each system always prints the same way.
 
 ## Building systems by splitting
 
-Any class can be split into equal parts. The odd numbers `1 mod 2` split in two: `1 mod 4` and `3 mod 4`. In general, `r mod m` splits into p classes with modulus p × m. Start from the class of all integers and keep splitting, and you get a tree. Its leaves are always an exact covering system, because splitting a class changes neither which integers are covered nor how many times. This tree builds the system on the wheel. The four classes with nothing below them are the leaves, drawn with a thick outline:
+Any class can be split into equal parts. The odd numbers `1 mod 2` split in two: `1 mod 4` and `3 mod 4`. In general, `r mod m` splits into p classes with modulus p × m: `0 mod 2` splits in three as `0 mod 6`, `2 mod 6` and `4 mod 6`. Start from the class of all integers and keep splitting, and you get a tree. Its leaves are always an exact covering system, because splitting a class changes neither which integers are covered nor how many times. This tree builds the system on the wheel. The four classes with nothing below them are the leaves, drawn with a thick outline:
 
 ```mermaid
 flowchart TD
@@ -99,7 +99,7 @@ When n is a power of 2, every system is such a tree, and that gives a rule for t
 1. It contains `0 mod 1`, and then that class is the whole system.
 2. It doesn't, and then every modulus is even. A class with an even modulus holds only even numbers or only odd numbers: `1 mod 4` is all odd. So the system falls into two separate parts, one that shares out the even numbers and one that shares out the odd numbers.
 
-Halve the even numbers, and the first part becomes a system for n/2 on the integers. Subtract 1 from the odd numbers and halve them, and the second part does too. The two parts can be chosen freely and independently. So:
+Halve the even numbers, and the first part becomes a system for n/2 on the integers: `0 mod 4` becomes `0 mod 2`. Subtract 1 from the odd numbers and halve them, and the second part does too: `3 mod 8` becomes `1 mod 4`. The two parts can be chosen freely and independently. So:
 
     total for n = (total for n/2) × (total for n/2) + 1
 
@@ -112,7 +112,7 @@ The extra 1 is case 1. Starting from one system for n=1, this gives:
 
 These numbers are sequence [A003095](https://oeis.org/A003095) in the Online Encyclopedia of Integer Sequences, which also counts binary trees of limited height.
 
-The same argument works for powers of any prime p, a number that only 1 and itself divide, since a class whose modulus is a multiple of p falls inside one class mod p. There are p parts instead of two, so each total is the previous one multiplied by itself p times, plus 1. For the powers of 3, the numbers 3, 9 and 27, that gives 1×1×1+1 = 2, then 2×2×2+1 = 9, then 9×9×9+1 = 730.
+The same argument works for powers of any prime p, a number that only 1 and itself divide, since a class whose modulus is a multiple of p falls inside one class mod p. There are p parts instead of two, so each total is p copies of the previous total multiplied together, plus 1. For the powers of 3, the numbers 3, 9 and 27, that gives 1×1×1+1 = 2, then 2×2×2+1 = 9, then 9×9×9+1 = 730.
 
 ### Splitting doesn't explain everything
 
@@ -125,7 +125,7 @@ Give the 13 classes the letters A to M, in that order, and write each number's c
      0  1  2  3  4  5  6  7  8  9 10 11 12 13 14 15 16 17 18 19 20 21 22 23 24 25 26 27 28 29
      A  C  B  D  H  E  A  G  B  F  I  C  A  D  B  E  J  K  A  F  B  C  G  D  A  E  B  L  M  F
 
-A tree's first split into p parts needs p to divide every modulus. But no number above 1 divides all of 6, 10 and 15: 2 doesn't divide 15, 3 doesn't divide 10, and 5 doesn't divide 6. Of the 276734 systems for n=30, 13500 are like this. For every n below 30, splitting builds them all.
+A tree's first split makes p parts, and every class of the system must fit inside one of them, so p must divide every modulus. But no number above 1 divides all of 6, 10 and 15: 2 doesn't divide 15, 3 doesn't divide 10, and 5 doesn't divide 6. Of the 276734 systems for n=30, 13500 are like this. For every n below 30, splitting builds them all.
 
 The count that splitting does build, 263234 for n=30, agrees with sequence [A353860](https://oeis.org/A353860) for all n from 1 to 30. That sequence is defined in a different way, by merging numbers in a list, so this match is an observation here and not something proved.
 
@@ -229,7 +229,7 @@ A prime n always has exactly 2 systems: the whole of the integers, or all n clas
 The tests do the following. The code that does the checking doesn't use dlx or the matrix.
 
 - Every system found for n up to 30 is tested against the definition on the integers from 0 to 3n-1, and its fractions must add up to 1.
-- The systems for n up to 30 are compared, as a whole, with a separate [backtracking](../README.md#how-dlx-searches) search.
+- The systems for n up to 30 are compared with a separate [backtracking](../README.md#how-dlx-searches) search, by their number and by a sum of hashes of the systems.
 - The totals for 1, 2, 4, 8, 16 and 32 are compared with the sequence [A003095](https://oeis.org/A003095), and the totals for powers of 2, 3, 5 and 7 with the rule above.
 - A separate function decides whether a system can be built by splitting. It finds 13500 systems for n=30 that can't, none below that, and counts that match [A353860](https://oeis.org/A353860).
 - `-distinct` finds nothing for n up to 120, and the backtracking search finds no such system for n up to 30. To be sure the empty answer isn't a broken matrix, one test adds spare rows that let the largest modulus repeat, and then finds near misses such as `0 mod 2, 1 mod 4, 3 mod 8, 7 mod 8`.
@@ -240,6 +240,6 @@ The tests do the following. The code that does the checking doesn't use dlx or t
 
 The totals grow very fast. On the machine used to write this, the 458330 systems for n=32 took under a second, but the rule above gives 210066388901 systems for n=64, which would take days.
 
-`-distinct` searches without finding anything, and the search gets slow for numbers with many divisors. It took under half a second for n=360, and did not finish within a minute for n=720.
+`-distinct` searches without finding anything, and the search gets slow for numbers with many divisors. On that machine it took under half a second for n=360 and over a minute for n=720.
 
 The search only reports systems whose moduli divide n. To look for a system, you have to choose an n that allows its moduli.
