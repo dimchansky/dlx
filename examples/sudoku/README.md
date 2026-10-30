@@ -40,7 +40,7 @@ _ 3 _ | 5 _ _ | _ 8 _    1 3 4 | 5 9 7 | 6 8 2
 9 7 2 | 4 _ _ | _ 5 _    9 7 2 | 4 8 6 | 3 5 1
 ```
 
-Sudoku is the standard introduction to exact cover because nearly every rule already says "exactly once".
+Sudoku is a common introduction to exact cover because nearly every rule already says "exactly once".
 
 ## How it becomes a matrix
 
@@ -51,36 +51,39 @@ There are four families, with 81 facts each:
 | Family | Example fact | How many |
 |--------|--------------|----------|
 | Each cell holds one digit | "the cell at row 1, column 3 is filled" | 9 x 9 = 81 |
-| Each row has each digit | "row 1 has a 2" | 9 x 9 = 81 |
-| Each column has each digit | "column 3 has a 2" | 9 x 9 = 81 |
-| Each box has each digit | "box 1 has a 2" | 9 x 9 = 81 |
+| Each row has each digit | "row 1 has a 6" | 9 x 9 = 81 |
+| Each column has each digit | "column 3 has a 6" | 9 x 9 = 81 |
+| Each box has each digit | "box 1 has a 6" | 9 x 9 = 81 |
 
 That gives 324 facts. Every move makes exactly four facts true, one from each family:
 
 ```mermaid
 flowchart LR
-    M["Move: put 2 at row 1, column 3"] --> A["The cell at row 1, column 3 is filled"]
-    M --> B["Row 1 has a 2"]
-    M --> C["Column 3 has a 2"]
-    M --> D["Box 1 has a 2"]
+    M["Move: put 6 at row 1, column 3"] --> A["The cell at row 1, column 3 is filled"]
+    M --> B["Row 1 has a 6"]
+    M --> C["Column 3 has a 6"]
+    M --> D["Box 1 has a 6"]
 ```
 
 The whole matrix is too big to draw, so here is a small part of it. Take the top left of the sample board, where the cells at row 1, column 1 and row 1, column 3 are both blank. This table shows three moves for those cells and the nine facts they touch, with r1c3 short for "row 1, column 3":
 
-| Move | cell r1c1 | cell r1c3 | row 1 has 2 | row 1 has 6 | col 1 has 2 | col 1 has 6 | col 3 has 2 | box 1 has 2 | box 1 has 6 |
+| Move | cell r1c1 | cell r1c3 | row 1 has 2 | row 1 has 6 | col 1 has 2 | col 1 has 6 | col 3 has 6 | box 1 has 2 | box 1 has 6 |
 |------|:-:|:-:|:-:|:-:|:-:|:-:|:-:|:-:|:-:|
 | 2 at r1c1 | 1 | 0 | 1 | 0 | 1 | 0 | 0 | 1 | 0 |
 | 6 at r1c1 | 1 | 0 | 0 | 1 | 0 | 1 | 0 | 0 | 1 |
-| 2 at r1c3 | 0 | 1 | 1 | 0 | 0 | 0 | 1 | 1 | 0 |
+| 6 at r1c3 | 0 | 1 | 0 | 1 | 0 | 0 | 1 | 0 | 1 |
 
 The rules of Sudoku appear as clashes between moves:
 
 - The first two moves both have a 1 under "cell r1c1". Only one can be picked, so a cell can't hold two digits.
-- The first and third moves both have a 1 under "row 1 has 2" and "box 1 has 2". Only one can be picked, so a digit can't appear twice in a row or box.
+- The last two moves both have a 1 under "row 1 has 6" and "box 1 has 6". Only one can be picked, so a digit can't appear twice in a row or box.
+- The first and last moves share no fact, so both can be picked. The filled board above uses both.
+
+The table is only a fragment, but a full solution works the same way. It picks 81 moves, one per cell. Each move makes four facts true, and 81 x 4 = 324, which is exactly the number of facts. Since no fact may be made true twice, every fact is made true once.
 
 A blank cell adds nine moves, one per digit. A cell that already holds a digit adds only one move, which is how the given digits enter the problem. An empty board would have 9 x 9 x 9 = 729 moves. The sample board has 24 given digits and 57 blanks, so it has 24 + 57 x 9 = 537.
 
-Moves are added for every digit in a blank cell, even digits that visibly clash with a given. The search rules those out at once, so the code stays short.
+Moves are added for every digit in a blank cell, even digits that visibly clash with a given. For example, the matrix does hold the move "2 at r1c3", although the bottom row already has a 2 in column 3. That given is the only move for its cell, so it must be picked, and it makes "column 3 has a 2" true. The move "2 at r1c3" needs the same fact, so the search rules it out at once. This keeps the code short.
 
 ### The fact numbers
 

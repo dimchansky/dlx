@@ -59,7 +59,15 @@ Diagonal number           Antidiagonal number
 3 4 5 6                   6 5 4 3
 ```
 
-So the queen at row 0, column 1 lies on diagonal 1 and antidiagonal 2. Its matrix row has four 1s: `r0`, `c1`, `d1` and `a2`.
+So the queen at row 0, column 1 lies on diagonal 1 and antidiagonal 2. Its matrix row has four 1s, one for each line it stands on:
+
+```mermaid
+flowchart LR
+    Q["Queen at row 0, column 1"] --> R["r0: board row 0"]
+    Q --> C["c1: board column 1"]
+    Q --> D["d1: diagonal 1"]
+    Q --> A["a2: antidiagonal 2"]
+```
 
 The full matrix for n=4 has 22 columns and 30 rows. This table shows only the 10 rows of the first solution above, so you can check that each column has a 1 in exactly one row. The other 12 queen rows and 8 slack rows are not shown.
 

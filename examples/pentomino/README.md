@@ -30,16 +30,28 @@ Each row has six 1s: its piece and the five cells it occupies.
 
 ### A tiny version
 
-The real matrix is far too big to draw, so here is the same idea with a board of 2 rows and 3 columns, and two pieces: a domino D of two squares, and an L of four squares. The cells are named by row letter and column number:
+The real matrix is far too big to draw, so here is the same idea with a board of 2 rows and 3 columns, and two pieces: a domino D of two squares, and a bent piece H of four squares, H for hook. The cells are named by row letter and column number:
 
 ```
 a1 a2 a3
 b1 b2 b3
 ```
 
-The domino fits in 7 places, and the L in 4. Each placement is one row of the matrix. D and L are the piece columns, and the rest are the cell columns:
+The domino fits in 7 places, and the hook in 4:
 
-|    | D | L | a1 | a2 | a3 | b1 | b2 | b3 |
+```
+D1      D2      D3      D4      D5      D6      D7
+D D .   . D D   . . .   . . .   D . .   . D .   . . D
+. . .   . . .   D D .   . D D   D . .   . D .   . . D
+
+H1      H2      H3      H4
+H H H   H H H   H . .   . . H
+H . .   . . H   H H H   H H H
+```
+
+Each placement is one row of the matrix. D and H are the piece columns, and the rest are the cell columns:
+
+|    | D | H | a1 | a2 | a3 | b1 | b2 | b3 |
 |----|:-:|:-:|:-:|:-:|:-:|:-:|:-:|:-:|
 | D1 | 1 | 0 | 1 | 1 | 0 | 0 | 0 | 0 |
 | D2 | 1 | 0 | 0 | 1 | 1 | 0 | 0 | 0 |
@@ -48,19 +60,19 @@ The domino fits in 7 places, and the L in 4. Each placement is one row of the ma
 | D5 | 1 | 0 | 1 | 0 | 0 | 1 | 0 | 0 |
 | D6 | 1 | 0 | 0 | 1 | 0 | 0 | 1 | 0 |
 | D7 | 1 | 0 | 0 | 0 | 1 | 0 | 0 | 1 |
-| L1 | 0 | 1 | 1 | 1 | 1 | 1 | 0 | 0 |
-| L2 | 0 | 1 | 1 | 1 | 1 | 0 | 0 | 1 |
-| L3 | 0 | 1 | 1 | 0 | 0 | 1 | 1 | 1 |
-| L4 | 0 | 1 | 0 | 0 | 1 | 1 | 1 | 1 |
+| H1 | 0 | 1 | 1 | 1 | 1 | 1 | 0 | 0 |
+| H2 | 0 | 1 | 1 | 1 | 1 | 0 | 0 | 1 |
+| H3 | 0 | 1 | 1 | 0 | 0 | 1 | 1 | 1 |
+| H4 | 0 | 1 | 0 | 0 | 1 | 1 | 1 | 1 |
 
-This matrix has four exact covers: L1 with D4, L2 with D3, L3 with D2, and L4 with D1. Here is the first:
+This matrix has four exact covers: H1 with D4, H2 with D3, H3 with D2, and H4 with D1. Here is the first:
 
 ```
-L L L
-L D D
+H H H
+H D D
 ```
 
-The piece columns matter. Without them, three dominoes D1, D7 and D3 would also fill the board, which would use one piece three times and the other not at all. The piece columns allow one D row and one L row in each solution, and no more. In the real problem, a tiling could otherwise use one pentomino three times and skip another.
+The piece columns matter. Without them, three dominoes D1, D7 and D3 would also fill the board, which would use one piece three times and the other not at all. The piece columns allow one D row and one H row in each solution, and no more. In the real problem, a tiling could otherwise use one pentomino three times and skip another.
 
 ### The 12 pieces in the matrix
 

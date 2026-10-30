@@ -108,11 +108,11 @@ flowchart LR
 
 That means listing every roster, which is fine for a few dozen candidates and useless for a real airline's thousands. Real crew pairing uses integer programming, a family of methods that can steer toward a low cost without listing every solution.
 
-**dlx doesn't identify rows.** A solution lists each row's columns, not which row it was, so two pairings with the same flights look identical. Here that happens for A2 and D1 in [pairings.txt](pairings.txt): both cover F103 and F104, at costs of 700 and 680. The solver gives each set of flights a single matrix row and remembers the cheapest pairing for it, since a dearer one can't be in the cheapest roster. As a result, the rosters are counted by how they divide up the flights, and a dearer duplicate never appears, even with `-limit 0`.
+**dlx doesn't identify rows.** A solution lists each row's columns, not which row it was, so two pairings with the same flights look identical. Here that happens for A2 and D1 in [pairings.txt](pairings.txt): both cover F103 and F104, at costs of 700 and 680. The solver gives each set of flights a single matrix row and remembers the cheapest pairing for it, since a more expensive one can't be in the cheapest roster. As a result, the rosters are counted by how they divide up the flights, and a more expensive duplicate never appears, even with `-limit 0`.
 
 ## How a solution decodes back
 
-Each row of a solution is a list of flights. The solver uses that list as a key to look up the cheapest pairing with those flights, then adds its cost to the roster's total.
+Each row of a solution is a list of column numbers, and each column is one flight. Flights are numbered from 0 in the order of the `flights` line, so in the small example above F1 is column 0, F2 is column 1, and so on. The row `[0 1]` means F1 and F2. The solver uses that list as a key to look up the cheapest pairing with those flights, here pairing A, then adds its cost, 900, to the roster's total.
 
 ## Installation
 
@@ -129,8 +129,9 @@ A2  700 F103
 
 - Blank lines and lines starting with `#` are skipped. A `#` later in a line is not a comment.
 - The first other line is the word `flights` followed by every flight name.
-- Each later line is a pairing: a unique name, a cost from 0 to 1000000, and the flights it covers. Fields are separated by whitespace.
-- Naming an unlisted flight is an error, which catches typos.
+- Each later line is a pairing: a unique name, a cost, and the flights it covers. Fields are separated by whitespace.
+- The cost is a whole number from 0 to 1000000, so `1.5` is an error.
+- Naming an unlisted flight is an error, which catches typos. So is listing a flight twice in one pairing.
 - Input is read to the end, so if you type at a terminal, finish with Ctrl-D.
 
 [pairings.txt](pairings.txt) is a made-up sample with 12 flights.
