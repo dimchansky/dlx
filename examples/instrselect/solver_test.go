@@ -194,6 +194,21 @@ func codeLines(chosen *tiling) []string {
 	return lines
 }
 
+// TestSolve_RowOrder pins the order of the rows in the README's decoding example.
+func TestSolve_RowOrder(t *testing.T) {
+	t.Parallel()
+
+	found := solve(mustParse(t, defaultExpression), instructions, 1)
+
+	var got [][]int
+	for _, chosen := range found.tilings[0].tiles {
+		got = append(got, chosen.covered)
+	}
+	if want := [][]int{{2}, {0, 1, 3}}; !reflect.DeepEqual(got, want) {
+		t.Errorf("rows = %v, want %v", got, want)
+	}
+}
+
 func TestSolve_LimitKeepsTheCheapestInOrder(t *testing.T) {
 	t.Parallel()
 
@@ -364,9 +379,10 @@ func (c *choices) add(cost int, operands ...choices) {
 }
 
 // bestCost is the dynamic programming method: the memo means it works out each
-// node once, and at each node it tries the tiles that can sit there. It is written out rule by
-// rule, without the pattern table, and adds the tilings up instead of listing
-// them. adds is left out, as in the solver: tiles on the same nodes count once.
+// node once, and at each node it tries the tiles that can sit there. It is
+// written out rule by rule, without the pattern table, and adds the tilings up
+// instead of listing them. adds is left out, as in the solver: tiles on the same
+// nodes count once.
 func bestCost(e *expr, memo map[*expr]choices) choices {
 	if known, isKnown := memo[e]; isKnown {
 		return known
@@ -525,14 +541,14 @@ func cheapestOverlappingCover(tiles []tile, nodes int) (int, bool) {
 
 // TestSolve_OverlapsDontHelp checks the README's claim that requiring each node
 // to be covered exactly once loses nothing. The published count is for this seed
-// and this size cap.
+// and the full size cap. The table of costs doubles with every node, so the
+// short run caps the size lower.
 func TestSolve_OverlapsDontHelp(t *testing.T) {
 	t.Parallel()
 
-	const mostNodes = 18
-	trees := 5000
+	mostNodes, trees := 18, 5000
 	if testing.Short() {
-		trees = 500
+		mostNodes, trees = 14, 500
 	}
 
 	r := rand.New(rand.NewSource(2))

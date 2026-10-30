@@ -95,14 +95,14 @@ func (t *tile) matches(s shape, n *node) bool {
 // it means that every total and list counts node sets, not programs.
 func placements(t tree, set []pattern) []tile {
 	var tiles []tile
-	index := map[string]int{}
+	index := map[uint64]int{}
 	for _, n := range t.nodes {
 		for _, p := range set {
 			candidate := tile{pattern: p, root: n}
 			if !candidate.matches(p.shape, n) {
 				continue
 			}
-			key := fmt.Sprint(candidate.covered)
+			key := nodeSet(candidate.covered)
 			i, isSeen := index[key]
 			switch {
 			case !isSeen:
@@ -114,6 +114,16 @@ func placements(t tree, set []pattern) []tile {
 		}
 	}
 	return tiles
+}
+
+// nodeSet returns the given node ids as a bit mask, so that two rows with the
+// same columns get the same key. The node cap means that every id fits.
+func nodeSet(ids []int) uint64 {
+	var set uint64
+	for _, id := range ids {
+		set |= 1 << id
+	}
+	return set
 }
 
 // tiling is a set of tiles that covers every node of the tree exactly once.
@@ -151,10 +161,10 @@ type solution struct {
 func solve(t tree, set []pattern, limit uint64) solution {
 	tiles := placements(t, set)
 	m := dlx.NewMatrix(len(t.nodes))
-	byColumns := make(map[string]tile, len(tiles))
+	byColumns := make(map[uint64]tile, len(tiles))
 	for _, placed := range tiles {
 		m.AddRow(placed.covered...)
-		byColumns[fmt.Sprint(placed.covered)] = placed
+		byColumns[nodeSet(placed.covered)] = placed
 	}
 
 	found := solution{rows: len(tiles)}
@@ -162,12 +172,16 @@ func solve(t tree, set []pattern, limit uint64) solution {
 		found.total++
 		next := tiling{tiles: make([]tile, len(exactCover))}
 		for i, row := range exactCover {
-			next.tiles[i] = byColumns[fmt.Sprint(row)]
+			next.tiles[i] = byColumns[nodeSet(row)]
 			next.cost += next.tiles[i].pattern.cost
 		}
-		found.tilings = keepCheapest(found.tilings, next, limit)
+		found.tilings = append(found.tilings, next)
+		if size := len(found.tilings); limit != 0 && size >= smallestSort && uint64(size)/2 >= limit {
+			found.tilings = keepCheapest(found.tilings, limit)
+		}
 		return false
 	}))
+	found.tilings = keepCheapest(found.tilings, limit)
 
 	for i := range found.tilings {
 		found.tilings[i].decode(t.root)
@@ -175,17 +189,17 @@ func solve(t tree, set []pattern, limit uint64) solution {
 	return found
 }
 
-// keepCheapest adds next to tilings, which is sorted by cost, and drops the
-// last one if there are more than limit. A tie goes after the tilings already
-// there. Without a limit it keeps them all, so memory follows the total.
-func keepCheapest(tilings []tiling, next tiling, limit uint64) []tiling {
-	at := sort.Search(len(tilings), func(i int) bool { return tilings[i].cost > next.cost })
-	if limit != 0 && uint64(at) == limit {
-		return tilings
-	}
-	tilings = append(tilings, tiling{})
-	copy(tilings[at+1:], tilings[at:])
-	tilings[at] = next
+// smallestSort is how long the list of tilings must get before solve trims it,
+// so that a small limit doesn't mean a sort for almost every tiling.
+const smallestSort = 1024
+
+// keepCheapest sorts tilings by cost and drops all but the first limit. Ties
+// stay in the order they came, so they stay in search order. solve calls it when
+// the list reaches twice the limit, or smallestSort if that is more, and once at
+// the end. So memory follows the limit. Without a limit it runs only at the end
+// and keeps them all, so memory follows the total.
+func keepCheapest(tilings []tiling, limit uint64) []tiling {
+	sort.SliceStable(tilings, func(i, j int) bool { return tilings[i].cost < tilings[j].cost })
 	if limit != 0 && uint64(len(tilings)) > limit {
 		tilings = tilings[:limit]
 	}
