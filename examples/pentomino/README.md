@@ -20,7 +20,7 @@ Each row has six 1s: its piece and the five cells it occupies. The piece columns
 
 Every tiling is reported together with its images under the board's symmetries, which are the two mirror flips and the half turn. Each one is a different exact cover, so `Tilings` counts all of them. `Distinct` counts each group once.
 
-Here the matrix can't easily remove them, so the program compares each tiling with its images and counts it only if it is the smallest. This works because each group has exactly four members: the F piece has no symmetry and appears once, so no flip can give the same tiling, and a 60-cell board is never square, so quarter turns don't apply. The [Langford example](../langford) shows the other approach, which removes mirror images from the matrix itself.
+The matrix could remove them by keeping only two orientations of the F piece, one for each group of orientations under the board's symmetries. This example wants the full total as well, so it keeps every row, compares each tiling with its images, and counts it as distinct only if it is the smallest. This works because each group has exactly four members: the F piece has no symmetry and appears once, so no flip can give the same tiling, and a 60-cell board is never square, so quarter turns don't apply. The [Langford example](../langford) shows the other approach, which removes mirror images from the matrix itself.
 
 | Board | Tilings | Distinct |
 |-------|---------|----------|
@@ -93,4 +93,4 @@ Output:
 
 ## Tests
 
-`go test` runs every total. With `-short` or `-race` it skips the 4x15, 5x12 and 6x10 enumerations: the race detector makes them take minutes, and each search runs on a single goroutine.
+`go test` checks every total. `go test -short` skips the 4x15, 5x12 and 6x10 totals, which take seconds normally and minutes with `-race`. Use `-short` with `-race`.

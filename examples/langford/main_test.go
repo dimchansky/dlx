@@ -114,7 +114,7 @@ func TestRun(t *testing.T) {
 			t.Parallel()
 
 			var stdout, stderr bytes.Buffer
-			code := run(tt.args, strings.NewReader(""), &stdout, &stderr)
+			code := run(tt.args, &stdout, &stderr)
 
 			if code != tt.wantCode {
 				t.Errorf("exit status %d, want %d", code, tt.wantCode)
@@ -155,7 +155,7 @@ func TestRun_WriteFailure(t *testing.T) {
 
 			var stderr bytes.Buffer
 			writer := &failingWriter{failOn: tt.failOn}
-			code := run(tt.args, strings.NewReader(""), writer, &stderr)
+			code := run(tt.args, writer, &stderr)
 
 			if code != 2 {
 				t.Errorf("exit status %d, want 2", code)

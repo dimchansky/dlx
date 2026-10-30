@@ -44,9 +44,9 @@ The tests check these totals and compare every arrangement with an independent b
 
     langford [-n size] [-limit n] [-count] [-mirrors]
 
-- `-n size` sets the largest number, 7 by default, from 1 to 64.
+- `-n size` sets the largest number, 7 by default, from 1 to 64. That limit bounds memory: it is not a usable range.
 - `-limit n` sets how many arrangements to print, 1 by default. Zero prints all of them.
-- `-count` enumerates every arrangement and prints the total instead, so `-limit` has no effect with it. The total grows quickly: n=12 took under a second on the machine used to write this, and n=15 took about three minutes.
+- `-count` enumerates every arrangement and prints the total instead, so `-limit` has no effect with it. The total grows quickly: n=12 took under a second on the machine used to write this, and n=15 took about two minutes. Large n can take very long even when no arrangement exists, because the search has to rule them all out.
 - `-mirrors` counts an arrangement and its reversal as two.
 
 `-help` prints the usage text to standard error.
@@ -95,3 +95,7 @@ The value n=5 has no arrangements, so this exits with code 1:
 Output, on standard error:
 
     langford: no arrangement found
+
+## Tests
+
+`go test` checks every total. `go test -short` skips n=11 and n=12, which are much slower with `-race`. Use `-short` with `-race`.

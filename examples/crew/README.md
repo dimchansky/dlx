@@ -2,6 +2,8 @@
 
 A command-line solver for a small crew pairing problem, written as an example of using package [dlx](https://github.com/dimchansky/dlx). Airlines group the flights of a day into pairings, each a sequence of flights one crew can work. The task is to pick pairings so that every flight is flown by exactly one crew, at the lowest cost. This kind of problem is called set partitioning, and it appears wherever every job must be done exactly once: delivery routes, shifts, machine schedules.
 
+This is a simplified version. Real pairings span several days and must start and end at a crew base, and thousands of flights give vastly more candidate pairings than this search could enumerate.
+
 ## How it maps to exact cover
 
 The mapping is direct, and it's the simplest one here:

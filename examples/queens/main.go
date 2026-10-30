@@ -35,12 +35,11 @@ const (
 const maxSize = 64
 
 func main() {
-	os.Exit(run(os.Args[1:], os.Stdin, os.Stdout, os.Stderr))
+	os.Exit(run(os.Args[1:], os.Stdout, os.Stderr))
 }
 
-// run executes the command and returns its exit status. The problem comes from
-// flags, so standard input is not read.
-func run(args []string, _ io.Reader, stdout, stderr io.Writer) int {
+// run executes the command and returns its exit status.
+func run(args []string, stdout, stderr io.Writer) int {
 	flags := flag.NewFlagSet("queens", flag.ContinueOnError)
 	flags.SetOutput(stderr)
 	flags.Usage = func() { printUsage(flags) }

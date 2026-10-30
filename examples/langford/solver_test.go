@@ -75,8 +75,8 @@ func TestSolve_KnownCounts(t *testing.T) {
 		n, want := i+1, want
 		t.Run(fmt.Sprintf("n=%d", n), func(t *testing.T) {
 			t.Parallel()
-			if n > 10 && raceEnabled {
-				t.Skip("slow with -race")
+			if n > 10 && testing.Short() {
+				t.Skip("slow: enumerates every arrangement")
 			}
 
 			all := map[string]bool{}

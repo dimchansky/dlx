@@ -245,8 +245,8 @@ func TestSolve_KnownTotals(t *testing.T) {
 		tt := tt
 		t.Run(tt.size, func(t *testing.T) {
 			t.Parallel()
-			if tt.isSlow && (testing.Short() || raceEnabled) {
-				t.Skip("slow: runs without -short and without -race")
+			if tt.isSlow && testing.Short() {
+				t.Skip("slow: enumerates every tiling")
 			}
 
 			b, err := parseBoard(tt.size)

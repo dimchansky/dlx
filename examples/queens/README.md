@@ -40,7 +40,7 @@ The tests check these totals and compare every solution with an independent back
 
     queens [-n size] [-limit n] [-count]
 
-- `-n size` sets the board size, 8 by default, from 1 to 64.
+- `-n size` sets the board size, 8 by default, from 1 to 64. That limit bounds memory: it is not a usable range, as the timings above show.
 - `-limit n` sets how many solutions to print, 1 by default. Zero prints all of them.
 - `-count` enumerates every solution and prints the total instead, so `-limit` has no effect with it.
 
@@ -87,3 +87,7 @@ A board of size 2 or 3 has no solutions, so this exits with code 1:
 Output, on standard error:
 
     queens: no solution found
+
+## Tests
+
+`go test` checks every total. `go test -short` skips n=11 and n=12, which are much slower with `-race`. Use `-short` with `-race`.

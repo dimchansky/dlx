@@ -18,7 +18,7 @@ B3 1200 F107 F108 F109 F110
 B4 1180 F109 F110 F111 F112
 B5 1400 F105 F106 F107 F108
 
-# Duties that pair flights in a different order.
+# Duties that pair flights in different combinations.
 C1 1300 F101 F104 F105
 C2 1000 F102 F103
 C3  990 F106 F107 F108

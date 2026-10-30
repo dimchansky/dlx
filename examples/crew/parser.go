@@ -11,7 +11,7 @@ import (
 )
 
 // maxCost bounds a pairing's cost. Pairings in a roster cover different flights,
-// so this also keeps the total cost of any roster well inside an int.
+// so this also keeps the total cost of any roster well inside a 64-bit int.
 const maxCost = 1_000_000
 
 // pairing is a sequence of flights one crew could work.

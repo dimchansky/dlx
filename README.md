@@ -22,7 +22,7 @@ Each one is a small command with a README that explains how the problem maps to 
 - [pentomino](examples/pentomino): tile a rectangle with the 12 pentominoes. Two kinds of column in one matrix, and counting tilings up to symmetry.
 - [queens](examples/queens): the n-queens problem. "At most once" constraints with slack rows.
 - [langford](examples/langford): Langford pairings. Removing mirror-image solutions from the matrix itself.
-- [crew](examples/crew): choose crew pairings so that each flight is flown exactly once, at the lowest cost. Picking the cheapest solution, and telling apart rows with equal columns.
+- [crew](examples/crew): choose crew pairings so that each flight is flown exactly once, at the lowest cost. Picking the cheapest solution, and handling rows with equal columns.
 
 ## What it doesn't do
 
