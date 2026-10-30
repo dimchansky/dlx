@@ -19,21 +19,6 @@ type matrixSize struct {
 	columns, rows int
 }
 
-// lookup returns the slot of word, and false if word isn't one of the keys. A
-// perfect hash sends a stranger to some slot as well, so the stored key has to
-// be compared.
-func (t *hashTable) lookup(word string) (int, bool) {
-	if word == "" {
-		return 0, false
-	}
-	shift, ok := t.shifts[word[0]]
-	if !ok {
-		return 0, false
-	}
-	slot := slotOf(word, shift, len(t.slots))
-	return slot, t.slots[slot] == word
-}
-
 // letterSum numbers the letters a=1 to z=26, multiplies each by its position in
 // the word, counting from 1, and adds the results. Multiplying by the position
 // keeps anagrams such as "abc" and "cba" apart.
@@ -45,10 +30,9 @@ func letterSum(word string) int {
 	return sum
 }
 
-// slotOf returns the slot of word in a table of the given size. Only lookup can
-// pass a word with bytes below 'a', so the remainder is made non-negative.
+// slotOf returns the slot of word in a table of the given size.
 func slotOf(word string, shift, size int) int {
-	return ((letterSum(word)+shift)%size + size) % size
+	return (letterSum(word) + shift) % size
 }
 
 // solve passes each hash table for keys to accept until accept returns true, and

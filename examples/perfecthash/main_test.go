@@ -73,6 +73,17 @@ Slot  Key
 4     var
 `
 
+// oneKeyOutput has a single row, so the count mustn't say "1 rows".
+const oneKeyOutput = `Keys: 1, first letters: 1
+Matrix: 2 columns, 1 row
+
+Letter  Shift
+a       0
+
+Slot  Key
+0     a
+`
+
 func TestRun(t *testing.T) {
 	t.Parallel()
 
@@ -85,6 +96,7 @@ func TestRun(t *testing.T) {
 	}{
 		{name: "go keywords by default", wantStdout: keywordOutput},
 		{name: "own keys", args: []string{"-keys", "for,func,if,map,var"}, wantStdout: fiveKeyOutput},
+		{name: "one key", args: []string{"-keys", "a"}, wantStdout: oneKeyOutput},
 		{
 			name:       "same letter clash",
 			args:       []string{"-keys", "ab,ad"},

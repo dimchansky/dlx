@@ -1,8 +1,12 @@
 package main
 
 import (
+	"fmt"
+	"go/types"
 	"strings"
 	"testing"
+
+	"github.com/dimchansky/dlx"
 )
 
 const alphabet = "abcdefghijklmnopqrstuvwxyz"
@@ -115,6 +119,8 @@ func TestLetterSum(t *testing.T) {
 		{word: "func", want: 6 + 2*21 + 3*14 + 4*3},
 		{word: "abc", want: 1 + 2*2 + 3*3},
 		{word: "cba", want: 3 + 2*2 + 3*1},
+		{word: "goto", want: 157},
+		{word: "gopher", want: 250},
 	}
 
 	for _, tt := range tests {
@@ -126,6 +132,46 @@ func TestLetterSum(t *testing.T) {
 				t.Errorf("letterSum(%q) = %d, want %d", tt.word, got, tt.want)
 			}
 		})
+	}
+}
+
+func TestCombinations_MatchREADME(t *testing.T) {
+	t.Parallel()
+
+	// One shift out of as many as there are keys, for each bucket.
+	combinations := func(keys []string) int64 {
+		total := int64(1)
+		for range groupByFirstLetter(keys) {
+			total *= int64(len(keys))
+		}
+		return total
+	}
+
+	if got := combinations([]string{"for", "func", "if", "map", "var"}); got != 625 {
+		t.Errorf("five keywords have %d combinations, want 625", got)
+	}
+	// 25^13, the README's "about 1.5 million million million".
+	if got := combinations(goKeywords); got != 1490116119384765625 {
+		t.Errorf("Go keywords have %d combinations, want 25^13", got)
+	}
+}
+
+func TestDecode_ReadmeRow(t *testing.T) {
+	t.Parallel()
+
+	keys := []string{"for", "func", "if", "map", "var"}
+	buckets := groupByFirstLetter(keys)
+	matrix, _ := buildMatrix(buckets, len(keys))
+
+	found := false
+	matrix.Solve(dlx.SolutionAccepterFunc(func(exactCover [][]int) bool {
+		for _, row := range exactCover {
+			found = found || fmt.Sprint(row) == "[3 8]"
+		}
+		return true
+	}))
+	if !found {
+		t.Error("dlx didn't report the README's row [3 8] for v shift 1")
 	}
 }
 
@@ -207,11 +253,23 @@ func checkTable(t *testing.T, table *hashTable, keys []string) {
 		if table.slots[want] != key {
 			t.Errorf("slot %d holds %q, want %q", want, table.slots[want], key)
 		}
-		slot, ok := table.lookup(key)
-		if !ok || slot != want {
-			t.Errorf("lookup(%q) = %d, %v, want %d, true", key, slot, ok, want)
-		}
 	}
+}
+
+// lookup follows the README's steps for using a table. It returns the slot of
+// word, and false if word isn't one of the keys. A perfect hash sends a stranger
+// to some slot as well, so the stored key has to be compared. The command only
+// prints tables, so this lives here, to prove the README's account of them.
+func lookup(t *hashTable, word string) (int, bool) {
+	if word == "" {
+		return 0, false
+	}
+	shift, ok := t.shifts[word[0]]
+	if !ok {
+		return 0, false
+	}
+	slot := plainSlot(word, shift, len(t.slots))
+	return slot, t.slots[slot] == word
 }
 
 func TestHashTable_LookupRejectsStrangers(t *testing.T) {
@@ -227,16 +285,20 @@ func TestHashTable_LookupRejectsStrangers(t *testing.T) {
 	}
 
 	// Most of these start with a letter in use, so they reach a slot and only
-	// the comparison stops them. "gO" and "var " have bytes below 'a', which
-	// make the letter sum smaller or even negative.
-	if slot, ok := table.lookup("goto"); slot != 9 || !ok {
+	// the comparison stops them.
+	for _, key := range goKeywords {
+		if _, ok := lookup(table, key); !ok {
+			t.Errorf("lookup(%q) didn't find it", key)
+		}
+	}
+	if slot, ok := lookup(table, "goto"); slot != 9 || !ok {
 		t.Errorf("lookup(goto) = %d, %v, want the README's 9, true", slot, ok)
 	}
-	if slot, ok := table.lookup("gopher"); slot != 2 || ok {
+	if slot, ok := lookup(table, "gopher"); slot != 2 || ok {
 		t.Errorf("lookup(gopher) = %d, %v, want the README's 2, false", slot, ok)
 	}
-	for _, word := range []string{"", "G", "Go", "gO", "x", "gopher", "var ", "fo", "typeof", "returns"} {
-		if slot, ok := table.lookup(word); ok {
+	for _, word := range []string{"", "G", "Go", "gO", "x", "apple", "gopher", "var ", "fo", "typeof", "returns"} {
+		if slot, ok := lookup(table, word); ok {
 			t.Errorf("lookup(%q) found slot %d", word, slot)
 		}
 	}
@@ -293,6 +355,11 @@ func TestSolve_MatchesEveryCombination(t *testing.T) {
 func TestSolve_MatchesPlainSearch(t *testing.T) {
 	t.Parallel()
 
+	// The README's reason for the first ten keywords having no table.
+	if a, b := plainSlot("const", 0, 10), plainSlot("continue", 0, 10); a != 1 || b != 1 {
+		t.Errorf("const and continue have remainders %d and %d, want 1 and 1", a, b)
+	}
+
 	tests := []struct {
 		name string
 		keys []string
@@ -327,18 +394,21 @@ func TestSolve_MatchesPlainSearch(t *testing.T) {
 func TestSolve_ClashingListHasNoTable(t *testing.T) {
 	t.Parallel()
 
-	// The README's list of 31 words: cap and complex land on one slot, and so
-	// do imag and int, and panic and print.
-	words := strings.Split("bool,byte,cap,clear,close,complex,copy,delete,error,false,float,imag,"+
-		"int,iota,len,make,max,min,new,nil,panic,print,println,real,recover,rune,string,true,uint,"+
-		"uintptr,any", ",")
-	if len(words) != 31 {
-		t.Fatalf("%d words, want 31", len(words))
+	// The README's list of 29 words. Go 1.21 added clear, max and min, which are
+	// left out so that this holds for every Go this module supports.
+	words := strings.Split("any,append,bool,byte,cap,close,comparable,complex,copy,delete,error,"+
+		"false,imag,int,iota,len,make,new,nil,panic,print,println,real,recover,rune,string,true,"+
+		"uint,uintptr", ",")
+	if len(words) != 29 {
+		t.Fatalf("%d words, want 29", len(words))
 	}
-	for _, pair := range [][2]string{{"cap", "complex"}, {"imag", "int"}, {"panic", "print"}} {
-		if plainSlot(pair[0], 0, 31) != plainSlot(pair[1], 0, 31) {
-			t.Errorf("%s and %s don't clash", pair[0], pair[1])
+	for _, word := range words {
+		if types.Universe.Lookup(word) == nil {
+			t.Errorf("%q is not predeclared in Go", word)
 		}
+	}
+	if a, b := plainSlot("cap", 0, 29), plainSlot("comparable", 0, 29); a != 24 || b != 24 {
+		t.Errorf("cap and comparable have remainders %d and %d, want 24 and 24", a, b)
 	}
 
 	solve(words, func(*hashTable) bool {

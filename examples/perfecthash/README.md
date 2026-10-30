@@ -1,10 +1,10 @@
 # Perfect hash
 
-A command-line tool that builds a perfect hash for Go's 25 keywords, written as an example of using package [dlx](https://github.com/dimchansky/dlx). If exact cover is new to you, read the [introduction to the examples](../README.md) first.
+A command-line tool that builds a perfect hash for Go's 25 keywords, the words the language reserves for itself, such as `for` and `func`. It is written as an example of using package [dlx](https://github.com/dimchansky/dlx). If exact cover is new to you, read the [introduction to the examples](../README.md) first.
 
 ## The problem
 
-A **hash table** is a row of numbered boxes, called slots, plus a rule that turns a word into a slot number. To store a word, you compute its number and put the word in that box. To find a word later, you compute the same number and look in that one box, instead of reading the whole list. A compiler can use this to tell keywords such as `for` from ordinary names.
+A **hash table** is a row of numbered boxes, called slots, plus a rule that turns a word into a slot number. To store a word, you compute its number and put the word in that box. To find a word later, you compute the same number and look in that one box, instead of reading the whole list. A compiler, the program that translates Go code into something a computer can run, has to tell keywords from names the programmer made up, and a hash table is one way to do that.
 
 The trouble comes when the rule gives two words the same number. They want the same box. This is called a **collision**, and a normal hash table spends extra work on it, for example by keeping a short list in that box.
 
@@ -34,9 +34,11 @@ Take five keywords and five slots. A word gets its number in two steps.
 
 **The fix: a shift for each first letter.** Words that start with the same letter form a group, called a bucket. Each bucket gets one small extra number, its shift, which is added to the sum before taking the remainder. Giving the `v` bucket a shift of 1 turns 78 into 79, which has remainder 4. The collision is gone, as the bottom of the picture shows.
 
+Why not one shift per word? That would make the problem trivial, but the list of shifts would be as long as the word list, and a lookup couldn't find a word's shift without already knowing the word. The first letter can be read straight from any word, so a lookup can always find its bucket, and the list of shifts never has more than 26 entries.
+
 A whole bucket moves together, and it wraps around: with a shift of 3, the `f` bucket moves `for` from slot 0 to slot 3, and `func` from slot 2 to slot 0, since 102 + 3 = 105 has remainder 0.
 
-So the only thing to find is one shift per bucket. The Go keywords have 13 buckets and 25 possible shifts for each, which makes 25 multiplied by itself 13 times: far too many combinations to try one by one. Exact cover cuts the search down.
+So the only thing to find is one shift per bucket. The Go keywords have 13 buckets and 25 possible shifts for each, which makes 25^13 combinations, about 1.5 million million million: far too many to try one by one. A search doesn't have to, because it can drop a shift as soon as it clashes with an earlier one. The plain backtracking search in the tests does just that, and it also reaches the keyword table. So dlx isn't needed for speed here: it's used because the problem has the shape of an exact cover, as the next section shows.
 
 ## How it becomes a matrix
 
@@ -94,15 +96,18 @@ So `v shift 1` comes back as `[3 8]`. The 3 is bucket `v`, whose only word is `v
 
 ## Using the table
 
-The finished table is the list of slots and one shift per letter. Looking up a word follows the same steps as above:
+The finished table is the list of slots and one shift per letter. The command only prints it. A program that uses the table looks up a word with the same steps as above:
 
 ```mermaid
 flowchart LR
     W["word"] --> L["Find the shift of its first letter"]
-    L --> S["Letter sum + shift"]
+    L -- "no shift" --> N["Not in the list"]
+    L -- "found" --> S["Letter sum + shift"]
     S --> R["Remainder after dividing by the number of slots"]
     R --> C["Compare the word with the one in that slot"]
 ```
+
+If no listed word starts with that letter, there is no shift to find and the word is not in the list. With the keyword table below, that is what happens to `x` and `apple`.
 
 The comparison is needed because a perfect hash only promises to keep the listed words apart. Any other word lands on some slot too. With the keyword table below, `goto` has sum 157 and `g` has shift 2, and 159 has remainder 9 after dividing by 25, so it is in slot 9. `gopher` has sum 250, and 252 has remainder 2, but slot 2 holds `func`, so `gopher` is not a keyword.
 
@@ -114,7 +119,7 @@ The comparison is needed because a perfect hash only promises to keep the listed
 
     perfecthash [-keys word,word,...]
 
-- `-keys` gives your own words, separated by commas. They must be different, and made of the lowercase letters a to z, with at most 64 letters each and at most 256 words. Without it, the words are Go's 25 keywords.
+- `-keys` gives your own words, separated by commas. They must be different, and made of the lowercase letters a to z, with at most 64 letters each and at most 256 words. Without it, or with an empty value (`-keys=`), the words are Go's 25 keywords.
 
 `-help` prints the usage text to standard error.
 
@@ -212,16 +217,18 @@ Output, on standard error:
 ## How the results are checked
 
 - **The keyword list can't drift.** A test reads the keywords from the standard package `go/token` and compares them with the list in [main.go](main.go).
-- **The table is checked without the solver.** A test recomputes the slot of each word with a separate version of the hash, and checks that each word is in one slot and that lookups find it. It also checks that strangers such as `gopher` and `Go` are rejected.
+- **The table is checked without the solver.** A test recomputes the slot of each word with a separate version of the hash, and checks that each word is in one slot. A lookup written in the test file follows the steps above: it finds every keyword and rejects strangers such as `gopher` and `Go`.
 - **Small cases are checked against every combination.** A test with no matrix tries all shifts for seven small word lists, and dlx must find the same tables. The five keywords above have 30 tables out of 625 combinations.
 - **Existence is checked by a second search.** A plain [backtracking](../README.md#how-dlx-searches) search that doesn't use dlx must agree on whether a table exists, including for the 25 keywords.
-- The letter sums are checked against values worked out by hand, and the outputs above are checked in full.
+- The letter sums are checked against values worked out by hand, and the outputs above are checked in full. So are the sums of `goto` and `gopher`, the row `[3 8]` as dlx reports it, and the counts 625 and 25^13.
 
 ## Limits
 
 - The command stops at the first table. Going through all the tables for the 25 keywords didn't finish in 20 seconds, so this page gives no total.
-- Not every list has a table, because two words of a bucket that collide do so under every shift. The first ten keywords have none, since `const` and `continue` both have remainder 1 after dividing by 10. A list of 31 of Go's other predeclared names, such as `cap`, `len` and `nil`, fails the same way, on `cap` and `complex` among others.
+- Not every list has a table, because two words of a bucket that collide do so under every shift. The first ten keywords in alphabetical order have none, since `const` and `continue` both have remainder 1 after dividing by 10. A list of 29 of Go's predeclared names, such as `cap`, `len` and `nil`, fails the same way: `cap` and `comparable` both have remainder 24 after dividing by 29.
 - Shifts can also fail to fit together when no such pair exists: the list `aa,ab,ba,baa` has no table.
-- Finding the table for the keywords took under a millisecond on the machine used to write this. Lists near the 256-word cap were not tried, and may not finish in practical time: the cap only stops the program building a huge matrix.
+- Finding the table for the keywords took under a millisecond on the machine used to write this.
+- Long lists usually have no table at all. In one run with 40 random lists at each of seven sizes from 30 to 250 words, using words of 1 to 10 letters from a to z, about two lists in three had a table at 30 words, one in eight at 80 words, and none from 120 words up. Every list that came back without a table had two words of a bucket that collide, as above. That leaves the bucket with no rows, so the answer comes at once.
+- Larger lists can also be far slower. In that run, 4 of the 160 lists of 120 words or more gave no answer in a second, because no such pair settled the matter. So the 256-word cap only stops the program building a huge matrix: it doesn't promise a quick answer.
 - The table has to be built again if a word is added.
 - Leaving spare slots would need a slack row for each slot, as in the [queens example](../queens). This command doesn't do that.

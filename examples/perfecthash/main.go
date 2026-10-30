@@ -33,7 +33,7 @@ const (
 	// maxKeys bounds the size of the matrix. The search itself can become
 	// impractical well below it.
 	maxKeys = 256
-	// maxKeyLength keeps the letter sum of a word far from overflowing an int.
+	// maxKeyLength is a sanity bound on a word, not a limit of the hash.
 	maxKeyLength = 64
 )
 
@@ -135,7 +135,11 @@ func validateKeys(keys []string) error {
 func formatTable(table *hashTable, matrix matrixSize) string {
 	var b strings.Builder
 	fmt.Fprintf(&b, "Keys: %d, first letters: %d\n", len(table.slots), len(table.shifts))
-	fmt.Fprintf(&b, "Matrix: %d columns, %d rows\n\n", matrix.columns, matrix.rows)
+	rowWord := "rows"
+	if matrix.rows == 1 {
+		rowWord = "row"
+	}
+	fmt.Fprintf(&b, "Matrix: %d columns, %d %s\n\n", matrix.columns, matrix.rows, rowWord)
 
 	b.WriteString("Letter  Shift\n")
 	for letter := byte('a'); letter <= 'z'; letter++ {
