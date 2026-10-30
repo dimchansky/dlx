@@ -97,9 +97,9 @@ func run(args []string, stdout, stderr io.Writer) int {
 	case opts.count:
 		_, _ = fmt.Fprintf(w, "Strategies: %d\n", countStrategies(opts.hand, opts.deck))
 	case opts.play != nil:
-		printPlay(w, findStrategy(opts.hand, opts.deck), opts.play, opts.deck)
+		printPlay(w, findStrategy(opts.hand, opts.deck), opts.play)
 	default:
-		printStrategy(w, findStrategy(opts.hand, opts.deck), opts.deck, messages)
+		printStrategy(w, findStrategy(opts.hand, opts.deck), messages)
 	}
 	// A bufio.Writer keeps its first error, so Flush reports any failed write.
 	if err := w.Flush(); err != nil {
@@ -130,26 +130,30 @@ func parseOptions(args []string, stderr io.Writer) (opts options, code int, ok b
 	played := false
 	flags.Visit(func(f *flag.Flag) { played = played || f.Name == "play" })
 
-	switch {
-	case flags.NArg() != 0:
+	fail := func(format string, args ...any) (options, int, bool) {
+		report(stderr, format, args...)
+		return opts, exitFailure, false
+	}
+	if flags.NArg() != 0 {
 		report(stderr, "unexpected argument %q", flags.Arg(0))
 		flags.Usage()
-	case opts.hand < minHand || opts.hand > maxHand:
-		report(stderr, "invalid hand %d: want %d to %d", opts.hand, minHand, maxHand)
-	case opts.deck < opts.hand || opts.deck > maxDeck:
-		report(stderr, "invalid deck %d: want %d to %d", opts.deck, opts.hand, maxDeck)
-	case opts.count && played:
-		report(stderr, "-count and -play can't be combined")
-	case played:
-		var err error
-		if opts.play, err = parseHand(*playText, opts.hand, opts.deck); err == nil {
-			return opts, exitOK, true
-		}
-		report(stderr, "invalid -play: %v", err)
-	default:
-		return opts, exitOK, true
+		return opts, exitFailure, false
 	}
-	return opts, exitFailure, false
+	switch {
+	case opts.hand < minHand || opts.hand > maxHand:
+		return fail("invalid hand %d: want %d to %d", opts.hand, minHand, maxHand)
+	case opts.deck < opts.hand || opts.deck > maxDeck:
+		return fail("invalid deck %d: want %d to %d", opts.deck, opts.hand, maxDeck)
+	case opts.count && played:
+		return fail("-count and -play can't be combined")
+	}
+	if played {
+		var err error
+		if opts.play, err = parseHand(*playText, opts.hand, opts.deck); err != nil {
+			return fail("invalid -play: %v", err)
+		}
+	}
+	return opts, exitOK, true
 }
 
 // parseHand reads a comma-separated hand and returns its cards in increasing
@@ -198,18 +202,18 @@ func printUsage(flags *flag.FlagSet) {
 
 // printStrategy prints each line of the strategy, then the score of a
 // performance over every hand. Write errors are left to the caller's Flush.
-func printStrategy(w *bufio.Writer, plays []play, deck int, messages uint64) {
+func printStrategy(w *bufio.Writer, plays []play, messages uint64) {
 	_, _ = fmt.Fprintf(w, "Hands: %d\nMessages: %d\n\n", len(plays), messages)
 	for _, p := range plays {
 		_, _ = fmt.Fprintf(w, "hand %s  hide %2d  show %s\n", formatCards(p.hand), p.hidden, formatCards(p.shown))
 	}
-	_, _ = fmt.Fprintf(w, "\nMagician named %d of %d hidden cards\n", perform(plays, deck), len(plays))
+	_, _ = fmt.Fprintf(w, "\nMagician named %d of %d hidden cards\n", perform(plays), len(plays))
 }
 
 // printPlay prints one performance. The magician's line comes from the
 // notebook, which has never seen the hand.
-func printPlay(w *bufio.Writer, plays []play, drawn []int, deck int) {
-	magician := newNotebook(plays, deck)
+func printPlay(w *bufio.Writer, plays []play, drawn []int) {
+	magician := newNotebook(plays)
 	for _, p := range plays {
 		if !sameCards(p.hand, drawn) {
 			continue

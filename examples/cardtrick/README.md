@@ -42,7 +42,7 @@ The magician's copy is the same table sorted by the last column. On seeing 7 the
 
 There must be at least as many messages as hands, or two hands would have to share a message. The two counts are close relatives. For 3 cards from deck 8, hands are 8 × 7 × 6 / 6 and messages are 8 × 7. Both have 8 × 7, so only the part left over matters: 6 / 6, which is 1, so the counts are equal.
 
-The same happens for a hand of k cards. Compared with the messages, the hands have one extra factor, the deck size minus k-1, and they are divided by k × (k-1) × ... × 1, the number of orders of a hand. So the counts are equal when the deck has k × (k-1) × ... × 1 cards, plus k-1 more. With one card more, the extra factor is larger than the divisor, and there are more hands than messages.
+The same happens for a hand of k cards. Compared with the messages, the hands have one extra factor, the deck size minus k-1, and they are divided by k × (k-1) × ... × 1, the number of orders of a hand. So the counts are equal when the deck has k × (k-1) × ... × 1 cards, plus k-1 more. For a hand of 4 and a deck of 27, the extra factor is 27 - 3 = 24 and the divisor is 4 × 3 × 2 × 1 = 24, so the counts are equal. With one card more, the extra factor is larger than the divisor, and there are more hands than messages.
 
 | Cards in a hand | Largest possible deck | Hands     | Messages  |
 |-----------------|-----------------------|-----------|-----------|
@@ -89,17 +89,15 @@ Drawing hands on the left and messages on the right shows the choice. The thick 
 
 ```mermaid
 flowchart LR
-    H12["hand 1 2"] == "hide 2" ==> M1["show 1"]
-    H13["hand 1 3"] == "hide 1" ==> M3["show 3"]
-    H23["hand 2 3"] == "hide 3" ==> M2["show 2"]
+    H12["hand 1 2"] ==> M1["show 1"]
+    H23["hand 2 3"] ==> M2["show 2"]
+    H13["hand 1 3"] ==> M3["show 3"]
     H12 --- M2
-    H13 --- M1
     H23 --- M3
+    H13 --- M1
 ```
 
 This matrix has two exact covers, and the thin lines are the second. Read the first as a rule: shown card 1 means 2, shown 2 means 3, and shown 3 means 1. So the hidden card is the next one round a ring of three. The second strategy goes round the ring the other way.
-
-Pairing things off like this, with each one used at most once, is called a matching.
 
 ### Spare messages: slack rows
 
@@ -135,7 +133,7 @@ dlx reports column numbers. Hands are numbered from 0 in dictionary order, which
     cardtrick [-hand size] [-deck size] -count
 
 - `-hand size` sets the cards in a hand, 3 by default, from 2 to 4.
-- `-deck size` sets the cards in the deck, 8 by default. Cards are numbered from 1. The largest deck that is searched is 3 for hands of 2, 8 for hands of 3, and 25 for hands of 4. See [Limits](#limits).
+- `-deck size` sets the cards in the deck, 8 by default, from the hand size to 1000. Cards are numbered from 1. The largest deck that is searched is 3 for hands of 2, 8 for hands of 3, and 25 for hands of 4. See [Limits](#limits). The default deck is too big for hands of 2, so `cardtrick -hand 2` exits with code 1 unless `-deck` is given too.
 - `-play cards` performs the trick on one hand, such as `2,5,7`.
 - `-count` goes through every strategy and prints the total. It takes tricks of up to 10 hands.
 
@@ -223,6 +221,8 @@ Output:
 
 ## Number of strategies
 
+A strategy is a whole table, and two tables that differ in a single line count as different strategies. With 3 cards from a deck of 3 there is 1 hand and 6 messages, so there are 6 strategies, one for each message. More hands multiply the choices, although hands that want the same message get in each other's way.
+
 | Cards in a hand | Deck | Hands | Messages | Strategies |
 |-----------------|------|-------|----------|------------|
 | 2               | 2    | 1     | 2        | 2          |
@@ -243,7 +243,7 @@ The spectator draws 1, 4 and 6.
 
 1. **The assistant picks the card to hide.** The cards add up to 11, which leaves remainder 2 when divided by 3, the size of the hand. So the assistant hides the card in position 2 of the hand, counting from 0 in increasing order. That is 6.
 2. **The magician narrows it down.** Imagine the deck with the shown cards deleted and the rest renumbered 0 to 5. The cards shown add up to 5, and the hidden card's new number leaves the remainder that takes 5 up to a multiple of 3, which is 1. So the new number is 1 or 4.
-3. **The order picks one of them.** Increasing order means the smaller choice, and decreasing order means the larger. The assistant shows 4 then 1, so the new number is 4.
+3. **The order picks one of them.** Increasing order means the smaller choice, and decreasing order means the larger. The assistant works out the hidden card's new number, 4, which is the larger choice, and so shows 4 then 1. The magician sees decreasing order, so the new number is 4.
 4. **The magician counts.** Without 1 and 4, the deck is 0, 2, 3, 5, 6, 7. Number 4 in that list, counting from 0, is 6.
 
 Step 2 works for every hand, and the numbers above show why. The hidden card is 6. The two cards of the hand below it, 1 and 4, are both shown, so deleting them moves it down 2 places, and its new number is 6 - 2 = 4. In general, the card in position p has p cards of the hand below it, all of them shown, so its new number is its old number minus p.
@@ -259,7 +259,7 @@ The matrix for 5 cards from 52 would have over 9 million columns, and no magicia
 ![Thirteen ranks round a clock face, from A at the top clockwise to K. An arrow goes clockwise from 3 to 9, numbered 1 to 6 past the ranks 4 to 9.](clock.svg)
 
 1. Five cards always include two of one suit, since there are only four suits.
-2. Going round the clock from one of those two cards to the other takes at most 6 steps in one of the two directions. The assistant hides the card that is ahead and shows the other one first.
+2. Going clockwise, exactly one of those two cards is at most 6 steps ahead of the other. The assistant hides the card that is ahead and shows the other one first. The clock wraps round: from K to 2 is 2 steps, through A, so of K and 2 the assistant hides the 2.
 3. The other three cards tell the number of steps. Order the deck by rank, then by suit: clubs, diamonds, hearts, spades. The three cards are then small (S), middle (M) and large (L).
 
 | Order shown | SML | SLM | MSL | MLS | LSM | LMS |

@@ -93,11 +93,12 @@ func arrangements(cards []int, size int) [][]int {
 }
 
 // messageKey turns a message into a number, so that it can be a map key. Each
-// card is a digit in base deck+1, so two different messages get different keys.
-func messageKey(message []int, deck int) int {
+// card is a digit in base maxDeck+1, so two different messages get different
+// keys. A message has at most 3 cards, so the key fits in a 32-bit int.
+func messageKey(message []int) int {
 	key := 0
 	for _, card := range message {
-		key = key*(deck+1) + card
+		key = key*(maxDeck+1) + card
 	}
 	return key
 }
@@ -120,7 +121,7 @@ func encode(handSize, deck int) encoding {
 	}
 	messages := arrangements(wholeDeck, handSize-1)
 	m := dlx.NewMatrix(len(hands) + len(messages))
-	addRows(m, hands, messages, deck)
+	addRows(m, hands, messages)
 	return encoding{hands: hands, messages: messages, matrix: m}
 }
 
@@ -133,15 +134,15 @@ func encode(handSize, deck int) encoding {
 // unused. Their columns must still be covered, so each message also gets a
 // slack row covering it alone. When the counts are equal every message is
 // needed and slack rows would only slow the search down.
-func addRows(m dlx.Matrix, hands, messages [][]int, deck int) {
+func addRows(m dlx.Matrix, hands, messages [][]int) {
 	column := make(map[int]int, len(messages))
 	for i, message := range messages {
-		column[messageKey(message, deck)] = len(hands) + i
+		column[messageKey(message)] = len(hands) + i
 	}
 
 	for h, hand := range hands {
 		for _, message := range arrangements(hand, len(hand)-1) {
-			m.AddRow(h, column[messageKey(message, deck)])
+			m.AddRow(h, column[messageKey(message)])
 		}
 	}
 	if len(messages) > len(hands) {
@@ -202,30 +203,27 @@ func countStrategies(handSize, deck int) uint64 {
 
 // notebook is all the magician knows: for each message, the card it stands for.
 // It holds no hands, so naming a card is a lookup and nothing else.
-type notebook struct {
-	deck   int
-	hidden map[int]int
-}
+type notebook map[int]int
 
 // newNotebook writes down a strategy from the magician's side.
-func newNotebook(plays []play, deck int) notebook {
-	n := notebook{deck: deck, hidden: make(map[int]int, len(plays))}
+func newNotebook(plays []play) notebook {
+	n := make(notebook, len(plays))
 	for _, p := range plays {
-		n.hidden[messageKey(p.shown, deck)] = p.hidden
+		n[messageKey(p.shown)] = p.hidden
 	}
 	return n
 }
 
 // name returns the card the magician names on seeing message.
 func (n notebook) name(message []int) int {
-	return n.hidden[messageKey(message, n.deck)]
+	return n[messageKey(message)]
 }
 
 // perform runs the trick once for every hand and returns how many times the
 // magician named the hidden card. Two hands sharing a message would share a
 // notebook entry, so a strategy that reuses a message scores below len(plays).
-func perform(plays []play, deck int) int {
-	magician := newNotebook(plays, deck)
+func perform(plays []play) int {
+	magician := newNotebook(plays)
 	correct := 0
 	for _, p := range plays {
 		if magician.name(p.shown) == p.hidden {

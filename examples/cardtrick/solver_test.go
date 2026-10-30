@@ -118,7 +118,7 @@ func TestEncode(t *testing.T) {
 
 			e := encode(tt.handSize, tt.deck)
 			var c rowCounter
-			addRows(&c, e.hands, e.messages, tt.deck)
+			addRows(&c, e.hands, e.messages)
 			if len(e.hands) != tt.wantHands || len(e.messages) != tt.wantMessages {
 				t.Errorf("got %d hands, %d messages, want %d, %d",
 					len(e.hands), len(e.messages), tt.wantHands, tt.wantMessages)
@@ -243,7 +243,7 @@ func TestFindStrategy(t *testing.T) {
 
 			plays := findStrategy(tt.handSize, tt.deck)
 			checkStrategy(t, plays, tt.handSize, tt.deck)
-			if got := perform(plays, tt.deck); got != len(plays) {
+			if got := perform(plays); got != len(plays) {
 				t.Errorf("perform = %d, want %d", got, len(plays))
 			}
 		})
@@ -277,7 +277,7 @@ func TestPerform_noticesAReusedMessage(t *testing.T) {
 		{hand: []int{1, 2}, hidden: 2, shown: []int{1}},
 		{hand: []int{1, 3}, hidden: 3, shown: []int{1}},
 	}
-	if got := perform(plays, 3); got != 1 {
+	if got := perform(plays); got != 1 {
 		t.Errorf("perform = %d, want 1", got)
 	}
 }
