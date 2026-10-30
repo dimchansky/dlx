@@ -1,0 +1,99 @@
+name: CI
+
+on:
+  push:
+    branches: [master]
+  pull_request:
+  workflow_dispatch:
+  schedule:
+    - cron: "0 6 1 * *" # monthly: catch breakage when a new Go release becomes "stable"
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
+
+jobs:
+  test:
+    name: Test (Go ${{ matrix.go }})
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    strategy:
+      fail-fast: false
+      matrix:
+        # 1.19 is the minimum from go.mod; oldstable/stable are the two supported Go releases.
+        go: ["1.19", "oldstable", "stable"]
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - uses: actions/setup-go@b7ad1dad31e06c5925ef5d2fc7ad053ef454303e # v7.0.0
+        with:
+          go-version: ${{ matrix.go }}
+          cache: false # no dependencies to cache
+      - run: go vet ./...
+      # -short skips the example totals that take minutes under the race detector.
+      - run: go test -race -short -shuffle=on -count=1 -covermode=atomic -coverprofile=coverage.out ./...
+      # Without -race the full example totals take seconds.
+      - run: go test -count=1 ./...
+      # The badge describes the library: example commands are not part of its API.
+      - if: matrix.go == 'stable'
+        run: grep -v '^github.com/dimchansky/dlx/examples/' coverage.out > coverage-lib.out
+      - if: matrix.go == 'stable'
+        uses: coverallsapp/github-action@8d6379e14d29928660c4ba802d8e85393440b329 # v2.3.8
+        with:
+          file: coverage-lib.out
+          format: golang
+          fail-on-error: false
+
+  lint:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - uses: actions/setup-go@b7ad1dad31e06c5925ef5d2fc7ad053ef454303e # v7.0.0
+        with:
+          go-version: stable
+          cache: false
+      - run: go mod tidy -diff
+      - uses: golangci/golangci-lint-action@ba0d7d2ec06a0ea1cb5fa41b2e4a3ab91d21278a # v9.3.0
+        with:
+          version: v2.15.0 # not updated by Dependabot; bump manually
+
+  # Not a required check: a newly published Go vulnerability should be reported
+  # here, not block every open pull request until setup-go offers a fixed Go.
+  vulncheck:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - uses: actions/setup-go@b7ad1dad31e06c5925ef5d2fc7ad053ef454303e # v7.0.0
+        with:
+          go-version: stable
+          cache: false
+      - run: go run golang.org/x/vuln/cmd/govulncheck@v1.9.0 ./... # not updated by Dependabot; bump manually
+
+  # Skipped on pull requests to keep them fast. Each input is at most 8 columns
+  # by 12 rows, so the 30 s budget ends the run and no single input can outlast it.
+  fuzz:
+    if: github.event_name != 'pull_request'
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - uses: actions/setup-go@b7ad1dad31e06c5925ef5d2fc7ad053ef454303e # v7.0.0
+        with:
+          go-version: stable
+          cache: false
+      - run: go test -run='^$' -fuzz='^FuzzSolve$' -fuzztime=30s .
+      # The runner is discarded, so print the failing input to keep the reproducer.
+      - if: failure()
+        run: grep -r . testdata/fuzz
