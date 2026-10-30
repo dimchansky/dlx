@@ -1,0 +1,14 @@
+version: 2
+updates:
+  # No gomod entry: go.mod has no requirements, so there is nothing to update.
+  # Add one if the module ever takes a dependency.
+  - package-ecosystem: github-actions
+    directory: /
+    schedule:
+      interval: weekly
+    cooldown:
+      default-days: 7 # let fresh releases settle before they are proposed (and auto-merged)
+    groups:
+      actions:
+        patterns: ["*"]
+        update-types: [minor, patch] # majors arrive as separate PRs for manual review
