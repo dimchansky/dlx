@@ -18,11 +18,42 @@ You turn your problem into a table, and dlx reports the sets of rows that solve 
 
 Each one is a small command with a README that explains how the problem maps to exact cover:
 
-- [sudoku](examples/sudoku): solve a Sudoku board. The standard introduction to exact cover.
-- [pentomino](examples/pentomino): tile a rectangle with the 12 pentominoes. Two kinds of column in one matrix, and counting tilings up to symmetry.
-- [queens](examples/queens): the n-queens problem. "At most once" constraints with slack rows.
-- [langford](examples/langford): Langford pairings. Removing mirror-image solutions from the matrix itself.
-- [crew](examples/crew): choose crew pairings so that each flight is flown exactly once, at the lowest cost. Picking the cheapest solution, and handling rows with equal columns.
+### Puzzles
+
+| Example | Problem | What it teaches |
+|---------|---------|-----------------|
+| [sudoku](examples/sudoku) | Solve a Sudoku board. | The standard introduction to exact cover: one move meets four requirements at once. |
+| [pentomino](examples/pentomino) | Tile a rectangle with the 12 pentominoes. | Two kinds of column in one matrix, and counting tilings up to symmetry. |
+| [queens](examples/queens) | Place n queens so that no two attack each other. | "At most once" with slack rows, and what slack rows cost the search. |
+| [langford](examples/langford) | Line up two copies of each number, with k numbers between the copies of k. | Removing mirror-image solutions from the matrix itself. |
+| [cardtrick](examples/cardtrick) | Find a strategy for a trick where the order of the shown cards names the hidden one. | Slack rows for spare messages, counting that rules out a deck with no search, and a recipe that reaches decks the search can't. |
+
+### Science and maths
+
+| Example | Problem | What it teaches |
+|---------|---------|-----------------|
+| [kochenspecker](examples/kochenspecker) | Show that Peres's 33 rays can't be painted by the rules behind the Kochen-Specker theorem. | Proof by zero solutions: the search finds no answer, and that empty result is the theorem. |
+| [fullerene](examples/fullerene) | Find the double bonds of the C60 molecule. | A scientific count: the 12500 structures found by search match a published total and a determinant that needs no search. |
+| [witt](examples/witt) | Find Steiner systems, such as 132 committees of six where any five people share exactly one. | A matrix that is the definition itself, and totals that measure symmetry, cross-checked by a division. |
+| [hat](examples/hat) | Cover a disk with copies of the hat, the shape that covers the plane only without repeating. | Slack rows for the kites outside the disk, and a zero result: turned copies alone can't cover radius 6. |
+| [hamming](examples/hamming) | Find perfect codes, and use one to win a hat game 7 times out of 8. | One row per neighbourhood, with the search's 240 codes rebuilt by Hamming's recipe. |
+| [coveringsystems](examples/coveringsystems) | Split the integers into remainder classes, so that each integer is in exactly one. | A finite matrix for an infinite question, totals checked against a known sequence, and zero solutions backing a theorem. |
+
+### Music
+
+| Example | Problem | What it teaches |
+|---------|---------|-----------------|
+| [twelvetone](examples/twelvetone) | Order the twelve notes so that every interval appears exactly once. | The equality trick, which makes two rows agree on a value. The totals match the published counts. |
+| [vuza](examples/vuza) | Find where copies of a rhythm must enter so that every beat is struck once, and neither rhythm nor entries repeat. | Post-filtering in the accepter: dlx finds every list of entries, and those that repeat are dropped. The totals match published ones. |
+| [bells](examples/bells) | Ring every order of the bells exactly once under the rules of change ringing. | Post-filtering in the accepter for a rule no column states: of 2655552 covers, 10792 pass, which is the published total. |
+
+### Computing and scheduling
+
+| Example | Problem | What it teaches |
+|---------|---------|-----------------|
+| [crew](examples/crew) | Choose crew pairings so that each flight is flown exactly once, at the lowest cost. | Ranking by cost outside dlx, and handling rows with equal columns. |
+| [instrselect](examples/instrselect) | Choose machine instructions for an expression by covering its tree with tiles. | Ranking by cost outside dlx, why the tiles join up with no extra rule, and when dynamic programming is the better tool. |
+| [perfecthash](examples/perfecthash) | Build a minimal perfect hash for Go's 25 keywords. | Two kinds of column, and why a minimal table needs no slack rows: every slot must be used. |
 
 ## What it doesn't do
 

@@ -2,13 +2,27 @@
 
 Each directory here is a small command that solves one problem with package [dlx](https://github.com/dimchansky/dlx). This page explains the one idea they all share, so you can read any of them without knowing the mathematics. Only school arithmetic is assumed.
 
-| Example | Problem | What it teaches |
-|---------|---------|-----------------|
-| [sudoku](sudoku) | Fill a Sudoku board | One choice meets four requirements at once |
-| [pentomino](pentomino) | Fill a rectangle with 12 shapes | Two kinds of column in one matrix |
-| [queens](queens) | Place queens that don't attack each other | "At most once" with slack rows |
-| [langford](langford) | Arrange pairs of numbers at set distances | Removing mirror images from the matrix |
-| [crew](crew) | Choose crew duties for a day of flights | Picking the cheapest solution outside dlx |
+The [dlx README](../README.md#example-programs) says what each example teaches.
+
+| Group | Example | Problem |
+|-------|---------|---------|
+| Puzzles | [sudoku](sudoku) | Fill a Sudoku board |
+| Puzzles | [pentomino](pentomino) | Fill a rectangle with 12 shapes |
+| Puzzles | [queens](queens) | Place queens that don't attack each other |
+| Puzzles | [langford](langford) | Arrange pairs of numbers at set distances |
+| Puzzles | [cardtrick](cardtrick) | Name a hidden card from the order of the others |
+| Science and maths | [kochenspecker](kochenspecker) | Show that a set of rays can't be painted |
+| Science and maths | [fullerene](fullerene) | Find the double bonds of C60 |
+| Science and maths | [witt](witt) | Find Steiner systems |
+| Science and maths | [hat](hat) | Cover a disk with copies of the hat |
+| Science and maths | [hamming](hamming) | Find perfect codes and win a hat game |
+| Science and maths | [coveringsystems](coveringsystems) | Split the integers into remainder classes |
+| Music | [twelvetone](twelvetone) | Use every interval once in a twelve-tone row |
+| Music | [vuza](vuza) | Fill a drum loop with copies of one rhythm |
+| Music | [bells](bells) | Ring every order of the bells once |
+| Computing and scheduling | [crew](crew) | Choose crew duties for a day of flights |
+| Computing and scheduling | [instrselect](instrselect) | Choose machine instructions for an expression |
+| Computing and scheduling | [perfecthash](perfecthash) | Build a perfect hash for Go's keywords |
 
 ## What exact cover is
 
