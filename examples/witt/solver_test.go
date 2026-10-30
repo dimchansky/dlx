@@ -248,10 +248,10 @@ func countByBacktracking(s spec) int {
 	return total
 }
 
-func factorial(n int) int {
-	result := 1
+func factorial(n int) uint64 {
+	result := uint64(1)
 	for i := 2; i <= n; i++ {
-		result *= i
+		result *= uint64(i)
 	}
 	return result
 }
@@ -368,7 +368,7 @@ func TestSolve_KnownCounts(t *testing.T) {
 			if tt.isSharp && len(targets) != shuffles {
 				t.Errorf("%d shuffles reach %d target lists, want the same number", shuffles, len(targets))
 			}
-			if got := uint64(factorial(tt.spec.v) / shuffles); got != tt.wantSolutions {
+			if got := factorial(tt.spec.v) / uint64(shuffles); got != tt.wantSolutions {
 				t.Errorf("%d! / %d = %d, want %d", tt.spec.v, shuffles, got, tt.wantSolutions)
 			}
 

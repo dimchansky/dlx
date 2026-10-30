@@ -107,13 +107,17 @@ The more symmetric a system is, the fewer different systems it can be renamed in
 |-----------|------------------------------------------|--------|--------------|------------------------------|---------------|
 | S(1,2,4)  | Two pairs                                | 2      | 24           | 8                            | 3             |
 | S(2,3,7)  | Fano plane                               | 7      | 5040         | 168                          | 30            |
-| S(4,5,11) | Small Witt design with one point removed | 66     | 39916800     | 7920                         | 5040          |
+| S(4,5,11) | Derived small Witt design                | 66     | 39916800     | 7920                         | 5040          |
 | S(5,6,12) | Small Witt design                        | 132    | 479001600    | 95040                        | 5040          |
 | S(2,4,13) | Projective plane of order 3              | 13     | 6227020800   | 5616                         | 1108800       |
 
-Each row is a division you can check: 479001600 / 95040 = 5040. "All shuffles" is v·(v-1)·…·2·1. The 5040 in the Fano row is a different number that happens to match the last column: it is 7·6·5·4·3·2·1.
+Each row is a division you can check: 479001600 / 95040 = 5040. "All shuffles" is v·(v-1)·…·2·1.
+
+Two rows need a word. S(4,5,11) is cut out of S(5,6,12): keep only the 66 blocks through one point, then delete that point from them. Any four remaining points plus the deleted one make five, which lie in exactly one block, so the four lie in exactly one shortened block. The last row, a projective plane, is explained in [the card game section](#the-card-game-connection).
 
 The 95040 is striking. It equals 12·11·10·9·8, and that is no accident. Choose any five different points as new names for points 0 to 4: exactly one shuffle that keeps the Witt design does that, and the other seven points have no freedom left. Mathematicians call this set of 95040 shuffles the Mathieu group M12. You don't need the name to follow anything here.
+
+That is also why both Witt rows end in 5040. The 95040 shuffles use up the first five factors of 12·11·…·2·1, so dividing leaves 7·6·5·4·3·2·1. S(4,5,11) does the same with four points: its 7920 shuffles are 11·10·9·8, and dividing leaves the same seven factors. The 5040 in the Fano row is a separate fact: it is all the shuffles of 7 points, because v = 7.
 
 S(5,6,12) and S(4,5,11) are [known to be unique](https://en.wikipedia.org/wiki/Steiner_system) up to renaming, and Yuki Irie's paper [arXiv 2001.00415](https://arxiv.org/abs/2001.00415) mentions the 5040 copies of S(5,6,12).
 
@@ -121,7 +125,7 @@ S(5,6,12) and S(4,5,11) are [known to be unique](https://en.wikipedia.org/wiki/S
 
 Spot It, also sold as Dobble, deals cards with symbols on them, and any two cards share exactly one symbol. Decks like this come from systems of the form S(2,n+1,n²+n+1), which are called **projective planes** of order n. The points are the symbols and the blocks are the cards, so there are as many cards as symbols.
 
-The Fano plane is the plane of order 2: 7 cards with 3 symbols each. Cards `0 1 2` and `1 3 5` share the symbol 1. The system's own rule is about symbols: any two symbols sit on exactly one card. In a projective plane that also gives the rule of the game, which is about cards. This is a known result, and the tests confirm it pair by pair on the solutions for orders 2 to 5.
+The Fano plane is the plane of order 2: 7 cards with 3 symbols each. Cards `0 1 2` and `1 3 5` share the symbol 1. The system's own rule is about symbols: any two symbols sit on exactly one card. In a projective plane that also gives the rule of the game, which is about cards. This is a known result, and the tests confirm it pair by pair on the first solution found for each of the orders 2 to 5.
 
 The plane of order 5 is the largest deck this example builds: 31 cards with 6 symbols each.
 
@@ -245,5 +249,7 @@ These systems are small enough because their rows and solutions both stay few. T
 
 - On the machine used to write this, `witt -t 2 -k 6 -v 31` took about a second, most of it spent building the matrix. The total for S(2,4,13) took about three seconds.
 - Finding one system can be far easier than counting them. `witt -t 2 -k 5 -v 21` finds a plane of order 4 quickly, while `-count` on the same system did not finish in 30 seconds.
-- The command doesn't apply the counting tests above, so proving that a system doesn't exist can take a long time. S(2,6,16) took about 16 seconds to report none. S(2,5,22) did not finish in 30 seconds, although a point would need 21 / 4 blocks, which rules it out at once.
+- The command doesn't apply the counting tests above, so proving that a system doesn't exist can take a long time. S(2,5,22) did not finish in 30 seconds, although a point would need 21 / 4 blocks, which rules it out at once.
+- Some systems pass both counting tests and still can't exist. S(2,6,16) would have 120 / 15 = 8 blocks, with 15 / 5 = 3 of them through each point. But take one block: each of its 6 points needs 2 more blocks, and those 12 are all different, because a block sharing two points with the first would put that pair in two blocks. That makes at least 13 blocks, not 8. The search knows none of this, and took about 16 seconds to report none.
+- The limit of 20 million ones bounds memory, not time. `witt -t 5 -k 5 -v 60 -count` passes the check: each row has a single 1, and there is only one solution. But dlx looks through all the remaining columns at every step, so the time grows with the square of the number of columns. With v = 30 and 142506 columns that took about 25 seconds, and v = 60 has 5461512 columns.
 - The next Witt design, S(5,8,24), is over the limit, with 735471 rows of 56 ones each.
