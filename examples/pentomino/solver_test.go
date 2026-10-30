@@ -31,8 +31,14 @@ var pieceCells = map[byte][][2]int{
 // cell is the one a left-to-right, top-to-bottom search places first.
 func testOrientations(cells [][2]int) [][][2]int {
 	maps := [][4]int{
-		{1, 0, 0, 1}, {0, -1, 1, 0}, {-1, 0, 0, -1}, {0, 1, -1, 0},
-		{-1, 0, 0, 1}, {1, 0, 0, -1}, {0, 1, 1, 0}, {0, -1, -1, 0},
+		{1, 0, 0, 1},
+		{0, -1, 1, 0},
+		{-1, 0, 0, -1},
+		{0, 1, -1, 0},
+		{-1, 0, 0, 1},
+		{1, 0, 0, -1},
+		{0, 1, 1, 0},
+		{0, -1, -1, 0},
 	}
 	seen := map[string]bool{}
 	result := [][][2]int{}
