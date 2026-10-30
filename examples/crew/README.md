@@ -1,26 +1,110 @@
 # Crew pairing
 
-A command-line solver for a small crew pairing problem, written as an example of using package [dlx](https://github.com/dimchansky/dlx). Airlines group the flights of a day into pairings, each a sequence of flights one crew can work. The task is to pick pairings so that every flight is flown by exactly one crew, at the lowest cost. This kind of problem is called set partitioning, and it appears wherever every job must be done exactly once: delivery routes, shifts, machine schedules.
+A command-line solver for a small crew pairing problem, written as an example of using package [dlx](https://github.com/dimchansky/dlx). If exact cover is new to you, read the [introduction to the examples](../README.md) first.
+
+## The problem
+
+An airline must staff every flight of the day. A **pairing** is a sequence of flights that one crew can work, and it has a cost, such as pay and hotels. A set of pairings that staffs the whole day is called a **roster** here. The task is to pick pairings so that every flight is flown by exactly one crew, at the lowest total cost.
+
+This kind of problem is called **set partitioning**. To partition a set means to divide it into groups so that each item lands in exactly one group. Here the items are the flights, and the groups are the pairings. It appears wherever every job must be done exactly once: delivery routes, shifts, machine schedules.
 
 This is a simplified version. Real pairings span several days and must start and end at a crew base, and thousands of flights give vastly more candidate pairings than this search could enumerate.
 
-## How it maps to exact cover
+## A small example
 
-The mapping is direct, and it's the simplest one here:
+Take four flights and six candidate pairings. Written in the command's input format:
+
+```
+flights F1 F2 F3 F4
+A  900 F1 F2
+B  700 F3 F4
+C 1000 F2 F3
+D  500 F1
+E  450 F4
+L 1500 F1 F2 F3 F4
+```
+
+## How it becomes a matrix
+
+The mapping is direct, and it's the simplest one in these examples. **One column of the matrix is one flight.** **One row of the matrix is one candidate pairing**, with a 1 under each flight it covers. The cost isn't in the matrix at all, so it is shown here only in the row label:
+
+| Pairing (cost) | F1 | F2 | F3 | F4 |
+|----------------|:-:|:-:|:-:|:-:|
+| A (900)        | 1 | 1 | 0 | 0 |
+| B (700)        | 0 | 0 | 1 | 1 |
+| C (1000)       | 0 | 1 | 1 | 0 |
+| D (500)        | 1 | 0 | 0 | 0 |
+| E (450)        | 0 | 0 | 0 | 1 |
+| L (1500)       | 1 | 1 | 1 | 1 |
+
+Picking rows so that each column has exactly one 1 is the same as staffing each flight exactly once. This matrix has three exact covers, and adding up each one's costs gives the ranking:
+
+| Roster  | Sum                | Total |
+|---------|--------------------|-------|
+| L       | 1500               | 1500  |
+| A, B    | 900 + 700          | 1600  |
+| D, C, E | 500 + 1000 + 450   | 1950  |
+
+For the sample file [pairings.txt](pairings.txt):
 
 | Matrix part | Meaning                                                   | Count in pairings.txt  |
 |-------------|-----------------------------------------------------------|------------------------|
 | Column      | A flight, which must be flown by exactly one crew         | 12                     |
 | Row         | A candidate pairing, covering its flights                 | 19, from 20 candidates |
 
-The interesting part is what dlx leaves out, because real problems run into both of these:
+<details>
+<summary>The whole sample as a table, with flights numbered from 101</summary>
 
-- **dlx has no costs.** It finds solutions and doesn't rank them. So [solver.go](solver.go) enumerates every roster, adds up each one's cost, and sorts them. That is exhaustive, which is fine for a few dozen candidates and useless for a real airline's thousands. Real crew pairing uses integer programming.
-- **dlx doesn't identify rows.** A solution lists each row's columns, not which row it was, so two pairings with the same flights look identical. Here that happens for A2 and D1 in [pairings.txt](pairings.txt). The solver gives each set of flights a single matrix row and remembers the cheapest pairing for it, since a dearer one can't be in the cheapest roster. As a result, the rosters are counted by how they divide up the flights, and a dearer duplicate never appears, even with `-limit 0`.
+Rows A2 and D1 are the same, so only one of them goes into the matrix, as explained below.
+
+| Pairing (cost) | 101 | 102 | 103 | 104 | 105 | 106 | 107 | 108 | 109 | 110 | 111 | 112 |
+|---|:-:|:-:|:-:|:-:|:-:|:-:|:-:|:-:|:-:|:-:|:-:|:-:|
+| A1 (900) | 1 | 1 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 |
+| A2 (700) | 0 | 0 | 1 | 1 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 |
+| A3 (800) | 0 | 0 | 0 | 0 | 1 | 1 | 0 | 0 | 0 | 0 | 0 | 0 |
+| A4 (650) | 0 | 0 | 0 | 0 | 0 | 0 | 1 | 1 | 0 | 0 | 0 | 0 |
+| A5 (750) | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 1 | 1 | 0 | 0 |
+| A6 (820) | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 1 | 1 |
+| B1 (1150) | 1 | 1 | 1 | 1 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 |
+| B2 (1250) | 0 | 0 | 1 | 1 | 1 | 1 | 0 | 0 | 0 | 0 | 0 | 0 |
+| B3 (1200) | 0 | 0 | 0 | 0 | 0 | 0 | 1 | 1 | 1 | 1 | 0 | 0 |
+| B4 (1180) | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 1 | 1 | 1 | 1 |
+| B5 (1400) | 0 | 0 | 0 | 0 | 1 | 1 | 1 | 1 | 0 | 0 | 0 | 0 |
+| C1 (1300) | 1 | 0 | 0 | 1 | 1 | 0 | 0 | 0 | 0 | 0 | 0 | 0 |
+| C2 (1000) | 0 | 1 | 1 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 |
+| C3 (990) | 0 | 0 | 0 | 0 | 0 | 1 | 1 | 1 | 0 | 0 | 0 | 0 |
+| C4 (1450) | 0 | 1 | 1 | 0 | 0 | 1 | 1 | 1 | 0 | 0 | 0 | 0 |
+| R1 (520) | 1 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 |
+| R2 (500) | 0 | 1 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 |
+| R3 (560) | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 1 | 0 |
+| R4 (540) | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 1 |
+| D1 (680) | 0 | 0 | 1 | 1 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 |
+
+</details>
+
+## What dlx leaves out
+
+The interesting part is what dlx doesn't do, because real problems run into both of these.
+
+**dlx has no costs.** It finds solutions and doesn't rank them. An exact cover is a yes-or-no question, and a matrix of 0s and 1s has nowhere to put a price. So cost is handled outside the search: [solver.go](solver.go) lists every roster, adds up each one's cost, and sorts them.
+
+```mermaid
+flowchart LR
+    A["Candidate pairings with costs"] --> B["Keep the cheapest pairing for each set of flights"]
+    B --> C["dlx lists every roster"]
+    C --> D["Add up each roster's cost"]
+    D --> E["Sort, cheapest first"]
+```
+
+That is exhaustive, which is fine for a few dozen candidates and useless for a real airline's thousands. Real crew pairing uses integer programming, a family of methods that can steer toward a low cost without listing every solution.
+
+**dlx doesn't identify rows.** A solution lists each row's columns, not which row it was, so two pairings with the same flights look identical. Here that happens for A2 and D1 in [pairings.txt](pairings.txt): both cover F103 and F104, at costs of 700 and 680. The solver gives each set of flights a single matrix row and remembers the cheapest pairing for it, since a dearer one can't be in the cheapest roster. As a result, the rosters are counted by how they divide up the flights, and a dearer duplicate never appears, even with `-limit 0`.
+
+## How a solution decodes back
+
+Each row of a solution is a list of flights. The solver uses that list as a key to look up the cheapest pairing with those flights, then adds its cost to the roster's total.
 
 The number of solutions depends on the data. A flight that no pairing covers leaves its column empty, so there are no rosters at all, and that is reported as such.
-
-The tests compare the cost of every roster with a brute-force search over subsets of the candidates, for the sample file and for 500 random problems.
 
 ## Installation
 
@@ -81,3 +165,11 @@ Output:
       B4    1180  F109 F110 F111 F112
 
 Each line of a roster shows the pairing's name, its cost and its flights.
+
+## How the results are checked
+
+The tests compare the cost of every roster with a brute-force search over subsets of the candidates, for the sample file and for 500 random problems.
+
+## Limits
+
+Every roster is found and held in memory, even with `-limit 1`, so the running time and memory grow with the number of rosters. This suits a few dozen candidates and not a real airline schedule.
