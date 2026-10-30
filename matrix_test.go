@@ -3,6 +3,8 @@ package dlx
 import (
 	"fmt"
 	"math"
+	"math/bits"
+	"math/rand"
 	"sort"
 	"strings"
 	"testing"
@@ -345,6 +347,152 @@ func TestSolve_SolutionsAreSafeToRetain(t *testing.T) {
 	if got := toString(allSolutions(m)); got != want {
 		t.Errorf("changing a retained solution changed the matrix\ngot:\n%s\nwant:\n%s", got, want)
 	}
+}
+
+func TestSolve_MatchesBruteForce(t *testing.T) {
+	t.Parallel()
+
+	rng := rand.New(rand.NewSource(1))
+	matricesWithSolutions := 0
+	for i := 0; i < 3000; i++ {
+		nColumns := rng.Intn(maxBruteForceColumns + 1)
+		rows := randomRows(rng, nColumns, rng.Intn(maxBruteForceRows+1))
+
+		want := bruteForce(nColumns, rows)
+		if len(want) > 0 {
+			matricesWithSolutions++
+		}
+
+		m := newTestMatrix(nColumns, rows)
+		if got, want := toString(allSolutions(m)), toString(want); got != want {
+			t.Fatalf("matrix %d, %d columns, rows %v\ngot:\n%s\nwant:\n%s", i, nColumns, rows, got, want)
+		}
+		assertSolveRestores(t, m)
+	}
+
+	// Guards the generator: a run with hardly any solutions would prove nothing.
+	if matricesWithSolutions < 300 {
+		t.Errorf("only %d matrices had solutions", matricesWithSolutions)
+	}
+}
+
+func TestSolve_InterleavedWithAddRow(t *testing.T) {
+	t.Parallel()
+
+	rng := rand.New(rand.NewSource(2))
+	for i := 0; i < 500; i++ {
+		nColumns := 1 + rng.Intn(maxBruteForceColumns)
+		rows := randomRows(rng, nColumns, maxBruteForceRows)
+
+		m := newTestMatrix(nColumns, nil)
+		for added, row := range rows {
+			m.AddRow(row...)
+
+			got := toString(allSolutions(m))
+			want := toString(bruteForce(nColumns, rows[:added+1]))
+			if got != want {
+				t.Fatalf("matrix %d after %d rows of %v\ngot:\n%s\nwant:\n%s", i, added+1, rows, got, want)
+			}
+			m.Solve(SolutionAccepterFunc(func([][]int) bool { return true }))
+		}
+	}
+}
+
+func FuzzSolve(f *testing.F) {
+	f.Add([]byte{})
+	f.Add([]byte{0})
+	f.Add([]byte{3, 0b001, 0b010, 0b100})
+	f.Add([]byte{4, 0b0111, 0b0101, 0b0010, 0b1000})
+	f.Add([]byte{8, 0xff, 0xff, 0x0f, 0xf0, 0x33, 0xcc, 0x55, 0xaa, 0, 1, 2, 4})
+
+	f.Fuzz(func(t *testing.T, data []byte) {
+		nColumns, rows := decodeMatrix(data)
+		m := newTestMatrix(nColumns, rows)
+
+		got := toString(allSolutions(m))
+		want := toString(bruteForce(nColumns, rows))
+		if got != want {
+			t.Fatalf("%d columns, rows %v\ngot:\n%s\nwant:\n%s", nColumns, rows, got, want)
+		}
+		assertSolveRestores(t, m)
+	})
+}
+
+// The brute force solver tries 2^rows subsets, which keeps these small.
+const (
+	maxBruteForceColumns = 8
+	maxBruteForceRows    = 12
+)
+
+// bruteForce solves an exact cover problem by trying every subset of rows. It
+// shares no code with the solver under test. Empty rows are left out because
+// AddRow ignores them; they would otherwise double the solutions.
+func bruteForce(nColumns int, rows [][]int) [][][]int {
+	nonEmpty := make([][]int, 0, len(rows))
+	for _, row := range rows {
+		if len(row) > 0 {
+			nonEmpty = append(nonEmpty, row)
+		}
+	}
+
+	solutions := [][][]int{}
+	for subset := uint(0); subset < 1<<uint(len(nonEmpty)); subset++ {
+		solution := [][]int{}
+		covered, isExact := uint(0), true
+		for i, row := range nonEmpty {
+			if subset>>uint(i)&1 == 0 {
+				continue
+			}
+			solution = append(solution, row)
+			for _, c := range row {
+				isExact = isExact && covered>>uint(c)&1 == 0
+				covered |= 1 << uint(c)
+			}
+		}
+		if isExact && bits.OnesCount(covered) == nColumns {
+			solutions = append(solutions, solution)
+		}
+	}
+	return solutions
+}
+
+// randomRows returns rows of distinct columns in random order. Some are empty.
+func randomRows(rng *rand.Rand, nColumns, nRows int) [][]int {
+	rows := make([][]int, 0, nRows)
+	for i := 0; i < nRows; i++ {
+		rows = append(rows, rng.Perm(nColumns)[:rng.Intn(nColumns+1)])
+	}
+	return rows
+}
+
+// decodeMatrix turns fuzz input into a small matrix. The first byte selects the
+// column count and each later byte is a bitmask of the columns of one row. A row
+// starts at a column that depends on its position, so that rows are not always
+// in ascending order.
+func decodeMatrix(data []byte) (nColumns int, rows [][]int) {
+	if len(data) == 0 {
+		return 0, nil
+	}
+
+	nColumns = int(data[0]) % (maxBruteForceColumns + 1)
+	masks := data[1:]
+	if len(masks) > maxBruteForceRows {
+		masks = masks[:maxBruteForceRows]
+	}
+	if nColumns == 0 {
+		return 0, nil
+	}
+
+	for i, mask := range masks {
+		row := []int{}
+		for offset := 0; offset < nColumns; offset++ {
+			if c := (i + offset) % nColumns; mask>>uint(c)&1 == 1 {
+				row = append(row, c)
+			}
+		}
+		rows = append(rows, row)
+	}
+	return nColumns, rows
 }
 
 // newTestMatrix returns the concrete matrix, so that tests can inspect its links.
