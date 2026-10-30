@@ -1,0 +1,36 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 460 250" width="460" height="250" role="img" aria-label="Five words in five slots: map and var collide until var is shifted by 1" font-family="Helvetica, Arial, sans-serif">
+<title>Five words in five slots: map and var collide until var is shifted by 1</title>
+<rect x="0.5" y="0.5" width="459" height="249" rx="8" fill="#ffffff" stroke="#8c959f"/>
+<text x="20" y="26" font-size="15" font-weight="bold" fill="#24292f">Before: map and var collide, slot 4 is empty</text>
+<rect x="20" y="38" width="76" height="62" rx="4" fill="#dafbe1" stroke="#1a7f37" stroke-width="2"/>
+<text x="58" y="120" text-anchor="middle" font-size="13" fill="#57606a">slot 0</text>
+<text x="58" y="74" text-anchor="middle" font-size="16" font-family="Menlo, Consolas, monospace" fill="#24292f">for</text>
+<rect x="104" y="38" width="76" height="62" rx="4" fill="#dafbe1" stroke="#1a7f37" stroke-width="2"/>
+<text x="142" y="120" text-anchor="middle" font-size="13" fill="#57606a">slot 1</text>
+<text x="142" y="74" text-anchor="middle" font-size="16" font-family="Menlo, Consolas, monospace" fill="#24292f">if</text>
+<rect x="188" y="38" width="76" height="62" rx="4" fill="#dafbe1" stroke="#1a7f37" stroke-width="2"/>
+<text x="226" y="120" text-anchor="middle" font-size="13" fill="#57606a">slot 2</text>
+<text x="226" y="74" text-anchor="middle" font-size="16" font-family="Menlo, Consolas, monospace" fill="#24292f">func</text>
+<rect x="272" y="38" width="76" height="62" rx="4" fill="#ffebe9" stroke="#cf222e" stroke-width="2"/>
+<text x="310" y="120" text-anchor="middle" font-size="13" fill="#57606a">slot 3</text>
+<text x="310" y="63" text-anchor="middle" font-size="16" font-family="Menlo, Consolas, monospace" fill="#24292f">map</text>
+<text x="310" y="85" text-anchor="middle" font-size="16" font-family="Menlo, Consolas, monospace" fill="#24292f">var</text>
+<rect x="356" y="38" width="76" height="62" rx="4" fill="#f6f8fa" stroke="#8c959f" stroke-width="2"/>
+<text x="394" y="120" text-anchor="middle" font-size="13" fill="#57606a">slot 4</text>
+<text x="20" y="140" font-size="15" font-weight="bold" fill="#24292f">After: var is shifted by 1, every slot holds one word</text>
+<rect x="20" y="152" width="76" height="62" rx="4" fill="#dafbe1" stroke="#1a7f37" stroke-width="2"/>
+<text x="58" y="234" text-anchor="middle" font-size="13" fill="#57606a">slot 0</text>
+<text x="58" y="188" text-anchor="middle" font-size="16" font-family="Menlo, Consolas, monospace" fill="#24292f">for</text>
+<rect x="104" y="152" width="76" height="62" rx="4" fill="#dafbe1" stroke="#1a7f37" stroke-width="2"/>
+<text x="142" y="234" text-anchor="middle" font-size="13" fill="#57606a">slot 1</text>
+<text x="142" y="188" text-anchor="middle" font-size="16" font-family="Menlo, Consolas, monospace" fill="#24292f">if</text>
+<rect x="188" y="152" width="76" height="62" rx="4" fill="#dafbe1" stroke="#1a7f37" stroke-width="2"/>
+<text x="226" y="234" text-anchor="middle" font-size="13" fill="#57606a">slot 2</text>
+<text x="226" y="188" text-anchor="middle" font-size="16" font-family="Menlo, Consolas, monospace" fill="#24292f">func</text>
+<rect x="272" y="152" width="76" height="62" rx="4" fill="#dafbe1" stroke="#1a7f37" stroke-width="2"/>
+<text x="310" y="234" text-anchor="middle" font-size="13" fill="#57606a">slot 3</text>
+<text x="310" y="188" text-anchor="middle" font-size="16" font-family="Menlo, Consolas, monospace" fill="#24292f">map</text>
+<rect x="356" y="152" width="76" height="62" rx="4" fill="#dafbe1" stroke="#1a7f37" stroke-width="2"/>
+<text x="394" y="234" text-anchor="middle" font-size="13" fill="#57606a">slot 4</text>
+<text x="394" y="188" text-anchor="middle" font-size="16" font-family="Menlo, Consolas, monospace" fill="#24292f">var</text>
+</svg>
