@@ -109,17 +109,21 @@ func (m *matrixObject) AddRow(constraintsRow ...int) {
 	}
 }
 
-// Solve finds a set or more of rows in which exactly one 1 appears for each column.
-// Each solution is passed to accepter. It stops immediately when accepter AcceptSolution returns true.
+// Solve implements Matrix.
 func (m *matrixObject) Solve(accepter SolutionAccepter) {
+	if accepter == nil {
+		panic("dlx: Solve: nil SolutionAccepter")
+	}
 	m.solve(accepter)
 }
 
+// solve reports whether the accepter asked to stop. It undoes all its covering
+// before returning, so a stop leaves the matrix as intact as an exhausted search.
 func (m *matrixObject) solve(accepter SolutionAccepter) bool {
 	head := m.head
 	headRight := head.right.column
-	if headRight == head && accepter.AcceptSolution(m.getExactCover()) {
-		return true
+	if headRight == head {
+		return accepter.AcceptSolution(m.getExactCover())
 	}
 
 	c := headRight
@@ -138,16 +142,15 @@ func (m *matrixObject) solve(accepter SolutionAccepter) bool {
 	stackSize := len(m.partialSolution)
 	m.partialSolution = append(m.partialSolution, nil)
 
-	for r := c.down; r != &c.dataObject; r = r.down {
+	stopped := false
+	for r := c.down; r != &c.dataObject && !stopped; r = r.down {
 		m.partialSolution[stackSize] = r
 
 		for j := r.right; j != r; j = j.right {
 			coverColumn(j.column)
 		}
 
-		if m.solve(accepter) {
-			return true
-		}
+		stopped = m.solve(accepter)
 
 		for j := r.left; j != r; j = j.left {
 			unCoverColumn(j.column)
@@ -156,7 +159,7 @@ func (m *matrixObject) solve(accepter SolutionAccepter) bool {
 	m.partialSolution = m.partialSolution[:stackSize]
 	unCoverColumn(c)
 
-	return false
+	return stopped
 }
 
 func (m *matrixObject) getExactCover() [][]int {
