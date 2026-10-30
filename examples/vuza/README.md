@@ -6,11 +6,13 @@ A command-line solver for rhythmic canons, written as an example of using packag
 
 Think of a drum loop with a fixed number of beats. After the last beat it starts again from the first, like the hours on a clock. We number the beats from 0, so a 72-beat loop has beats 0 to 71.
 
-A **rhythm** is a set of beats to strike in that loop. A **voice** is one player playing the rhythm from some starting beat, called its **entry**. If the rhythm is 0, 1, 2 and a voice enters on beat 3, it strikes 3, 4, 5.
+A **rhythm** is a set of beats to strike in that loop, and each of those beats is called a **note**. A **voice** is one player playing the rhythm from some starting beat, called its **entry**. If the rhythm is 0, 1, 2 and a voice enters on beat 3, it strikes 3, 4, 5.
 
 Beat numbers wrap round the loop. In a 72-beat loop, a note 8 beats after beat 66 lands on beat 2, because 66 + 8 = 74, and 74 is 2 past the end. That is the only arithmetic in this example: add, and take away the length of the loop if you went past the end.
 
 A **canon** here means several voices playing the same rhythm from different entries, so that **every beat of the loop is struck by exactly one voice**. Nothing clashes and nothing is left silent. The list of entries that achieves this is called a **complement** of the rhythm.
+
+To **shift** a list of beats is to add the same number to each of them, wrapping round the loop as usual.
 
 The smallest interesting case has 6 beats and the rhythm 0, 1, 2. Two voices are enough, and there are three ways to place them. Each ring below is the loop, with one colour per voice:
 
@@ -18,7 +20,7 @@ The smallest interesting case has 6 beats and the rhythm 0, 1, 2. Two voices are
 
 ### Why repeating matters
 
-Draw the loop as a wheel, with the notes marked on it. A pattern **repeats** if some turn of the wheel, short of a full circle, puts every note back onto a note. Such a pattern is called **periodic**, and a pattern with no such turn is **aperiodic**.
+Draw the loop as a wheel, with the notes marked on it. Turning the wheel is the same thing as shifting the notes, so this page uses "turn" and "shift" for one operation. A pattern **repeats** if some turn of the wheel, short of a full circle, puts every note back onto a note. Such a pattern is called **periodic**, and a pattern with no such turn is **aperiodic**.
 
 ![Two wheels of 12 beats. Notes 0, 1, 6, 7 match themselves after half a turn. Notes 0, 1, 5 match only after a full turn](wheels.svg)
 
@@ -59,11 +61,13 @@ Each row is the row above it moved one place to the right, and the last rows wra
 
 This matrix has three exact covers, one for each ring in the picture above:
 
-| Picked rows        | Beats 0 to 5 are struck by        |
-|--------------------|-----------------------------------|
-| entry 0, entry 3   | 0 0 0 3 3 3                       |
-| entry 1, entry 4   | 4 1 1 1 4 4                       |
-| entry 2, entry 5   | 5 5 2 2 2 5                       |
+| Picked rows        | Entry of the voice striking beats 0 to 5 |
+|--------------------|------------------------------------------|
+| entry 0, entry 3   | 0 0 0 3 3 3                              |
+| entry 1, entry 4   | 4 1 1 1 4 4                              |
+| entry 2, entry 5   | 5 5 2 2 2 5                              |
+
+Each digit is an entry number, with one digit per beat. So 4 1 1 1 4 4 says the voice with entry 4 strikes beats 0, 4 and 5, and the voice with entry 1 strikes beats 1, 2 and 3.
 
 Picking entry 0 and entry 1 fails, because both strike beat 1.
 
@@ -144,7 +148,7 @@ Output:
     Complements: 1296
     Aperiodic: 432
 
-Swap the roles. The entries above are themselves a rhythm of 12 notes, and it needs 6 voices. All of its complements are aperiodic:
+Swap the roles. A voice strikes note + entry, and note + entry = entry + note, so rhythm and entries can trade places and the same sums come out. For example, the rhythm 0, 1, 2 with entries 0, 3 in 6 beats becomes the rhythm 0, 3 with entries 0, 1, 2. So the entries above are themselves a rhythm of 12 notes, and it needs 6 voices. All of its complements are aperiodic:
 
     vuza -tile 0,1,5,6,12,25,29,36,42,48,49,53 -count
 
@@ -187,7 +191,7 @@ Output:
 
 ## Reading the totals
 
-Shift all the entries of a canon by one beat and you get another canon, which is the same music started later. The totals count these separately. An aperiodic list of entries has one different shift for each beat of the loop, so dividing by 72 gives the number of different shapes:
+Shift all the entries of a canon by one beat and you get another canon, which is the same music started later. The totals count these separately. An aperiodic list of entries has one different shift for each beat of the loop, because if two shifts gave the same list, the list would repeat. So dividing by 72 gives the number of different shapes:
 
 | Rhythm            | Notes | Complements | Aperiodic | Shapes (aperiodic / 72) |
 |-------------------|-------|-------------|-----------|-------------------------|
@@ -198,12 +202,12 @@ Those 6 and 3 are the known answer for 72 beats. There are 3 six-note rhythms an
 
 ## How the results are checked
 
-- **Published rhythms.** [Fripertinger's list](https://imsc.uni-graz.at/fripertinger/canons/canon_3.html) gives the 3 and the 6 rhythms for 72 beats. The tests start from each published rhythm and check that the complements found are exactly the published partners, each shifted 72 ways. Every six-note rhythm gives 1296 and 432, and every twelve-note rhythm gives 216 and 216.
+- **Published rhythms.** [Fripertinger's list](https://imsc.uni-graz.at/fripertinger/canons/canon_3.html) gives the 3 and the 6 rhythms for 72 beats. The tests start from each published rhythm and check that the aperiodic complements found are exactly the published partners, each shifted 72 ways. Every six-note rhythm gives 1296 and 432, and every twelve-note rhythm gives 216 and 216.
 - **Published totals.** Table 1 of Jedrzejewski's [On the enumeration of Vuza canons](https://arxiv.org/abs/1304.6609) gives 3 and 6 for 72 beats, and one of its rows gives 8640 shapes for 144 beats with 6 notes and 24 entries. The tests confirm 8640 by counting the complements with an entry on beat 0, which is a sixth of the search and takes about a second. The full run of `vuza -n 144 -tile 0,16,32,36,52,68 -count` reports 1244160 aperiodic complements, which is 8640 x 144.
 - **A separate search.** The totals for the default rhythm, its 12-note partner and the small examples are compared with a backtracking search that doesn't use dlx.
 - **Trying everything.** For every aperiodic rhythm starting on beat 0, in loops of up to 12 beats, the tests try every possible list of entries and compare the result with dlx.
 - **The definition.** Every complement in those tests is checked by adding each note to each entry and seeing that every beat comes up once. The repeat check is compared with trying every possible turn.
-- **Short loops.** For loops of up to 28 beats, the tests try every rhythm and find no Vuza canon. It is enough to try rhythms of at most the square root of the loop length that start on beat 0, because the two sizes multiply to the loop length and any canon can be shifted. That 72 is the shortest length comes from the published proofs, not from this test.
+- **Short loops.** For loops of up to 28 beats, the tests try every rhythm and find no Vuza canon. It is enough to try rhythms with at most sqrt(n) notes that start on beat 0, where n is the loop length. For 28 beats that means 5 notes at most. Notes times voices equals the loop length, so at least one of the two sets is that small. It may be either the rhythm or the entries, but they can swap roles as shown above, so the smaller set can always be the one tried. Any canon can also be shifted so that this set starts on beat 0. That 72 is the shortest length comes from the published proofs, not from this test.
 
 The rhythm itself comes from Example 18 of the paper, which also gives a partner that the tests confirm. A warning if you read that paper: the 12-note set printed in its Example 7 completes this rhythm but repeats every 36 beats, so it isn't a Vuza partner. A test records this. The paper's tables don't depend on it.
 
@@ -211,7 +215,7 @@ The rhythm itself comes from Example 18 of the paper, which also gives a partner
 
 ## Limits
 
-**You must supply the rhythm.** dlx answers "where do the entries go?", not "which rhythm works?". The matrix is built from one rhythm, so finding rhythms means a separate outer search, solving one matrix per candidate. Even for six notes in 72 beats that is 13019909 rhythms starting on beat 0. A one-off run of that search, not part of the tests, took 7 minutes on 8 goroutines. It found 18 rhythms, which are the 3 published shapes, each started from its 6 notes. Longer loops and more notes are out of reach this way, which is why the rhythm is an input here.
+**You must supply the rhythm.** dlx answers "where do the entries go?", not "which rhythm works?". The matrix is built from one rhythm, so finding rhythms means a separate outer search, solving one matrix per candidate. Even for six notes in 72 beats that is 13019909 rhythms starting on beat 0. A one-off run of that search, not part of the tests, took minutes, running 8 searches side by side. It found 18 rhythms, which are the 3 published shapes, each started from its 6 notes. Longer loops and more notes are out of reach this way, which is why the rhythm is an input here.
 
 **The totals grow fast.** On the machine used to write this, `vuza -count` took a few milliseconds and the 144-beat count above took about 6 seconds for 1679616 complements. Printing the first results is much quicker than counting all of them.
 
