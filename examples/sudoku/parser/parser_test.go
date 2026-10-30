@@ -193,6 +193,18 @@ func TestParseReader_ReadFailures(t *testing.T) {
 			wantMsg: "line 10: reading input: read failure",
 		},
 		{
+			name:    "reader fails after partial content following the board",
+			input:   io.MultiReader(strings.NewReader(validBoard+"\nmore"), iotest.ErrReader(errRead)),
+			wantErr: errRead,
+			wantMsg: "line 10: reading input: read failure",
+		},
+		{
+			name:    "reader fails after a partial blank line following the board",
+			input:   io.MultiReader(strings.NewReader(validBoard+"\n  "), iotest.ErrReader(errRead)),
+			wantErr: errRead,
+			wantMsg: "line 10: reading input: read failure",
+		},
+		{
 			name:    "line beyond the scanner limit after the board",
 			input:   strings.NewReader(validBoard + "\n" + strings.Repeat(" ", bufio.MaxScanTokenSize)),
 			wantErr: bufio.ErrTooLong,

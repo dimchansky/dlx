@@ -197,25 +197,60 @@ func TestRun_ReadFailure(t *testing.T) {
 	}
 }
 
-// The board has too many solutions to enumerate, so this ends only if the write
-// failure stops the search.
-func TestRun_WriteFailureStopsSearch(t *testing.T) {
+func TestRun_WriteFailure(t *testing.T) {
 	t.Parallel()
 
-	var stderr bytes.Buffer
-	code := run([]string{"-limit", "0"}, strings.NewReader(emptyBoard), failingWriter{}, &stderr)
-
-	if code != 2 {
-		t.Errorf("exit status %d, want 2", code)
+	tests := []struct {
+		name   string
+		args   []string
+		stdin  string
+		failOn int
+	}{
+		{
+			// The board has too many solutions to enumerate, so this ends only
+			// if the failure stops the search.
+			name:   "header stops an unbounded search",
+			args:   []string{"-limit", "0"},
+			stdin:  emptyBoard,
+			failOn: 1,
+		},
+		{
+			// The header is the first write and each row is one more.
+			name:   "middle of the board",
+			stdin:  readBoardFile(t),
+			failOn: 5,
+		},
 	}
-	want := "sudoku: writing solution: write failure\n"
-	if stderr.String() != want {
-		t.Errorf("stderr = %q, want %q", stderr.String(), want)
+
+	for _, tt := range tests {
+		tt := tt
+		t.Run(tt.name, func(t *testing.T) {
+			t.Parallel()
+
+			var stderr bytes.Buffer
+			code := run(tt.args, strings.NewReader(tt.stdin), &failingWriter{failOn: tt.failOn}, &stderr)
+
+			if code != 2 {
+				t.Errorf("exit status %d, want 2", code)
+			}
+			want := "sudoku: writing solution: write failure\n"
+			if stderr.String() != want {
+				t.Errorf("stderr = %q, want %q", stderr.String(), want)
+			}
+		})
 	}
 }
 
-type failingWriter struct{}
+// failingWriter accepts writes until write number failOn, which fails.
+type failingWriter struct {
+	failOn int
+	writes int
+}
 
-func (failingWriter) Write([]byte) (int, error) {
-	return 0, errors.New("write failure")
+func (w *failingWriter) Write(p []byte) (int, error) {
+	w.writes++
+	if w.writes == w.failOn {
+		return 0, errors.New("write failure")
+	}
+	return len(p), nil
 }

@@ -54,14 +54,17 @@ func ParseReader(r io.Reader) (string, error) {
 		}
 	}
 
-	l := boardSize + 1
-	for ; s.Scan(); l++ {
+	for l := boardSize + 1; ; l++ {
+		scanned := s.Scan()
+		if err := s.Err(); err != nil {
+			return "", fmt.Errorf("line %d: reading input: %w", l, err)
+		}
+		if !scanned {
+			break
+		}
 		if len(bytes.TrimSpace(s.Bytes())) != 0 {
 			return "", fmt.Errorf("line %d: unexpected content after the board", l)
 		}
-	}
-	if err := s.Err(); err != nil {
-		return "", fmt.Errorf("line %d: reading input: %w", l, err)
 	}
 
 	return string(bs), nil
