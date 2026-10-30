@@ -101,9 +101,8 @@ type puzzle struct {
 	placements map[[hatKites]int]placement
 }
 
-// newPuzzle sets up the disk of the given radius. Without withMirrors,
-// placements are rotated copies of the hat only.
-func newPuzzle(radius int, withMirrors bool) *puzzle {
+// diskKites lists the kites of the disk of the given radius.
+func diskKites(radius int) []kite {
 	var disk []kite
 	for q := -radius; q <= radius; q++ {
 		for r := -radius; r <= radius; r++ {
@@ -114,12 +113,13 @@ func newPuzzle(radius int, withMirrors bool) *puzzle {
 			}
 		}
 	}
-	return newPuzzleOn(disk, withMirrors)
+	return disk
 }
 
-// newPuzzleOn lists every placement that touches the given kites, which are the
-// kites to cover.
-func newPuzzleOn(disk []kite, withMirrors bool) *puzzle {
+// newPuzzle lists every placement that touches the given kites, which are the
+// kites to cover. Without withMirrors, placements are rotated copies of the hat
+// only.
+func newPuzzle(disk []kite, withMirrors bool) *puzzle {
 	p := &puzzle{placements: make(map[[hatKites]int]placement)}
 	p.kites = append(p.kites, disk...)
 	p.disk = len(p.kites)

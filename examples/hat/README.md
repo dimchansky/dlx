@@ -21,11 +21,13 @@ This cover of radius 5 uses no mirror images:
 
 ![Eleven blue hats covering a jagged disk of radius 5, with the red line around the disk](rotations.svg)
 
-The solid red line is the edge of the disk, and everything inside it is covered. The dashed circle only shows the radius. The disk is made of whole kites, so it is jagged, and the circle pokes out past it in places. [The rules](#the-rules-of-the-disk) say which kites count. The dark kites are in the disk, and the pale ones are the parts of hats that stick out.
+The solid red line is the edge of the disk, and everything inside it is covered. The dashed circle only shows the radius. The disk is made of whole kites, so its edge doesn't follow the circle: the circle pokes out past the edge in places, and spikes of the edge poke out past the circle, because a kite counts if its centre is inside. [The rules](#the-rules-of-the-disk) say which kites count. The dark kites are in the disk, and the pale ones are the parts of hats that stick out.
 
 This cover of radius 6 uses three mirror images, drawn in orange:
 
-![Eighteen hats covering a jagged disk of radius 6, three of them orange mirror images](mirrors.svg)
+![Eighteen hats covering a hexagonal disk of radius 6, three of them orange mirror images](mirrors.svg)
+
+The kites of this disk happen to form a plain hexagon, so its edge is not jagged.
 
 ## The rules of the disk
 
@@ -34,7 +36,7 @@ The hats lie on the kite grid: every hat is made of eight whole kites of the gri
 - There are 6 orientations of the hat, one for each turn by a multiple of 60 degrees.
 - The mirror image adds 6 more, so 12 in all.
 
-The disk is centred on the middle of a hexagon. It holds the kites whose centres are at most the radius from the middle of the disk, so it is jagged rather than truly round. The centre of a kite here is the average of its four corners, which lies 5/4 from the middle of its hexagon. A radius of 2 holds just the six kites of the central hexagon. The unit is the short side of a kite.
+The disk is centred on the middle of a hexagon. It holds the kites whose centres are at most the radius from the middle of the disk, so it is not truly round. The centre of a kite here is the average of its four corners, which lies 5/4 from the middle of its hexagon. A radius of 2 holds just the six kites of the central hexagon. The unit is the short side of a kite.
 
 Every kite of the disk must be covered by exactly one hat. Kites outside the disk may stay empty, but no two hats may overlap there either.
 
@@ -62,7 +64,7 @@ The margin is every kite outside the disk that a hat touching the disk can reach
 
 Only placements that touch the disk get a row. The others could not help to cover it.
 
-Here is the smallest case: radius 2 with turned copies only. The disk has six kites, k0 to k5, named after the numbers in the first picture. There are 18 hat placements, h0 to h17. The whole matrix has 36 columns and 48 rows, so this table leaves things out: it folds the 30 margin columns into one count, and it doesn't show the 30 slack rows.
+Here is the smallest case: radius 2 with turned copies only. The disk has six kites, k0 to k5, named after the numbers in the first picture. There are 18 hat placements, h0 to h17. The whole matrix has 36 columns and 48 rows, so this table leaves things out: it folds the 30 margin columns into one count, and it doesn't show the 30 slack rows. The second table below shows some of those.
 
 | Hat row | k0 | k1 | k2 | k3 | k4 | k5 | Margin kites |
 |---------|:--:|:--:|:--:|:--:|:--:|:--:|:------------:|
@@ -89,11 +91,27 @@ Each row adds up to 8, because a hat has eight kites. Some hats put four kites i
 
 Look for a set of rows with one 1 in each of the columns k0 to k5. The bold rows are one answer: h1 covers k1 and k2, h2 covers k3 and k4, and h7 covers k0 and k5. Rows h0 and h1 can't be picked together, because both have a 1 in column k1. They would overlap on that kite.
 
-This disk has 28 covers in all. The hidden margin columns change nothing in this tiny case: the disk columns alone also give 28. They matter as soon as the disk grows, because two hats that fit together in the disk can still clash outside it. At radius 6 with turned copies, dropping the margin columns gives 38 false covers instead of 0.
-
 The bold rows give this picture:
 
 ![Three hats meeting at the middle of a disk of radius 2](small.svg)
+
+Here is a slice of the same matrix with its margin columns showing. It has one disk column, three margin columns and five rows, two of them slack rows. Margin kites are named by their column number in the matrix, so m10 is column 10:
+
+| Row        | k1 | m10 | m14 | m23 |
+|------------|:--:|:---:|:---:|:---:|
+| hat h1     | 1  | 1   | 1   | 0   |
+| hat h3     | 1  | 0   | 0   | 1   |
+| slack m10  | 0  | 1   | 0   | 0   |
+| slack m14  | 0  | 0   | 1   | 0   |
+| slack m23  | 0  | 0   | 0   | 1   |
+
+Pick hat h1. It fills m10 and m14, so the slack rows of those two can't be picked: both would put a second 1 in the column. It leaves m23 empty, and every column must have a 1, so slack m23 goes in. A hat that doesn't reach a margin kite pays for that with one slack row, and that is all a slack row does.
+
+This disk has 28 covers in all. The margin columns change nothing in this tiny case: the disk columns alone also give 28. They matter as soon as the disk grows, because two hats that fit together in the disk can still clash outside it. At radius 6 with turned copies, dropping the margin columns gives 38 false covers instead of 0. Here is one of them, with each margin kite under two hats drawn dark red:
+
+![A false cover of the disk of radius 6 with turned copies, with hats overlapping on dark red kites outside the disk](clash.svg)
+
+Inside the red line nothing is wrong, so a matrix with only disk columns accepts this. With the margin columns, two hats on one of those red kites would both have a 1 in its column.
 
 The two safety rules for slack rows from the [introduction](../README.md#at-most-once-slack-rows) both hold:
 
@@ -119,7 +137,7 @@ The columns of a hat row always come back in the same order, so the program keep
 
     hat [-r radius] [-rotations] [-count] [-svg]
 
-- `-r radius` sets the radius of the disk, 6 by default, from 2 to 64. That cap only stops the program building a huge matrix: radii near it are not practical, as the limits below show.
+- `-r radius` sets the radius of the disk, 6 by default, from 2 to 64. That cap is a round number that catches a mistyped radius. The matrix stays small even at 64. The search is what takes too long, far below it, as the limits below show. The `Disk of radius` line is printed before the search starts, so you can tell that it is running.
 - `-rotations` allows only turned copies of the hat, not its mirror image.
 - `-count` goes through every cover and prints the total.
 - `-svg` prints the first cover as an SVG picture instead of a summary. It can't be combined with `-count`.
@@ -171,9 +189,13 @@ Output:
 
     Covers: 14
 
-Draw a cover, as the pictures on this page were drawn:
+Draw a cover. Three of the pictures on this page were drawn this way, with these commands:
 
+    hat -r 5 -rotations -svg > rotations.svg
     hat -svg > mirrors.svg
+    hat -r 2 -rotations -svg > small.svg
+
+The first picture on this page, of the kites and the hat, was not drawn by the program, and neither was the dark red of the false cover. The tests check both against the program's kites.
 
 ## Number of covers
 
@@ -187,7 +209,7 @@ Two covers count as different if their sets of hats differ, even if only outside
 
 The counts don't have to grow with the radius: a bigger disk asks for more, while its jagged edge changes which covers fit.
 
-At radius 6, the 26844 covers use from 13 to 19 hats, and from 1 to 16 of those are mirror images. The 18 hats printed above are only the first cover the search reached. A different order of rows gives a different first cover, so that number says nothing about the hat.
+At radius 6, the 26844 covers use from 13 to 19 hats. Flipping a cover over swaps the two shapes, so the number of mirror images alone says little: 16 of 17 is just the flip of 1 of 17. What does say something is the number of hats of the rarer shape, which goes from 1 to 7. For example, 24 covers have 15 hats with 7 mirror images, and their 24 flips have 8. The 18 hats printed above are only the first cover the search reached. A different order of rows gives a different first cover, so that number says nothing about the hat.
 
 ## What this shows and what it doesn't
 
@@ -201,7 +223,7 @@ It doesn't show these things:
 
 - **Nothing about a truly round disk.** Radius 5 works only because the disk counts a kite by its centre, which gives 48 kites. If every kite with any part inside the circle had to be covered, radius 5 would have 60 kites and no cover, and the largest disk for turned copies would be radius 4. Radii 2 to 4 would have 46, 46 and 64 covers, and radii 6 and 7 none. Radius 6 has the same 72 kites under both rules, so the result that it needs mirror images doesn't depend on the rule.
 - **Nothing about hats off the grid.** The search only tries hats made of whole kites of this grid. Appendix A of the paper proves that every covering of the whole plane by hats lies on such a grid. This program takes that from the paper and doesn't check it.
-- **Nothing about the hat covering the plane, or never repeating.** The paper proves those. A cover of a disk may be impossible to extend, because nothing here looks past the hats that touch the disk. In the paper's patches mirror images are sparse, while a cover of this disk can have 16 of them.
+- **Nothing about the hat covering the plane, or never repeating.** The paper proves those. A cover of a disk may be impossible to extend, because nothing here looks past the hats that touch the disk. In the paper's patches one of the two shapes is sparse, while a cover of this disk can have 7 hats of one shape and 8 of the other.
 - **Nothing about other centres.** A disk centred somewhere else might give a different radius.
 
 Together with that result from Appendix A, the answer for radius 6 agrees with the paper. A covering of the plane by turned copies alone would lie on a grid and would have to cover this disk, and it can't. That is a small check of a known result, not a new proof, and it relies on the appendix.
@@ -217,14 +239,14 @@ The tests start from the [published outline](https://github.com/isohedral/hatviz
 - The hat uses four of the six kite directions once and two opposite directions twice, as the paper says.
 - All 12 orientations of the kites match the same 12 orientations of the outline.
 
-Every total in the table comes from two searches that give the same result. One is dlx. The other is a plain [backtracking](../README.md#how-dlx-searches) search in the tests, which builds hats from the outline alone and uses neither the matrix nor the kite list of the solver.
+Every total in the table, and the ranges of hats and of the rarer shape at radius 6, come from two searches that give the same result. One is dlx. The other is a plain [backtracking](../README.md#how-dlx-searches) search in the tests, which shares no code with the solver: it has its own copy of the outline, its own coordinates, and its own turn, flip and move, and it finds a hat's kites as the kite centres inside the outline.
 
-The tests also check the first 200 covers of each total for gaps and overlaps, and they compare these with the program: the three pictures of covers, the kites and hat outlines in the first picture, and the small matrix above. The numbers for a disk without margin columns and for the disk of whole kites touching the circle are tested too.
+The tests also check the first 200 covers of each total for gaps and overlaps, and they compare these with the program: the three pictures of covers, the false cover, the kites and hat outlines in the first picture, both small matrices above, and the raw solution line below them. The numbers for a disk without margin columns and for the disk of whole kites touching the circle are tested too, but those rest on dlx alone.
 
 `go test` checks every total. `go test -short` skips the three largest, with mirrors at radius 4, 5 and 6.
 
 ## Limits
 
-Slack rows have a cost here, as they do in the [queens example](../queens#limits). dlx treats a margin kite like any other column, so it can spend its time deciding which margin kites stay empty, which doesn't matter for the disk. For counting at radius 6, the plain search in the tests was about twice as fast as dlx on the machine used to write this.
+Slack rows have a cost here, as they do in the [queens example](../queens#limits). dlx treats a margin kite like any other column, so it can spend its time deciding which margin kites stay empty, which doesn't matter for the disk. For counting at radius 6, the plain search in the tests was about three times as fast as dlx on the machine used to write this.
 
-The time to find one cover jumps around with the radius. On that machine the first cover took a moment at radius 10, and from seconds to tens of seconds at radii 11 to 13.
+The time to find one cover jumps around with the radius. On that machine the first cover took a moment at radius 10, from seconds to tens of seconds at radii 11 to 13, and over two minutes at radius 14. At the cap, `hat -r 64 -rotations` took about 14 MB of memory and gave no answer in over six minutes.

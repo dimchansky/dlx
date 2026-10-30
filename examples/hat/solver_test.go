@@ -23,8 +23,12 @@ var coverTotals = []struct {
 	withMirrors bool
 	want        int
 	slow        bool
-	// hats and reflected give the fewest and most hats in any cover, when set.
-	hats, reflected [2]int
+	// hats gives the fewest and most hats in any cover, and rarer the fewest and
+	// most hats of the rarer shape, when set.
+	hats, rarer [2]int
+	// splits gives the number of covers for some pairs of hats and reflected
+	// hats.
+	splits map[[2]int]int
 }{
 	{name: "rotations radius 2", radius: 2, want: 28},
 	{name: "rotations radius 3", radius: 3, want: 46},
@@ -39,7 +43,8 @@ var coverTotals = []struct {
 	{name: "mirrors radius 5", radius: 5, withMirrors: true, want: 3676, slow: true},
 	{
 		name: "mirrors radius 6", radius: 6, withMirrors: true, want: 26844, slow: true,
-		hats: [2]int{13, 19}, reflected: [2]int{1, 16},
+		hats: [2]int{13, 19}, rarer: [2]int{1, 7},
+		splits: map[[2]int]int{{15, 7}: 24, {15, 8}: 24},
 	},
 }
 
@@ -161,7 +166,7 @@ func TestNewPuzzle(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			t.Parallel()
 
-			p := newPuzzle(tt.radius, tt.withMirrors)
+			p := newPuzzle(diskKites(tt.radius), tt.withMirrors)
 			if p.disk != tt.wantDisk {
 				t.Errorf("disk has %d kites, want %d", p.disk, tt.wantDisk)
 			}
@@ -183,6 +188,9 @@ func TestNewPuzzle(t *testing.T) {
 // six cells for the disk, and its count of margin kites.
 var readmeMatrixRow = regexp.MustCompile(`(?m)^\| (\*\*)?h(\d+)(?:\*\*)? \|(.*)\| (\d+) \|$`)
 
+// readmeSolution is the raw solution in the README, up to the three dots.
+var readmeSolution = regexp.MustCompile(`(?m)^    (\[\[.*) \.\.\.$`)
+
 // TestSmallMatrix compares the table and the decoding example in the README
 // with the program.
 func TestSmallMatrix(t *testing.T) {
@@ -194,7 +202,7 @@ func TestSmallMatrix(t *testing.T) {
 	}
 	table := readmeMatrixRow.FindAllStringSubmatch(string(readme), -1)
 
-	p := newPuzzle(2, false)
+	p := newPuzzle(diskKites(2), false)
 	if len(table) != len(p.rows) {
 		t.Fatalf("README has %d hat rows, want %d", len(table), len(p.rows))
 	}
@@ -236,12 +244,64 @@ func TestSmallMatrix(t *testing.T) {
 		t.Errorf("row 1 = %s, want %s", got, want)
 	}
 	var first []placement
-	p.solve(func(hats []placement) bool {
-		first = hats
+	var raw string
+	p.matrix().Solve(dlx.SolutionAccepterFunc(func(exactCover [][]int) bool {
+		first = p.decode(exactCover)
+		raw = fmt.Sprint(exactCover)
 		return true
-	})
+	}))
 	if !reflect.DeepEqual(first, wantHats) {
 		t.Errorf("first cover = %+v, want %+v", first, wantHats)
+	}
+	shown := readmeSolution.FindStringSubmatch(string(readme))
+	if shown == nil {
+		t.Fatal("README has no raw solution line")
+	}
+	if !strings.HasPrefix(raw, shown[1]) {
+		t.Errorf("README solution %s doesn't start %s", shown[1], raw)
+	}
+}
+
+// readmeSliceRow is one row of the slice of the matrix in the README.
+var readmeSliceRow = regexp.MustCompile(`(?m)^\| (hat h|slack m)(\d+) +\| (\d) +\| (\d) +\| (\d) +\| (\d) +\|$`)
+
+// TestMatrixSlice compares the table with margin columns in the README with the
+// matrix.
+func TestMatrixSlice(t *testing.T) {
+	t.Parallel()
+
+	readme, err := os.ReadFile("README.md")
+	if err != nil {
+		t.Fatal(err)
+	}
+	p := newPuzzle(diskKites(2), false)
+	columns := []int{1, 10, 14, 23}
+	table := readmeSliceRow.FindAllStringSubmatch(string(readme), -1)
+	if len(table) != 5 {
+		t.Fatalf("README has %d rows in the slice, want 5", len(table))
+	}
+	for _, cells := range table {
+		number, err := strconv.Atoi(cells[2])
+		if err != nil {
+			t.Fatal(err)
+		}
+		row := []int{number}
+		if cells[1] == "hat h" {
+			row = p.rows[number][:]
+		} else if number < p.disk || number >= len(p.kites) {
+			t.Fatalf("%s%s is not a margin kite", cells[1], cells[2])
+		}
+		for i, column := range columns {
+			want := "0"
+			for _, used := range row {
+				if used == column {
+					want = "1"
+				}
+			}
+			if cells[3+i] != want {
+				t.Errorf("%s%s has %s in column %d, want %s", cells[1], cells[2], cells[3+i], column, want)
+			}
+		}
 	}
 }
 
@@ -251,7 +311,7 @@ func TestDisk(t *testing.T) {
 	t.Parallel()
 
 	for radius, want := range map[int]int{2: 6, 3: 18, 4: 30, 5: 48, 6: 72, 7: 84, 8: 114} {
-		got := newPuzzle(radius, false)
+		got := newPuzzle(diskKites(radius), false)
 		if got.disk != want {
 			t.Errorf("radius %d: %d kites, want %d", radius, got.disk, want)
 		}
@@ -290,26 +350,40 @@ func TestMarginColumns(t *testing.T) {
 	t.Parallel()
 
 	for radius, want := range map[int]int{2: 28, 3: 174, 4: 156, 5: 198, 6: 38} {
-		p := newPuzzle(radius, false)
-		m := dlx.NewMatrix(p.disk)
-		for _, row := range p.rows {
-			var inDisk []int
-			for _, column := range row {
-				if column < p.disk {
-					inDisk = append(inDisk, column)
-				}
-			}
-			m.AddRow(inDisk...)
-		}
 		got := 0
-		m.Solve(dlx.SolutionAccepterFunc(func([][]int) bool {
+		solveDiskOnly(radius, func([]placement) bool {
 			got++
 			return false
-		}))
+		})
 		if got != want {
 			t.Errorf("radius %d: %d covers without margin columns, want %d", radius, got, want)
 		}
 	}
+}
+
+// solveDiskOnly passes each cover of a matrix with no margin columns, for hats
+// without mirrors, to accept until accept returns true.
+func solveDiskOnly(radius int, accept func(hats []placement) bool) {
+	p := newPuzzle(diskKites(radius), false)
+	m := dlx.NewMatrix(p.disk)
+	hats := make(map[string]placement)
+	for _, row := range p.rows {
+		var inDisk []int
+		for _, column := range row {
+			if column < p.disk {
+				inDisk = append(inDisk, column)
+			}
+		}
+		m.AddRow(inDisk...)
+		hats[fmt.Sprint(inDisk)] = p.placements[row]
+	}
+	m.Solve(dlx.SolutionAccepterFunc(func(exactCover [][]int) bool {
+		cover := make([]placement, len(exactCover))
+		for i, row := range exactCover {
+			cover[i] = hats[fmt.Sprint(row)]
+		}
+		return accept(cover)
+	}))
 }
 
 // TestRoundDisk asks for every kite with any part strictly inside the circle,
@@ -342,7 +416,7 @@ func TestRoundDisk(t *testing.T) {
 			t.Errorf("radius %d: %d kites, want %d", tt.radius, len(disk), tt.kites)
 		}
 		got := 0
-		newPuzzleOn(disk, false).solve(func([]placement) bool {
+		newPuzzle(disk, false).solve(func([]placement) bool {
 			got++
 			return false
 		})
@@ -353,7 +427,7 @@ func TestRoundDisk(t *testing.T) {
 
 	// At radius 6 the two rules pick the same kites, so the result that mirror
 	// images are needed doesn't depend on the rule.
-	for _, k := range newPuzzle(6, false).kites[:72] {
+	for _, k := range newPuzzle(diskKites(6), false).kites[:72] {
 		if !k.crossesCircle(6) {
 			t.Errorf("kite %v of the disk has no part inside the circle", k)
 		}
@@ -400,31 +474,79 @@ func TestSolve_Totals(t *testing.T) {
 				t.Skip("slow total")
 			}
 
-			got := 0
-			hats, reflected := [2]int{math.MaxInt32, 0}, [2]int{math.MaxInt32, 0}
+			got := coverStats{}
+			checked := 0
 			checker := newCoverChecker(tt.radius, tt.withMirrors)
-			newPuzzle(tt.radius, tt.withMirrors).solve(func(cover []placement) bool {
-				got++
-				hats = widen(hats, len(cover))
-				reflected = widen(reflected, countReflected(cover))
-				if got <= checkedCovers {
+			newPuzzle(diskKites(tt.radius), tt.withMirrors).solve(func(cover []placement) bool {
+				got[[2]int{len(cover), countReflected(cover)}]++
+				if checked < checkedCovers {
+					checked++
 					if problem := checker.check(cover); problem != "" {
 						t.Fatal(problem)
 					}
 				}
 				return false
 			})
-			if got != tt.want {
-				t.Errorf("%d covers, want %d", got, tt.want)
-			}
-			if tt.hats != [2]int{} && hats != tt.hats {
-				t.Errorf("covers use %v hats, want %v", hats, tt.hats)
-			}
-			if tt.reflected != [2]int{} && reflected != tt.reflected {
-				t.Errorf("covers use %v reflected hats, want %v", reflected, tt.reflected)
-			}
+			checkStats(t, got, tt.want, tt.hats, tt.rarer, tt.splits)
 		})
 	}
+}
+
+// TestIndependentSearch repeats every total and range with a separate search,
+// which shares no code with the solver.
+func TestIndependentSearch(t *testing.T) {
+	t.Parallel()
+
+	for _, tt := range coverTotals {
+		tt := tt
+		t.Run(tt.name, func(t *testing.T) {
+			t.Parallel()
+			if tt.slow && testing.Short() {
+				t.Skip("slow total")
+			}
+
+			got := newCoverChecker(tt.radius, tt.withMirrors).count()
+			checkStats(t, got, tt.want, tt.hats, tt.rarer, tt.splits)
+		})
+	}
+}
+
+// coverStats counts covers by their number of hats and of reflected hats.
+type coverStats map[[2]int]int
+
+// checkStats compares stats with the published values. The hats and rarer ranges
+// and the splits are checked when set.
+func checkStats(t *testing.T, stats coverStats, want int, hats, rarer [2]int, splits map[[2]int]int) {
+	t.Helper()
+
+	total := 0
+	gotHats, gotRarer := [2]int{math.MaxInt32, 0}, [2]int{math.MaxInt32, 0}
+	for split, covers := range stats {
+		total += covers
+		gotHats = widen(gotHats, split[0])
+		gotRarer = widen(gotRarer, min(split[1], split[0]-split[1]))
+	}
+	if total != want {
+		t.Errorf("%d covers, want %d", total, want)
+	}
+	if hats != [2]int{} && gotHats != hats {
+		t.Errorf("covers use %v hats, want %v", gotHats, hats)
+	}
+	if rarer != [2]int{} && gotRarer != rarer {
+		t.Errorf("covers use %v hats of the rarer shape, want %v", gotRarer, rarer)
+	}
+	for split, covers := range splits {
+		if stats[split] != covers {
+			t.Errorf("%d covers with %v hats and reflected hats, want %d", stats[split], split, covers)
+		}
+	}
+}
+
+func min(a, b int) int {
+	if a < b {
+		return a
+	}
+	return b
 }
 
 // widen stretches a range of smallest and largest values to include value.
@@ -438,40 +560,93 @@ func widen(r [2]int, value int) [2]int {
 	return r
 }
 
-// TestIndependentSearch counts the covers with a separate search that doesn't
-// use hatShape or the matrix. It shares only the corner arithmetic: the outline
-// from placement.outline, the point type and the move of an outline to a hexagon.
-func TestIndependentSearch(t *testing.T) {
-	t.Parallel()
+// spot is a point of the plane for the independent search. It lies at x/8, and
+// at y times the square root of 3, divided by 8. These are not the coordinates
+// of the solver, and they make all the moves below whole numbers.
+type spot struct {
+	x, y int
+}
 
-	for _, tt := range coverTotals {
-		tt := tt
-		t.Run(tt.name, func(t *testing.T) {
-			t.Parallel()
-			if tt.slow && testing.Short() {
-				t.Skip("slow total")
-			}
+// turned returns s rotated 60 degrees anticlockwise around the origin.
+func (s spot) turned() spot {
+	return spot{(s.x - 3*s.y) / 2, (s.x + s.y) / 2}
+}
 
-			if got := newCoverChecker(tt.radius, tt.withMirrors).count(); got != tt.want {
-				t.Errorf("%d covers, want %d", got, tt.want)
-			}
-		})
+// flipped returns s reflected in the line through the origin at 30 degrees.
+func (s spot) flipped() spot {
+	return spot{(s.x + 3*s.y) / 2, (s.x - s.y) / 2}
+}
+
+// inDisk reports whether s is at most radius from the origin.
+func (s spot) inDisk(radius int) bool {
+	return s.x*s.x+3*s.y*s.y <= 64*radius*radius
+}
+
+// inside reports whether s is inside the outline, by counting the sides that a
+// ray from s crosses. Stretching the plane along y keeps this true, so the
+// coordinates can be used as they are.
+func (s spot) inside(outline []spot) bool {
+	inside := false
+	for i := range outline {
+		from, to := outline[i], outline[(i+1)%len(outline)]
+		if (from.y > s.y) == (to.y > s.y) {
+			continue
+		}
+		left := (to.x-from.x)*(s.y-from.y)-(to.y-from.y)*(s.x-from.x) > 0
+		if left == (to.y > from.y) {
+			inside = !inside
+		}
 	}
+	return inside
+}
+
+// hexagonMiddle returns the middle of a hexagon, which is 6q, 2q+4r in units of
+// 1/4 of those of a spot. Its neighbours are 2 times the square root of 3 away.
+func hexagonMiddle(q, r int) spot {
+	return spot{4 * 6 * q, 4 * (2*q + 4*r)}
+}
+
+// kiteCentres returns the centres of the six kites of a hexagon. Each lies 5/4
+// from the middle, towards a corner of the hexagon.
+func kiteCentres(q, r int) [turns]spot {
+	var centres [turns]spot
+	middle := hexagonMiddle(q, r)
+	arm := spot{10, 0}
+	for dir := range centres {
+		centres[dir] = spot{middle.x + arm.x, middle.y + arm.y}
+		arm = arm.turned()
+	}
+	return centres
+}
+
+// checkedOutline is the published outline of the hat in the units of spot, before
+// the scale of 4 that kiteCentres uses. It is written out again here so that the
+// independent search takes nothing from the solver, not even this list.
+var checkedOutline = []spot{
+	{0, 0}, {-3, -1}, {-2, -2}, {2, -2}, {3, -1}, {6, -2}, {9, -1},
+	{8, 0}, {6, 0}, {6, 2}, {3, 3}, {2, 2}, {0, 2},
+}
+
+// checkedHat is a hat of the independent search: the kite centres it holds.
+type checkedHat struct {
+	centres  []spot
+	mirrored bool
 }
 
 // coverChecker knows the covering problem through the hat outline alone. A kite
 // is known only by its centre, and a hat only by the centres inside its outline.
 type coverChecker struct {
 	// disk lists the kite centres to cover, nearest first.
-	disk []point
+	disk []spot
 	// hats lists, for each centre in disk, the hats that contain it.
-	hats map[point][][]point
-	// placed maps a placement to its hat, to check reported covers.
-	placed map[placement][]point
+	hats map[spot][]*checkedHat
+	// placed maps the way the solver names a placement to its hat, to check
+	// reported covers.
+	placed map[placement]*checkedHat
 }
 
 func newCoverChecker(radius int, withMirrors bool) *coverChecker {
-	c := &coverChecker{hats: make(map[point][][]point), placed: make(map[placement][]point)}
+	c := &coverChecker{hats: make(map[spot][]*checkedHat), placed: make(map[placement]*checkedHat)}
 
 	// A hat that touches the disk has its reference hexagon within this many
 	// steps of the middle in each direction: hexagons are over 3 apart, and a
@@ -479,8 +654,8 @@ func newCoverChecker(radius int, withMirrors bool) *coverChecker {
 	reach := radius/2 + 5
 	for q := -reach; q <= reach; q++ {
 		for r := -reach; r <= reach; r++ {
-			for _, centre := range hexagonKites(q, r) {
-				if distance(centre) <= float64(radius) {
+			for _, centre := range kiteCentres(q, r) {
+				if centre.inDisk(radius) {
 					c.disk = append(c.disk, centre)
 				}
 			}
@@ -488,12 +663,12 @@ func newCoverChecker(radius int, withMirrors bool) *coverChecker {
 	}
 	sort.Slice(c.disk, func(i, j int) bool {
 		a, b := c.disk[i], c.disk[j]
-		if norm(a) != norm(b) {
-			return norm(a) < norm(b)
+		if da, db := a.x*a.x+3*a.y*a.y, b.x*b.x+3*b.y*b.y; da != db {
+			return da < db
 		}
-		return a.a < b.a || (a.a == b.a && a.b < b.b)
+		return a.x < b.x || (a.x == b.x && a.y < b.y)
 	})
-	inDisk := make(map[point]bool, len(c.disk))
+	inDisk := make(map[spot]bool, len(c.disk))
 	for _, centre := range c.disk {
 		inDisk[centre] = true
 	}
@@ -502,8 +677,15 @@ func newCoverChecker(radius int, withMirrors bool) *coverChecker {
 		if mirrored && !withMirrors {
 			continue
 		}
+		outline := make([]spot, len(checkedOutline))
+		for i, corner := range checkedOutline {
+			if mirrored {
+				corner = corner.flipped()
+			}
+			outline[i] = spot{4 * corner.x, 4 * corner.y}
+		}
 		for steps := 0; steps < turns; steps++ {
-			shape := centresInside(placement{mirrored: mirrored, turns: steps}.outline())
+			shape := centresInside(outline)
 			if len(shape) != hatKites {
 				panic("a hat does not hold eight kite centres")
 			}
@@ -512,58 +694,67 @@ func newCoverChecker(radius int, withMirrors bool) *coverChecker {
 					c.add(placement{mirrored, steps, q, r}, shape, inDisk)
 				}
 			}
+			for i, corner := range outline {
+				outline[i] = corner.turned()
+			}
 		}
 	}
 	return c
 }
 
-// add records hat, which is shape moved by q, r, if it touches the disk.
-func (c *coverChecker) add(hat placement, shape []point, inDisk map[point]bool) {
-	moved := make([]point, len(shape))
-	touched := []point{}
+// add records shape moved by name.q, name.r, if that touches the disk.
+func (c *coverChecker) add(name placement, shape []spot, inDisk map[spot]bool) {
+	hat := &checkedHat{centres: make([]spot, len(shape)), mirrored: name.mirrored}
+	move := hexagonMiddle(name.q, name.r)
+	touched := []spot{}
 	for i, centre := range shape {
-		moved[i] = point{centre.a + 4*(2*hat.q-2*hat.r), centre.b + 4*(2*hat.q+4*hat.r)}
-		if inDisk[moved[i]] {
-			touched = append(touched, moved[i])
+		hat.centres[i] = spot{centre.x + move.x, centre.y + move.y}
+		if inDisk[hat.centres[i]] {
+			touched = append(touched, hat.centres[i])
 		}
 	}
 	if len(touched) == 0 {
 		return
 	}
-	c.placed[hat] = moved
+	c.placed[name] = hat
 	for _, centre := range touched {
-		c.hats[centre] = append(c.hats[centre], moved)
+		c.hats[centre] = append(c.hats[centre], hat)
 	}
 }
 
 // count finds the first kite of the disk that is still empty, tries every hat
 // that fits on it, and goes on from there.
-func (c *coverChecker) count() int {
-	taken := make(map[point]bool)
-	var search func(next int) int
-	search = func(next int) int {
+func (c *coverChecker) count() coverStats {
+	stats := coverStats{}
+	taken := make(map[spot]bool)
+	var search func(next, hats, reflected int)
+	search = func(next, hats, reflected int) {
 		for next < len(c.disk) && taken[c.disk[next]] {
 			next++
 		}
 		if next == len(c.disk) {
-			return 1
+			stats[[2]int{hats, reflected}]++
+			return
 		}
-		total := 0
 		for _, hat := range c.hats[c.disk[next]] {
 			if anyTaken(taken, hat) {
 				continue
 			}
 			setTaken(taken, hat, true)
-			total += search(next + 1)
+			if hat.mirrored {
+				search(next+1, hats+1, reflected+1)
+			} else {
+				search(next+1, hats+1, reflected)
+			}
 			setTaken(taken, hat, false)
 		}
-		return total
 	}
-	return search(0)
+	search(0, 0, 0)
+	return stats
 }
 
-func anyTaken(taken map[point]bool, hat []point) bool {
-	for _, centre := range hat {
+func anyTaken(taken map[spot]bool, hat *checkedHat) bool {
+	for _, centre := range hat.centres {
 		if taken[centre] {
 			return true
 		}
@@ -571,24 +762,24 @@ func anyTaken(taken map[point]bool, hat []point) bool {
 	return false
 }
 
-func setTaken(taken map[point]bool, hat []point, value bool) {
-	for _, centre := range hat {
+func setTaken(taken map[spot]bool, hat *checkedHat, value bool) {
+	for _, centre := range hat.centres {
 		taken[centre] = value
 	}
 }
 
 // check returns a message unless hats overlap nowhere and fill the disk.
 func (c *coverChecker) check(hats []placement) string {
-	taken := make(map[point]bool)
-	for _, hat := range hats {
-		shape, ok := c.placed[hat]
+	taken := make(map[spot]bool)
+	for _, name := range hats {
+		hat, ok := c.placed[name]
 		if !ok {
 			return "cover has a hat that misses the disk"
 		}
-		if anyTaken(taken, shape) {
+		if anyTaken(taken, hat) {
 			return "cover has overlapping hats"
 		}
-		setTaken(taken, shape, true)
+		setTaken(taken, hat, true)
 	}
 	for _, centre := range c.disk {
 		if !taken[centre] {
@@ -598,25 +789,15 @@ func (c *coverChecker) check(hats []placement) string {
 	return ""
 }
 
-// hexagonKites returns four times the centres of the six kites of a hexagon. A
-// centre is 5/4 from the middle of the hexagon, towards the corner at distance 2.
-func hexagonKites(q, r int) []point {
-	middle := point{2*q - 2*r, 2*q + 4*r}
-	var centres []point
-	for _, corner := range []point{{1, 0}, {0, 1}, {-1, 1}, {-1, 0}, {0, -1}, {1, -1}} {
-		centres = append(centres, point{4*middle.a + 5*corner.a, 4*middle.b + 5*corner.b})
-	}
-	return centres
-}
-
-// centresInside returns four times every kite centre inside outline.
-func centresInside(outline []point) []point {
+// centresInside returns every kite centre inside outline, which is at the scale
+// of the centres.
+func centresInside(outline []spot) []spot {
 	const reach = 8
-	var inside []point
+	var inside []spot
 	for q := -reach; q <= reach; q++ {
 		for r := -reach; r <= reach; r++ {
-			for _, centre := range hexagonKites(q, r) {
-				if insideOutline(outline, 4, centre) {
+			for _, centre := range kiteCentres(q, r) {
+				if centre.inside(outline) {
 					inside = append(inside, centre)
 				}
 			}
@@ -673,5 +854,7 @@ func distance(centre point) float64 {
 
 // centre returns four times the centre of k.
 func (k kite) centre() point {
-	return hexagonKites(k.q, k.r)[k.dir]
+	corners := k.corners()
+	middle, tip := corners[0], corners[2]
+	return point{4*middle.a + 5*(tip.a-middle.a)/2, 4*middle.b + 5*(tip.b-middle.b)/2}
 }

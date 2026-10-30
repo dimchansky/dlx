@@ -201,6 +201,65 @@ func TestHatPicture(t *testing.T) {
 	}
 }
 
+// TestClashPicture keeps the false cover in the README equal to its source: the
+// first cover of the disk of radius 6 with no margin columns, with the kites
+// under two hats painted over it.
+func TestClashPicture(t *testing.T) {
+	t.Parallel()
+
+	got, err := clashPicture()
+	if err != nil {
+		t.Fatal(err)
+	}
+	want, err := os.ReadFile("clash.svg")
+	if err != nil {
+		t.Fatal(err)
+	}
+	if !bytes.Equal(got, want) {
+		t.Error("clash.svg differs from the first false cover")
+	}
+}
+
+// clashPicture draws the false cover. It fails unless the kites under two hats
+// exist and all lie outside the disk.
+func clashPicture() ([]byte, error) {
+	const radius = 6
+	var cover []placement
+	solveDiskOnly(radius, func(hats []placement) bool {
+		cover = hats
+		return true
+	})
+
+	var picture bytes.Buffer
+	if err := writeSVG(&picture, cover, radius); err != nil {
+		return nil, err
+	}
+	var size float64
+	if _, err := fmt.Sscanf(picture.String(), `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 %f`, &size); err != nil {
+		return nil, err
+	}
+
+	uses := make(map[kite]int)
+	var overlaps strings.Builder
+	for _, hat := range cover {
+		for _, k := range hat.kites() {
+			uses[k]++
+			if uses[k] == 2 {
+				if k.inDisk(radius) {
+					return nil, fmt.Errorf("kite %v of the disk is under two hats", k)
+				}
+				corners := k.corners()
+				fmt.Fprintf(&overlaps, `<polygon points="%s" fill="%s" stroke="%s" stroke-width="0.5"/>`+"\n",
+					svgPoints(corners[:], size/2/svgScale), svgDisk, svgInk)
+			}
+		}
+	}
+	if overlaps.Len() == 0 {
+		return nil, errors.New("the false cover has no overlap")
+	}
+	return bytes.Replace(picture.Bytes(), []byte("</svg>"), []byte(overlaps.String()+"</svg>"), 1), nil
+}
+
 func TestRun_WriteFailure(t *testing.T) {
 	t.Parallel()
 

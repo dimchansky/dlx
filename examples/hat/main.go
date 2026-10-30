@@ -32,8 +32,9 @@ const (
 const (
 	// minRadius is the smallest radius with a kite inside the disk.
 	minRadius = 2
-	// maxRadius bounds the memory the matrix can take. The search itself can
-	// become impractical far below it.
+	// maxRadius is a round number that catches a mistyped radius. The matrix
+	// stays small at this radius. The search is what becomes impractical, far
+	// below it.
 	maxRadius = 64
 )
 
@@ -71,7 +72,7 @@ func run(args []string, stdout, stderr io.Writer) int {
 		return exitFailure
 	}
 
-	p := newPuzzle(*radius, !*rotationsOnly)
+	p := newPuzzle(diskKites(*radius), !*rotationsOnly)
 	var found bool
 	var err error
 	if *count {
@@ -106,26 +107,29 @@ func printUsage(flags *flag.FlagSet) {
 }
 
 // printCover finds the first cover and prints it, as a summary or a picture. It
-// reports whether there was one.
+// reports whether there was one. The summary starts before the search, which can
+// take a long time at a large radius.
 func printCover(w io.Writer, p *puzzle, radius int, svg bool) (bool, error) {
+	if !svg {
+		_, err := fmt.Fprintf(w, "Disk of radius %d: %d kites, %d hat placements\n", radius, p.disk, len(p.rows))
+		if err != nil {
+			return false, err
+		}
+	}
+
 	var first []placement
 	p.solve(func(hats []placement) bool {
 		first = hats
 		return true
 	})
-	found := first != nil
+	if first == nil {
+		return false, nil
+	}
 	if svg {
-		if !found {
-			return false, nil
-		}
 		return true, writeSVG(w, first, radius)
 	}
-
-	_, err := fmt.Fprintf(w, "Disk of radius %d: %d kites, %d hat placements\n", radius, p.disk, len(p.rows))
-	if err == nil && found {
-		_, err = fmt.Fprintf(w, "Cover: %d hats, %d of them reflected\n", len(first), countReflected(first))
-	}
-	return found, err
+	_, err := fmt.Fprintf(w, "Cover: %d hats, %d of them reflected\n", len(first), countReflected(first))
+	return true, err
 }
 
 func countReflected(hats []placement) int {
