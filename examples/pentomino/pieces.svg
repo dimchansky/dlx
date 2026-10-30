@@ -1,0 +1,76 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 800 280" width="800" height="280" role="img" aria-label="The 12 pentominoes, each labelled with its letter" font-family="Helvetica, Arial, sans-serif">
+<title>The 12 pentominoes, each labelled with its letter</title>
+<rect x="0.5" y="0.5" width="799" height="279" rx="8" fill="#ffffff" stroke="#8c959f"/>
+<rect x="66" y="37" width="18" height="18" fill="#ff8a95" stroke="#24292f"/>
+<rect x="84" y="37" width="18" height="18" fill="#ff8a95" stroke="#24292f"/>
+<rect x="48" y="55" width="18" height="18" fill="#ff8a95" stroke="#24292f"/>
+<rect x="66" y="55" width="18" height="18" fill="#ff8a95" stroke="#24292f"/>
+<rect x="66" y="73" width="18" height="18" fill="#ff8a95" stroke="#24292f"/>
+<text x="75" y="132" text-anchor="middle" font-size="16" fill="#24292f">F</text>
+<rect x="160" y="55" width="18" height="18" fill="#3cb44b" stroke="#24292f"/>
+<rect x="178" y="55" width="18" height="18" fill="#3cb44b" stroke="#24292f"/>
+<rect x="196" y="55" width="18" height="18" fill="#3cb44b" stroke="#24292f"/>
+<rect x="214" y="55" width="18" height="18" fill="#3cb44b" stroke="#24292f"/>
+<rect x="232" y="55" width="18" height="18" fill="#3cb44b" stroke="#24292f"/>
+<text x="205" y="132" text-anchor="middle" font-size="16" fill="#24292f">I</text>
+<rect x="317" y="28" width="18" height="18" fill="#ffe119" stroke="#24292f"/>
+<rect x="317" y="46" width="18" height="18" fill="#ffe119" stroke="#24292f"/>
+<rect x="317" y="64" width="18" height="18" fill="#ffe119" stroke="#24292f"/>
+<rect x="317" y="82" width="18" height="18" fill="#ffe119" stroke="#24292f"/>
+<rect x="335" y="82" width="18" height="18" fill="#ffe119" stroke="#24292f"/>
+<text x="335" y="132" text-anchor="middle" font-size="16" fill="#24292f">L</text>
+<rect x="465" y="28" width="18" height="18" fill="#8fb0ff" stroke="#24292f"/>
+<rect x="465" y="46" width="18" height="18" fill="#8fb0ff" stroke="#24292f"/>
+<rect x="447" y="64" width="18" height="18" fill="#8fb0ff" stroke="#24292f"/>
+<rect x="465" y="64" width="18" height="18" fill="#8fb0ff" stroke="#24292f"/>
+<rect x="447" y="82" width="18" height="18" fill="#8fb0ff" stroke="#24292f"/>
+<text x="465" y="132" text-anchor="middle" font-size="16" fill="#24292f">N</text>
+<rect x="577" y="37" width="18" height="18" fill="#f58231" stroke="#24292f"/>
+<rect x="595" y="37" width="18" height="18" fill="#f58231" stroke="#24292f"/>
+<rect x="577" y="55" width="18" height="18" fill="#f58231" stroke="#24292f"/>
+<rect x="595" y="55" width="18" height="18" fill="#f58231" stroke="#24292f"/>
+<rect x="577" y="73" width="18" height="18" fill="#f58231" stroke="#24292f"/>
+<text x="595" y="132" text-anchor="middle" font-size="16" fill="#24292f">P</text>
+<rect x="698" y="37" width="18" height="18" fill="#cf9bf0" stroke="#24292f"/>
+<rect x="716" y="37" width="18" height="18" fill="#cf9bf0" stroke="#24292f"/>
+<rect x="734" y="37" width="18" height="18" fill="#cf9bf0" stroke="#24292f"/>
+<rect x="716" y="55" width="18" height="18" fill="#cf9bf0" stroke="#24292f"/>
+<rect x="716" y="73" width="18" height="18" fill="#cf9bf0" stroke="#24292f"/>
+<text x="725" y="132" text-anchor="middle" font-size="16" fill="#24292f">T</text>
+<rect x="48" y="176" width="18" height="18" fill="#42d4f4" stroke="#24292f"/>
+<rect x="84" y="176" width="18" height="18" fill="#42d4f4" stroke="#24292f"/>
+<rect x="48" y="194" width="18" height="18" fill="#42d4f4" stroke="#24292f"/>
+<rect x="66" y="194" width="18" height="18" fill="#42d4f4" stroke="#24292f"/>
+<rect x="84" y="194" width="18" height="18" fill="#42d4f4" stroke="#24292f"/>
+<text x="75" y="262" text-anchor="middle" font-size="16" fill="#24292f">U</text>
+<rect x="178" y="167" width="18" height="18" fill="#f032e6" stroke="#24292f"/>
+<rect x="178" y="185" width="18" height="18" fill="#f032e6" stroke="#24292f"/>
+<rect x="178" y="203" width="18" height="18" fill="#f032e6" stroke="#24292f"/>
+<rect x="196" y="203" width="18" height="18" fill="#f032e6" stroke="#24292f"/>
+<rect x="214" y="203" width="18" height="18" fill="#f032e6" stroke="#24292f"/>
+<text x="205" y="262" text-anchor="middle" font-size="16" fill="#24292f">V</text>
+<rect x="308" y="167" width="18" height="18" fill="#bfef45" stroke="#24292f"/>
+<rect x="308" y="185" width="18" height="18" fill="#bfef45" stroke="#24292f"/>
+<rect x="326" y="185" width="18" height="18" fill="#bfef45" stroke="#24292f"/>
+<rect x="326" y="203" width="18" height="18" fill="#bfef45" stroke="#24292f"/>
+<rect x="344" y="203" width="18" height="18" fill="#bfef45" stroke="#24292f"/>
+<text x="335" y="262" text-anchor="middle" font-size="16" fill="#24292f">W</text>
+<rect x="456" y="167" width="18" height="18" fill="#fabed4" stroke="#24292f"/>
+<rect x="438" y="185" width="18" height="18" fill="#fabed4" stroke="#24292f"/>
+<rect x="456" y="185" width="18" height="18" fill="#fabed4" stroke="#24292f"/>
+<rect x="474" y="185" width="18" height="18" fill="#fabed4" stroke="#24292f"/>
+<rect x="456" y="203" width="18" height="18" fill="#fabed4" stroke="#24292f"/>
+<text x="465" y="262" text-anchor="middle" font-size="16" fill="#24292f">X</text>
+<rect x="595" y="158" width="18" height="18" fill="#86d6c9" stroke="#24292f"/>
+<rect x="577" y="176" width="18" height="18" fill="#86d6c9" stroke="#24292f"/>
+<rect x="595" y="176" width="18" height="18" fill="#86d6c9" stroke="#24292f"/>
+<rect x="595" y="194" width="18" height="18" fill="#86d6c9" stroke="#24292f"/>
+<rect x="595" y="212" width="18" height="18" fill="#86d6c9" stroke="#24292f"/>
+<text x="595" y="262" text-anchor="middle" font-size="16" fill="#24292f">Y</text>
+<rect x="698" y="167" width="18" height="18" fill="#dcbeff" stroke="#24292f"/>
+<rect x="716" y="167" width="18" height="18" fill="#dcbeff" stroke="#24292f"/>
+<rect x="716" y="185" width="18" height="18" fill="#dcbeff" stroke="#24292f"/>
+<rect x="716" y="203" width="18" height="18" fill="#dcbeff" stroke="#24292f"/>
+<rect x="734" y="203" width="18" height="18" fill="#dcbeff" stroke="#24292f"/>
+<text x="725" y="262" text-anchor="middle" font-size="16" fill="#24292f">Z</text>
+</svg>

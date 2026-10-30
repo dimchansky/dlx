@@ -1,10 +1,22 @@
 # Pentomino tiling
 
-A command-line solver that tiles a rectangle with the 12 pentominoes, each used exactly once, written as an example of using package [dlx](https://github.com/dimchansky/dlx). A pentomino is a shape made of five squares joined edge to edge. Pieces may be rotated and flipped. Twelve pieces have 60 squares in all, so the board must have 60 cells.
+A command-line solver that fills a rectangle with the 12 pentominoes, each used exactly once, written as an example of using package [dlx](https://github.com/dimchansky/dlx). If exact cover is new to you, read the [introduction to the examples](../README.md) first.
 
-## How it maps to exact cover
+## The problem
 
-This is the classic geometric use of exact cover. Two different kinds of requirement share one matrix:
+A pentomino is a shape made of five squares joined edge to edge. There are exactly 12 of them, if you count a shape and its rotations and flips as the same piece. Each is named after a letter it resembles:
+
+![The 12 pentominoes, labelled F, I, L, N, P, T, U, V, W, X, Y and Z](pieces.svg)
+
+Pieces may be rotated and flipped. Twelve pieces of five squares have 60 squares in all, so the board must have 60 cells, such as 6 by 10. Filling a shape completely with pieces, with no gaps and no overlaps, is called tiling it. This is one tiling of the 6 by 10 board:
+
+![A 6 by 10 board filled with the 12 pentominoes, coloured by piece](tiling.svg)
+
+## How it becomes a matrix
+
+This is the classic geometric use of exact cover. Two different kinds of requirement share one matrix.
+
+**A column of the matrix is one of two things:** a piece that must be used exactly once, or a board cell that must be filled exactly once. **A row of the matrix is one placement:** one piece, turned one way, at one position on the board.
 
 | Matrix part | Meaning                                                       | Count for 6x10 |
 |-------------|---------------------------------------------------------------|----------------|
@@ -12,15 +24,62 @@ This is the classic geometric use of exact cover. Two different kinds of require
 | Column      | A board cell, which must be filled exactly once               | 60             |
 | Row         | One piece, in one orientation, at one position on the board   | 2056           |
 
-Each row has six 1s: its piece and the five cells it occupies. The piece columns matter: with cell columns alone, a tiling could use one piece three times and skip another.
+Each row has six 1s: its piece and the five cells it occupies.
 
-[solver.go](solver.go) generates the distinct orientations of each piece, between 1 for the X and 8 for the asymmetric pieces, 63 in all. A solution's rows give the piece and cells directly, because dlx keeps each row's columns in `AddRow` order.
+### A tiny version
+
+The real matrix is far too big to draw, so here is the same idea with a board of 2 rows and 3 columns, and two pieces: a domino D of two squares, and an L of four squares. The cells are named by row letter and column number:
+
+```
+a1 a2 a3
+b1 b2 b3
+```
+
+The domino fits in 7 places, and the L in 4. Each placement is one row of the matrix. D and L are the piece columns, and the rest are the cell columns:
+
+|    | D | L | a1 | a2 | a3 | b1 | b2 | b3 |
+|----|:-:|:-:|:-:|:-:|:-:|:-:|:-:|:-:|
+| D1 | 1 | 0 | 1 | 1 | 0 | 0 | 0 | 0 |
+| D2 | 1 | 0 | 0 | 1 | 1 | 0 | 0 | 0 |
+| D3 | 1 | 0 | 0 | 0 | 0 | 1 | 1 | 0 |
+| D4 | 1 | 0 | 0 | 0 | 0 | 0 | 1 | 1 |
+| D5 | 1 | 0 | 1 | 0 | 0 | 1 | 0 | 0 |
+| D6 | 1 | 0 | 0 | 1 | 0 | 0 | 1 | 0 |
+| D7 | 1 | 0 | 0 | 0 | 1 | 0 | 0 | 1 |
+| L1 | 0 | 1 | 1 | 1 | 1 | 1 | 0 | 0 |
+| L2 | 0 | 1 | 1 | 1 | 1 | 0 | 0 | 1 |
+| L3 | 0 | 1 | 1 | 0 | 0 | 1 | 1 | 1 |
+| L4 | 0 | 1 | 0 | 0 | 1 | 1 | 1 | 1 |
+
+This matrix has four exact covers: L1 with D4, L2 with D3, L3 with D2, and L4 with D1. Here is the first:
+
+```
+L L L
+L D D
+```
+
+The piece columns matter. Without them, three dominoes D1, D7 and D3 would also fill the board, which would use one piece three times and the other not at all. The piece columns allow one D row and one L row in each solution, and no more. In the real problem, a tiling could otherwise use one pentomino three times and skip another.
+
+### The 12 pieces in the matrix
+
+[solver.go](solver.go) starts from one drawing of each piece, and generates its distinct orientations by rotating and flipping it. A symmetric piece gives fewer, because some turns look the same. The X looks the same however you turn it, while a piece with no symmetry has 8. There are 63 orientations in all, which give 2056 placements on a 6 by 10 board:
+
+| Piece | F | I | L | N | P | T | U | V | W | X | Y | Z |
+|-------|---|---|---|---|---|---|---|---|---|---|---|---|
+| Orientations | 8 | 2 | 8 | 8 | 8 | 4 | 4 | 4 | 4 | 1 | 8 | 4 |
+| Rows for 6x10 | 256 | 56 | 248 | 248 | 304 | 128 | 152 | 128 | 128 | 32 | 248 | 128 |
+
+## How a solution decodes back
+
+A solution has 12 rows, one per piece, because the piece columns allow no more and no fewer. Each row lists its piece first and then its five cells, because dlx keeps columns in `AddRow` order. The decoder writes the piece's letter into those five cells.
 
 ## Counting duplicates
 
-Every tiling is reported together with its images under the board's symmetries, which are the two mirror flips and the half turn. Each one is a different exact cover, so `Tilings` counts all of them. `Distinct` counts each group once.
+Take a finished tiling and flip the board top to bottom. The result is still a valid tiling, but it is a different exact cover. So is the left-to-right flip, and so is a half turn, which is both flips together. A rectangle that isn't square has no other moves that fit it back in place, since a quarter turn changes its shape.
 
-The matrix could remove them by keeping only two orientations of the F piece, one for each group of orientations under the board's symmetries. This example wants the full total as well, so it keeps every row, compares each tiling with its images, and counts it as distinct only if it is the smallest. This works because each group has exactly four members: the F piece has no symmetry and appears once, so no flip can give the same tiling, and a 60-cell board is never square, so quarter turns don't apply. The [Langford example](../langford) shows the other approach, which removes mirror images from the matrix itself.
+`Tilings` counts all of these as separate. `Distinct` counts each group once. For that to work, each group must have exactly four different members, and it does: the F piece has no symmetry and appears once, so no flip can leave a tiling unchanged.
+
+The code compares each tiling with its three images, and counts it as distinct only if it comes first in alphabetical order. The matrix could remove the images instead, by keeping only two orientations of the F piece, one for each group of orientations under the board's flips. This example wants the full total as well, so it keeps every row. The [Langford example](../langford) shows the other approach, which removes mirror images from the matrix itself.
 
 | Board | Tilings | Distinct |
 |-------|---------|----------|
@@ -31,7 +90,7 @@ The matrix could remove them by keeping only two orientations of the F piece, on
 | 2x30  | 0       | 0        |
 | 1x60  | 0       | 0        |
 
-The tests check these totals against an independent backtracking search with its own table of pieces.
+Each `Tilings` total is four times its `Distinct` total, as the argument above predicts.
 
 ## Installation
 
@@ -91,6 +150,12 @@ Output:
     Tilings: 4040
     Distinct: 1010
 
-## Tests
+## How the results are checked
+
+The tests check these totals against an independent backtracking search with its own table of pieces.
 
 `go test` checks every total. `go test -short` skips the 4x15, 5x12 and 6x10 totals, which take seconds normally and minutes with `-race`. Use `-short` with `-race`.
+
+## Limits
+
+Only rectangles of 60 cells are accepted, and the set of pieces is fixed. Boards of other shapes would need a different encoding of the cells.
