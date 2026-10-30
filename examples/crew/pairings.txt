@@ -1,0 +1,34 @@
+# A small, invented crew pairing problem. The first line lists the flights of
+# the day. Every other line is a candidate pairing: a name, a cost and the
+# flights one crew could work in sequence.
+flights F101 F102 F103 F104 F105 F106 F107 F108 F109 F110 F111 F112
+
+# One short rotation each.
+A1  900 F101 F102
+A2  700 F103 F104
+A3  800 F105 F106
+A4  650 F107 F108
+A5  750 F109 F110
+A6  820 F111 F112
+
+# Longer duties, cheaper per flight but less flexible.
+B1 1150 F101 F102 F103 F104
+B2 1250 F103 F104 F105 F106
+B3 1200 F107 F108 F109 F110
+B4 1180 F109 F110 F111 F112
+B5 1400 F105 F106 F107 F108
+
+# Duties that pair flights in a different order.
+C1 1300 F101 F104 F105
+C2 1000 F102 F103
+C3  990 F106 F107 F108
+C4 1450 F102 F103 F106 F107 F108
+
+# Single flights flown by a reserve crew.
+R1  520 F101
+R2  500 F102
+R3  560 F111
+R4  540 F112
+
+# Same flights as A2 at a lower price, from another crew base.
+D1  680 F103 F104
