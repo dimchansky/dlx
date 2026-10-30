@@ -44,6 +44,8 @@ Solutions go to standard output. Errors go to standard error, prefixed `sudoku:`
 | 1         | The board has no solutions                                     |
 | 2         | Invalid usage, invalid input, or a read or write failure       |
 
+If standard output is a closed pipe, as with `sudoku < sudoku.txt | true`, the command is killed by SIGPIPE instead of exiting with code 2. Shells report that as 141.
+
 ## Examples
 
 These commands use [sudoku.txt](sudoku.txt), the board shown above, which has 8 solutions. Run them from this directory.

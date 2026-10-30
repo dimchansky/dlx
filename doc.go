@@ -7,7 +7,7 @@ rows that contains exactly one 1 in each column. Many puzzles and combinatorial
 problems reduce to this form: see the sudoku solver in the examples/sudoku
 directory.
 
-Knuth's paper explains the algorithm: https://arxiv.org/pdf/cs/0011047v1.pdf
+Knuth's paper explains the algorithm: https://arxiv.org/abs/cs/0011047
 
 # Usage
 

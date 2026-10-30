@@ -4,7 +4,7 @@ dlx solves exact cover problems in Go, using Knuth's algorithm DLX.
 
 An exact cover problem is a table of 0s and 1s. The task is to pick some of its rows so that every column has a 1 in exactly one picked row: no column is missed and no column is covered twice. Think of the columns as requirements and the rows as choices, each meeting some of the requirements.
 
-DLX is a backtracking search. It picks a column, tries each row that covers it, removes everything that row conflicts with, and continues until all columns are covered or it hits a dead end. The removals are undone cheaply through doubly linked lists, the "dancing links" of the name. [Knuth's paper](https://arxiv.org/abs/cs/0011047) explains it in full.
+DLX is a backtracking search. It picks a column, tries each row that covers it, removes everything that row conflicts with, and continues until all columns are covered or it hits a dead end. The removals are undone cheaply through doubly linked lists, the "dancing links" of the name. DLX is Algorithm X implemented this way, and Knuth's paper ["Dancing Links"](https://arxiv.org/abs/cs/0011047) explains it in full.
 
 ## What it can be used for
 
@@ -16,7 +16,7 @@ You turn your problem into a table, and dlx reports the sets of rows that solve 
 
 ## What it doesn't do
 
-- There are no secondary columns: every column must be covered exactly once, so "at most once" can't be stated directly. You can get that effect by adding a row with that column alone, and dropping such rows from the solutions you receive. A problem where many requirements are optional, such as scheduling with free time slots, may suit another tool better.
+- There are no secondary columns: every column must be covered exactly once, so "at most once" can't be stated directly. You can get that effect by adding a row with that column alone, and dropping such rows from the solutions you receive. This assumes no real row consists of that column alone, since the two could not be told apart. A problem where many requirements are optional, such as scheduling with free time slots, may suit another tool better.
 - It doesn't optimize. Rows have no costs or weights, so it finds solutions but doesn't rank them.
 - It can't be cancelled or timed out. Exact cover is NP-complete, so a search can take very long, and your code only runs when a solution is found.
 - It doesn't identify rows. A solution lists each picked row's column indices, not its position, so your columns must let you tell the rows apart. The sudoku solver decodes each placement from its column indices.
