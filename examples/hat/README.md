@@ -247,6 +247,6 @@ The tests also check the first 200 covers of each total for gaps and overlaps, a
 
 ## Limits
 
-Slack rows have a cost here, as they do in the [queens example](../queens#limits). dlx treats a margin kite like any other column, so it can spend its time deciding which margin kites stay empty, which doesn't matter for the disk. For counting at radius 6, the plain search in the tests was about three times as fast as dlx on the machine used to write this.
+Slack rows have a cost here, as they do in the [queens example](../queens#limits). dlx treats a margin kite like any other column, so it can spend its time deciding which margin kites stay empty, which doesn't matter for the disk. For counting at radius 6, the plain search in the tests was about twice as fast as dlx on the machine used to write this.
 
 The time to find one cover jumps around with the radius. On that machine the first cover took a moment at radius 10, from seconds to tens of seconds at radii 11 to 13, and over two minutes at radius 14. At the cap, `hat -r 64 -rotations` took about 14 MB of memory and gave no answer in over six minutes.
