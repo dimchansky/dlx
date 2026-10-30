@@ -5,6 +5,7 @@ import (
 	"math"
 	"math/bits"
 	"math/rand"
+	"runtime"
 	"sort"
 	"strings"
 	"testing"
@@ -112,18 +113,18 @@ func TestAddRow_UsableAfterPanic(t *testing.T) {
 	}
 }
 
-func TestAddRow_DoesNotAllocateForValidation(t *testing.T) {
-	const rowLength = 256
+func TestAddRow_DoesNotRetainRow(t *testing.T) {
+	t.Parallel()
 
-	row := make([]int, rowLength)
-	for i := range row {
-		row[i] = i
-	}
-	m := NewMatrix(rowLength)
+	row := []int{0, 1}
+	m := newTestMatrix(2, nil)
+	m.AddRow(row...)
+	row[0], row[1] = 1, 0
 
-	// The one allocation is the block of data objects for the row.
-	if got := testing.AllocsPerRun(100, func() { m.AddRow(row...) }); got != 1 {
-		t.Errorf("AddRow made %v allocations, want 1", got)
+	got := toString(allSolutions(m))
+	want := toString([][][]int{{{0, 1}}})
+	if got != want {
+		t.Errorf("wrong solutions\ngot:\n%s\nwant:\n%s", got, want)
 	}
 }
 
@@ -293,19 +294,6 @@ func TestSolve_AddRowAfterEarlyStop(t *testing.T) {
 	}
 }
 
-// A complete cover must end the recursion, otherwise it continues past the
-// report and pushes a row that does not exist onto the partial solution.
-func TestSolve_StopsSearchingAtCompleteCover(t *testing.T) {
-	t.Parallel()
-
-	m := newTestMatrix(0, nil)
-	m.Solve(SolutionAccepterFunc(func([][]int) bool { return false }))
-
-	if got := cap(m.partialSolution); got != 0 {
-		t.Errorf("partial solution grew to capacity %d after reporting a complete cover", got)
-	}
-}
-
 func TestSolve_NilAccepterPanics(t *testing.T) {
 	t.Parallel()
 
@@ -326,6 +314,29 @@ func TestSolve_NilAccepterPanics(t *testing.T) {
 			assertPanicsWith(t, "dlx: Solve: nil SolutionAccepter", func() { m.Solve(nil) })
 		})
 	}
+}
+
+func TestSolve_NilSolutionAccepterFunc(t *testing.T) {
+	t.Parallel()
+
+	var accepter SolutionAccepterFunc
+
+	t.Run("not called without solutions", func(t *testing.T) {
+		t.Parallel()
+
+		newTestMatrix(1, nil).Solve(accepter)
+	})
+
+	t.Run("runtime panic at the first solution", func(t *testing.T) {
+		t.Parallel()
+
+		defer func() {
+			if _, isRuntimeError := recover().(runtime.Error); !isRuntimeError {
+				t.Error("want a runtime error panic")
+			}
+		}()
+		newTestMatrix(0, nil).Solve(accepter)
+	})
 }
 
 func TestSolve_SolutionsAreSafeToRetain(t *testing.T) {

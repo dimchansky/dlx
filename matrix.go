@@ -59,9 +59,9 @@ type Matrix interface {
 	// search, so it can be called again and more rows can be added. Recursion
 	// depth is bounded by the number of columns.
 	//
-	// Solve panics if accepter is nil. A nil function converted to
-	// SolutionAccepterFunc is not detected and panics as a panicking accepter
-	// would, when the first solution is reported.
+	// Solve panics with a "dlx:" message if accepter is a nil interface value.
+	// A nil SolutionAccepterFunc is not detected: it panics with a runtime error
+	// when the first solution is reported, like any panicking accepter.
 	Solve(accepter SolutionAccepter)
 }
 
@@ -93,7 +93,8 @@ type matrixObject struct {
 }
 
 // NewMatrix creates the Matrix with the given number of columns.
-// It panics if nColumns is negative.
+// It panics with a "dlx:" message if nColumns is negative. An extremely large
+// nColumns fails with a runtime allocation panic instead.
 func NewMatrix(nColumns int) Matrix {
 	if nColumns < 0 {
 		panic(fmt.Sprintf("dlx: NewMatrix: negative column count %d", nColumns))

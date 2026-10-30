@@ -189,6 +189,18 @@ func TestSolve_InvalidArgumentsPanic(t *testing.T) {
 			want:     "solver: invalid cell 'x' at position 0",
 		},
 		{
+			name:     "byte just below the digits",
+			board:    "/" + multiSolutionBoard[1:],
+			accepter: accepter,
+			want:     "solver: invalid cell '/' at position 0",
+		},
+		{
+			name:     "byte just above the digits",
+			board:    ":" + multiSolutionBoard[1:],
+			accepter: accepter,
+			want:     "solver: invalid cell ':' at position 0",
+		},
+		{
 			name:     "space in a cell",
 			board:    multiSolutionBoard[:80] + " ",
 			accepter: accepter,
@@ -220,44 +232,19 @@ func TestSolve_InvalidArgumentsPanic(t *testing.T) {
 func TestSolveFirst(t *testing.T) {
 	t.Parallel()
 
-	tests := []struct {
-		name  string
-		input string
-		want  []string
-	}{
-		{
-			name:  "single solution",
-			input: solverTable[0].input,
-			want:  solverTable[0].solutions,
-		},
-		{
-			name:  "several solutions",
-			input: multiSolutionBoard,
-			want:  multiSolutionBoardSolutions,
-		},
-		{
-			name:  "no solutions",
-			input: conflictingBoard,
-		},
-	}
-
-	for _, tt := range tests {
+	for _, tt := range solverTable {
 		tt := tt
 		t.Run(tt.name, func(t *testing.T) {
 			t.Parallel()
 
+			want, wantOK := "", false
+			if solutions := allSolutions(tt.input); len(solutions) > 0 {
+				want, wantOK = solutions[0], true
+			}
+
 			got, ok := SolveFirst(tt.input)
-			if ok != (len(tt.want) > 0) {
-				t.Fatalf("SolveFirst() ok = %v with result %q", ok, got)
-			}
-			if !ok {
-				if got != "" {
-					t.Errorf("SolveFirst() = %q without a solution, want empty", got)
-				}
-				return
-			}
-			if !contains(tt.want, got) {
-				t.Errorf("SolveFirst() = %q, want one of %q", got, tt.want)
+			if got != want || ok != wantOK {
+				t.Errorf("SolveFirst() = %q, %v, want %q, %v", got, ok, want, wantOK)
 			}
 		})
 	}
@@ -287,13 +274,4 @@ func toString(solutions []string) string {
 	sorted := append([]string{}, solutions...)
 	sort.Strings(sorted)
 	return strings.Join(sorted, ",\n")
-}
-
-func contains(values []string, value string) bool {
-	for _, v := range values {
-		if v == value {
-			return true
-		}
-	}
-	return false
 }

@@ -53,8 +53,9 @@ more rows can be added to it.
 
 Invalid arguments are programmer errors and panic with a message prefixed
 "dlx:". This applies to a negative column count, a column index that is out of
-range or repeated within a row, and a nil accepter. A rejected row leaves the
-matrix unchanged.
+range or repeated within a row, and a nil SolutionAccepter interface value. A
+nil SolutionAccepterFunc is not detected: it panics with a runtime error when
+the first solution is reported. A rejected row leaves the matrix unchanged.
 
 A Matrix is not safe for concurrent use, and an accepter must not call AddRow
 or Solve on the matrix being solved. See the Matrix and SolutionAccepter
