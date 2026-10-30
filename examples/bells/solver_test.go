@@ -44,9 +44,12 @@ var knownTotals = []struct {
 // maxShortCovers keeps go test -short fast, even with -race, by leaving out the
 // solver runs above it. maxShortCount does the same for countCovers, whose map is
 // slow under -race on abcd. The walk still checks every total of extents.
+// maxEmptyCovers leaves out the solver run for acd, which is slow and has no
+// extents to compare: the count and the walk already check both of its totals.
 const (
 	maxShortCovers = 1000
 	maxShortCount  = 1000000
+	maxEmptyCovers = 100000
 )
 
 // changesNamed picks the changes for a test without going through the command.
@@ -156,8 +159,8 @@ type walker struct {
 }
 
 // step extends the path from its first depth rows. It is marked norace because
-// the walk on abcd takes millions of steps, which would cost about a second under
-// -race, and it shares nothing with another goroutine.
+// the walk on abcd takes millions of steps, which would add about a second to
+// go test -race -short, and it shares nothing with another goroutine.
 //
 //go:norace
 func (w *walker) step(depth int) {
@@ -245,9 +248,10 @@ func TestAllRows(t *testing.T) {
 	}
 }
 
-// TestSolve_Totals checks the solver against a count of the cycle covers that
-// uses no search, and a walk over the rows that uses no matrix. It compares the
-// extents one by one and checks each against the rules of ringing.
+// TestSolve_Totals checks the solver against knownTotals, which
+// TestIndependentTotals proves with no solver, and against a walk over the rows
+// that uses no matrix. It compares the extents one by one and checks each against
+// the rules of ringing.
 func TestSolve_Totals(t *testing.T) {
 	t.Parallel()
 
@@ -257,6 +261,9 @@ func TestSolve_Totals(t *testing.T) {
 			t.Parallel()
 			if tt.covers > maxShortCovers && testing.Short() {
 				t.Skip("slow: goes through every cycle cover")
+			}
+			if tt.extents == 0 && tt.covers > maxEmptyCovers {
+				t.Skip("slow, and TestIndependentTotals checks both totals")
 			}
 
 			rows := allRows(tt.bells)
@@ -277,12 +284,8 @@ func TestSolve_Totals(t *testing.T) {
 				t.Errorf("found %d different extents, want %d", len(got), tt.extents)
 			}
 
-			rowsAgain := independent[tt.bells]
-			if want := countCovers(rowsAgain, tt.names); covers != want {
-				t.Errorf("found %d cycle covers, independent count gives %d", covers, want)
-			}
 			want := map[string]bool{}
-			walk(rowsAgain, tt.names, func(extent string) { want[extent] = true })
+			walk(independent[tt.bells], tt.names, func(extent string) { want[extent] = true })
 			if !reflect.DeepEqual(got, want) {
 				t.Errorf("found %d extents, the walk found %d others", len(got), len(want))
 			}
@@ -391,8 +394,10 @@ func TestTimeMatrix(t *testing.T) {
 				t.Errorf("%d steps and %d slack rows, want %d and %d", steps, slack, tt.wantSteps, tt.wantSlack)
 			}
 
+			solutions := 0
 			got := map[string]bool{}
 			m.Solve(dlx.SolutionAccepterFunc(func(exactCover [][]int) bool {
+				solutions++
 				extent := make([]string, n+1)
 				extent[n] = rows[0]
 				for _, row := range exactCover {
@@ -408,6 +413,9 @@ func TestTimeMatrix(t *testing.T) {
 			walk(rows, tt.names, func(extent string) { want[extent] = true })
 			if !reflect.DeepEqual(got, want) {
 				t.Errorf("found %d extents, the walk found %d others", len(got), len(want))
+			}
+			if solutions != len(want) {
+				t.Errorf("%d solutions for %d extents", solutions, len(want))
 			}
 		})
 	}

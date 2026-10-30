@@ -12,7 +12,8 @@
 // The -bells flag sets the number of bells, 4 by default. The -changes flag
 // lists the allowed changes, in any order: a swaps places 1 and 2, b swaps
 // places 2 and 3, c swaps places 3 and 4, and d does a and c at the same time.
-// The default is every single swap: ab on 3 bells and abc on 4. The -limit flag
+// The default is every single swap: ab on 3 bells and abc on 4. An explicitly
+// empty list is an error. The -limit flag
 // sets how many extents to print, 1 by default. Zero prints all of them. The
 // -count flag goes through every cycle cover and prints the totals instead, so
 // -limit has no effect with it. An extent and its reverse count separately.
@@ -91,10 +92,10 @@ func parseArgs(flags *flag.FlagSet, bells int, names string) ([]change, error) {
 	if bells != 3 && bells != 4 {
 		return nil, fmt.Errorf("invalid number of bells %d: want 3 or 4", bells)
 	}
-	if names == "" {
+	if names == "" && !isSet(flags, "changes") {
 		names = singleSwaps(bells)
 	}
-	if strings.Trim(names, "abcd") != "" {
+	if names == "" || strings.Trim(names, "abcd") != "" {
 		return nil, fmt.Errorf("invalid changes %q: want letters from abcd", names)
 	}
 
@@ -109,6 +110,13 @@ func parseArgs(flags *flag.FlagSet, bells int, names string) ([]change, error) {
 		allowed = append(allowed, c)
 	}
 	return allowed, nil
+}
+
+// isSet reports whether the named flag was given on the command line.
+func isSet(flags *flag.FlagSet, name string) bool {
+	found := false
+	flags.Visit(func(f *flag.Flag) { found = found || f.Name == name })
+	return found
 }
 
 // report writes a diagnostic. There is nowhere left to report a failure of the

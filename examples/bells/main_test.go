@@ -105,6 +105,12 @@ func TestRun(t *testing.T) {
 			wantStderr: "bells: invalid changes \"abx\": want letters from abcd\n",
 		},
 		{
+			name:       "explicitly empty changes",
+			args:       []string{"-changes="},
+			wantCode:   2,
+			wantStderr: "bells: invalid changes \"\": want letters from abcd\n",
+		},
+		{
 			name:       "change that needs a fourth bell",
 			args:       []string{"-bells", "3", "-changes", "ad"},
 			wantCode:   2,
