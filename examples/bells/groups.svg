@@ -1,0 +1,53 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 660 190" width="660" height="190" role="img" aria-label="One group of four rows drawn as a square: 1234, 2134, 2143, 1243, with a swaps across the top and bottom and c swaps down the sides. It has four covers: only a swaps, only c swaps, once around clockwise, and once around anticlockwise." font-family="Helvetica, Arial, sans-serif">
+<title>The four ways to cover one group of rows</title>
+<defs><marker id="ha" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="5" markerHeight="5" orient="auto-start-reverse"><path d="M0 0L10 5L0 10z" fill="#0969da"/></marker><marker id="hc" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="5" markerHeight="5" orient="auto-start-reverse"><path d="M0 0L10 5L0 10z" fill="#bc4c00"/></marker></defs>
+<rect x="0.5" y="0.5" width="659" height="189" rx="8" fill="#ffffff" stroke="#8c959f"/>
+<text x="82.5" y="26" text-anchor="middle" font-size="15" font-weight="bold" fill="#24292f">Only a swaps</text>
+<line x1="61.5" y1="63.0" x2="103.5" y2="63.0" stroke="#0969da" stroke-width="3" marker-end="url(#ha)" marker-start="url(#ha)"/>
+<text x="82.5" y="82.0" text-anchor="middle" font-size="14" font-weight="bold" fill="#0969da">a</text>
+<line x1="127.5" y1="87.0" x2="127.5" y2="129.0" stroke="#8c959f" stroke-width="1.5" stroke-dasharray="4 4"/>
+<line x1="103.5" y1="153.0" x2="61.5" y2="153.0" stroke="#0969da" stroke-width="3" marker-end="url(#ha)" marker-start="url(#ha)"/>
+<text x="82.5" y="144.0" text-anchor="middle" font-size="14" font-weight="bold" fill="#0969da">a</text>
+<line x1="37.5" y1="129.0" x2="37.5" y2="87.0" stroke="#8c959f" stroke-width="1.5" stroke-dasharray="4 4"/>
+<circle cx="37.5" cy="63.0" r="22" fill="#ffffff" stroke="#24292f" stroke-width="1.5"/><text x="37.5" y="67.5" text-anchor="middle" font-size="13" fill="#24292f">1234</text>
+<circle cx="127.5" cy="63.0" r="22" fill="#ffffff" stroke="#24292f" stroke-width="1.5"/><text x="127.5" y="67.5" text-anchor="middle" font-size="13" fill="#24292f">2134</text>
+<circle cx="127.5" cy="153.0" r="22" fill="#ffffff" stroke="#24292f" stroke-width="1.5"/><text x="127.5" y="157.5" text-anchor="middle" font-size="13" fill="#24292f">2143</text>
+<circle cx="37.5" cy="153.0" r="22" fill="#ffffff" stroke="#24292f" stroke-width="1.5"/><text x="37.5" y="157.5" text-anchor="middle" font-size="13" fill="#24292f">1243</text>
+<text x="247.5" y="26" text-anchor="middle" font-size="15" font-weight="bold" fill="#24292f">Only c swaps</text>
+<line x1="226.5" y1="63.0" x2="268.5" y2="63.0" stroke="#8c959f" stroke-width="1.5" stroke-dasharray="4 4"/>
+<line x1="292.5" y1="87.0" x2="292.5" y2="129.0" stroke="#bc4c00" stroke-width="3" marker-end="url(#hc)" marker-start="url(#hc)"/>
+<text x="278.5" y="113.0" text-anchor="middle" font-size="14" font-weight="bold" fill="#bc4c00">c</text>
+<line x1="268.5" y1="153.0" x2="226.5" y2="153.0" stroke="#8c959f" stroke-width="1.5" stroke-dasharray="4 4"/>
+<line x1="202.5" y1="129.0" x2="202.5" y2="87.0" stroke="#bc4c00" stroke-width="3" marker-end="url(#hc)" marker-start="url(#hc)"/>
+<text x="216.5" y="113.0" text-anchor="middle" font-size="14" font-weight="bold" fill="#bc4c00">c</text>
+<circle cx="202.5" cy="63.0" r="22" fill="#ffffff" stroke="#24292f" stroke-width="1.5"/><text x="202.5" y="67.5" text-anchor="middle" font-size="13" fill="#24292f">1234</text>
+<circle cx="292.5" cy="63.0" r="22" fill="#ffffff" stroke="#24292f" stroke-width="1.5"/><text x="292.5" y="67.5" text-anchor="middle" font-size="13" fill="#24292f">2134</text>
+<circle cx="292.5" cy="153.0" r="22" fill="#ffffff" stroke="#24292f" stroke-width="1.5"/><text x="292.5" y="157.5" text-anchor="middle" font-size="13" fill="#24292f">2143</text>
+<circle cx="202.5" cy="153.0" r="22" fill="#ffffff" stroke="#24292f" stroke-width="1.5"/><text x="202.5" y="157.5" text-anchor="middle" font-size="13" fill="#24292f">1243</text>
+<text x="412.5" y="26" text-anchor="middle" font-size="15" font-weight="bold" fill="#24292f">Clockwise</text>
+<line x1="391.5" y1="63.0" x2="433.5" y2="63.0" stroke="#0969da" stroke-width="3" marker-end="url(#ha)"/>
+<text x="412.5" y="82.0" text-anchor="middle" font-size="14" font-weight="bold" fill="#0969da">a</text>
+<line x1="457.5" y1="87.0" x2="457.5" y2="129.0" stroke="#bc4c00" stroke-width="3" marker-end="url(#hc)"/>
+<text x="443.5" y="113.0" text-anchor="middle" font-size="14" font-weight="bold" fill="#bc4c00">c</text>
+<line x1="433.5" y1="153.0" x2="391.5" y2="153.0" stroke="#0969da" stroke-width="3" marker-end="url(#ha)"/>
+<text x="412.5" y="144.0" text-anchor="middle" font-size="14" font-weight="bold" fill="#0969da">a</text>
+<line x1="367.5" y1="129.0" x2="367.5" y2="87.0" stroke="#bc4c00" stroke-width="3" marker-end="url(#hc)"/>
+<text x="381.5" y="113.0" text-anchor="middle" font-size="14" font-weight="bold" fill="#bc4c00">c</text>
+<circle cx="367.5" cy="63.0" r="22" fill="#ffffff" stroke="#24292f" stroke-width="1.5"/><text x="367.5" y="67.5" text-anchor="middle" font-size="13" fill="#24292f">1234</text>
+<circle cx="457.5" cy="63.0" r="22" fill="#ffffff" stroke="#24292f" stroke-width="1.5"/><text x="457.5" y="67.5" text-anchor="middle" font-size="13" fill="#24292f">2134</text>
+<circle cx="457.5" cy="153.0" r="22" fill="#ffffff" stroke="#24292f" stroke-width="1.5"/><text x="457.5" y="157.5" text-anchor="middle" font-size="13" fill="#24292f">2143</text>
+<circle cx="367.5" cy="153.0" r="22" fill="#ffffff" stroke="#24292f" stroke-width="1.5"/><text x="367.5" y="157.5" text-anchor="middle" font-size="13" fill="#24292f">1243</text>
+<text x="577.5" y="26" text-anchor="middle" font-size="15" font-weight="bold" fill="#24292f">Anticlockwise</text>
+<line x1="598.5" y1="63.0" x2="556.5" y2="63.0" stroke="#0969da" stroke-width="3" marker-end="url(#ha)"/>
+<text x="577.5" y="82.0" text-anchor="middle" font-size="14" font-weight="bold" fill="#0969da">a</text>
+<line x1="622.5" y1="129.0" x2="622.5" y2="87.0" stroke="#bc4c00" stroke-width="3" marker-end="url(#hc)"/>
+<text x="608.5" y="113.0" text-anchor="middle" font-size="14" font-weight="bold" fill="#bc4c00">c</text>
+<line x1="556.5" y1="153.0" x2="598.5" y2="153.0" stroke="#0969da" stroke-width="3" marker-end="url(#ha)"/>
+<text x="577.5" y="144.0" text-anchor="middle" font-size="14" font-weight="bold" fill="#0969da">a</text>
+<line x1="532.5" y1="87.0" x2="532.5" y2="129.0" stroke="#bc4c00" stroke-width="3" marker-end="url(#hc)"/>
+<text x="546.5" y="113.0" text-anchor="middle" font-size="14" font-weight="bold" fill="#bc4c00">c</text>
+<circle cx="532.5" cy="63.0" r="22" fill="#ffffff" stroke="#24292f" stroke-width="1.5"/><text x="532.5" y="67.5" text-anchor="middle" font-size="13" fill="#24292f">1234</text>
+<circle cx="622.5" cy="63.0" r="22" fill="#ffffff" stroke="#24292f" stroke-width="1.5"/><text x="622.5" y="67.5" text-anchor="middle" font-size="13" fill="#24292f">2134</text>
+<circle cx="622.5" cy="153.0" r="22" fill="#ffffff" stroke="#24292f" stroke-width="1.5"/><text x="622.5" y="157.5" text-anchor="middle" font-size="13" fill="#24292f">2143</text>
+<circle cx="532.5" cy="153.0" r="22" fill="#ffffff" stroke="#24292f" stroke-width="1.5"/><text x="532.5" y="157.5" text-anchor="middle" font-size="13" fill="#24292f">1243</text>
+</svg>

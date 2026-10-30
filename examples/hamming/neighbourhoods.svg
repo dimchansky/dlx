@@ -1,0 +1,24 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 360 300" width="360" height="300" role="img" aria-label="A cube whose eight corners are the words of three digits. The corner 000 and its three neighbours form one group, and the corner 111 and its three neighbours form the other." font-family="Helvetica, Arial, sans-serif">
+<title>The eight words of three digits as corners of a cube, split into the neighbourhoods of 000 and 111</title>
+<rect x="0.5" y="0.5" width="359" height="299" rx="8" fill="#ffffff" stroke="#8c959f"/>
+<line x1="70" y1="240" x2="230" y2="240" stroke="#0969da" stroke-width="5"/>
+<line x1="70" y1="240" x2="70" y2="100" stroke="#0969da" stroke-width="5"/>
+<line x1="70" y1="240" x2="130" y2="190" stroke="#0969da" stroke-width="5"/>
+<line x1="230" y1="240" x2="230" y2="100" stroke="#8c959f" stroke-width="2" stroke-dasharray="6 5"/>
+<line x1="230" y1="240" x2="290" y2="190" stroke="#8c959f" stroke-width="2" stroke-dasharray="6 5"/>
+<line x1="70" y1="100" x2="230" y2="100" stroke="#8c959f" stroke-width="2" stroke-dasharray="6 5"/>
+<line x1="70" y1="100" x2="130" y2="50" stroke="#8c959f" stroke-width="2" stroke-dasharray="6 5"/>
+<line x1="230" y1="100" x2="290" y2="50" stroke="#bc4c00" stroke-width="5"/>
+<line x1="130" y1="190" x2="290" y2="190" stroke="#8c959f" stroke-width="2" stroke-dasharray="6 5"/>
+<line x1="130" y1="190" x2="130" y2="50" stroke="#8c959f" stroke-width="2" stroke-dasharray="6 5"/>
+<line x1="290" y1="190" x2="290" y2="50" stroke="#bc4c00" stroke-width="5"/>
+<line x1="130" y1="50" x2="290" y2="50" stroke="#bc4c00" stroke-width="5"/>
+<circle cx="70" cy="240" r="25" fill="#0969da"/><text x="70" y="246" text-anchor="middle" font-size="17" font-weight="bold" fill="#ffffff">000</text>
+<circle cx="230" cy="240" r="24" fill="#ffffff" stroke="#0969da" stroke-width="4"/><text x="230" y="246" text-anchor="middle" font-size="17" fill="#24292f">001</text>
+<circle cx="70" cy="100" r="24" fill="#ffffff" stroke="#0969da" stroke-width="4"/><text x="70" y="106" text-anchor="middle" font-size="17" fill="#24292f">010</text>
+<circle cx="230" cy="100" r="24" fill="#ffffff" stroke="#bc4c00" stroke-width="4"/><text x="230" y="106" text-anchor="middle" font-size="17" fill="#24292f">011</text>
+<circle cx="130" cy="190" r="24" fill="#ffffff" stroke="#0969da" stroke-width="4"/><text x="130" y="196" text-anchor="middle" font-size="17" fill="#24292f">100</text>
+<circle cx="290" cy="190" r="24" fill="#ffffff" stroke="#bc4c00" stroke-width="4"/><text x="290" y="196" text-anchor="middle" font-size="17" fill="#24292f">101</text>
+<circle cx="130" cy="50" r="24" fill="#ffffff" stroke="#bc4c00" stroke-width="4"/><text x="130" y="56" text-anchor="middle" font-size="17" fill="#24292f">110</text>
+<circle cx="290" cy="50" r="25" fill="#bc4c00"/><text x="290" y="56" text-anchor="middle" font-size="17" font-weight="bold" fill="#ffffff">111</text>
+</svg>

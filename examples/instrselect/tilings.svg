@@ -1,0 +1,76 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1010 300" width="1010" height="300" role="img" aria-label="The four ways to tile the tree of load(add(a, 8)), with their costs" font-family="Helvetica, Arial, sans-serif">
+<title>The four ways to tile the tree of load(add(a, 8)), with their costs</title>
+<rect x="0.5" y="0.5" width="1009" height="299" rx="8" fill="#ffffff" stroke="#8c959f"/>
+<g transform="translate(5 0)">
+<line x1="125" y1="45" x2="125" y2="115" stroke="#57606a" stroke-width="2"/>
+<line x1="125" y1="115" x2="75" y2="190" stroke="#57606a" stroke-width="2"/>
+<line x1="125" y1="115" x2="175" y2="190" stroke="#57606a" stroke-width="2"/>
+<polyline points="125,45 125,115 175,190" fill="none" stroke="#0969da" stroke-width="60" stroke-opacity="0.35" stroke-linecap="round" stroke-linejoin="round"/>
+<circle cx="75" cy="190" r="29" fill="#6e7781" fill-opacity="0.22" stroke="#6e7781" stroke-width="2"/>
+<circle cx="125" cy="45" r="21" fill="#ffffff" stroke="#24292f" stroke-width="1.5"/>
+<text x="125" y="50" text-anchor="middle" font-size="15" fill="#24292f">load</text>
+<circle cx="125" cy="115" r="21" fill="#ffffff" stroke="#24292f" stroke-width="1.5"/>
+<text x="125" y="120" text-anchor="middle" font-size="15" fill="#24292f">add</text>
+<circle cx="75" cy="190" r="21" fill="#ffffff" stroke="#24292f" stroke-width="1.5"/>
+<text x="75" y="195" text-anchor="middle" font-size="15" fill="#24292f">a</text>
+<circle cx="175" cy="190" r="21" fill="#ffffff" stroke="#24292f" stroke-width="1.5"/>
+<text x="175" y="195" text-anchor="middle" font-size="15" fill="#24292f">8</text>
+<text x="125" y="255" text-anchor="middle" font-size="15" font-weight="bold" fill="#24292f">ldrimm + reg</text>
+<text x="125" y="278" text-anchor="middle" font-size="14" fill="#24292f">cost 4 + 0 = 4</text>
+</g>
+<g transform="translate(255 0)">
+<line x1="125" y1="45" x2="125" y2="115" stroke="#57606a" stroke-width="2"/>
+<line x1="125" y1="115" x2="75" y2="190" stroke="#57606a" stroke-width="2"/>
+<line x1="125" y1="115" x2="175" y2="190" stroke="#57606a" stroke-width="2"/>
+<circle cx="125" cy="45" r="29" fill="#0969da" fill-opacity="0.22" stroke="#0969da" stroke-width="2"/>
+<polyline points="125,115 175,190" fill="none" stroke="#1a7f37" stroke-width="60" stroke-opacity="0.35" stroke-linecap="round" stroke-linejoin="round"/>
+<circle cx="75" cy="190" r="29" fill="#6e7781" fill-opacity="0.22" stroke="#6e7781" stroke-width="2"/>
+<circle cx="125" cy="45" r="21" fill="#ffffff" stroke="#24292f" stroke-width="1.5"/>
+<text x="125" y="50" text-anchor="middle" font-size="15" fill="#24292f">load</text>
+<circle cx="125" cy="115" r="21" fill="#ffffff" stroke="#24292f" stroke-width="1.5"/>
+<text x="125" y="120" text-anchor="middle" font-size="15" fill="#24292f">add</text>
+<circle cx="75" cy="190" r="21" fill="#ffffff" stroke="#24292f" stroke-width="1.5"/>
+<text x="75" y="195" text-anchor="middle" font-size="15" fill="#24292f">a</text>
+<circle cx="175" cy="190" r="21" fill="#ffffff" stroke="#24292f" stroke-width="1.5"/>
+<text x="175" y="195" text-anchor="middle" font-size="15" fill="#24292f">8</text>
+<text x="125" y="255" text-anchor="middle" font-size="15" font-weight="bold" fill="#24292f">ldr + addi + reg</text>
+<text x="125" y="278" text-anchor="middle" font-size="14" fill="#24292f">cost 4 + 1 + 0 = 5</text>
+</g>
+<g transform="translate(505 0)">
+<line x1="125" y1="45" x2="125" y2="115" stroke="#57606a" stroke-width="2"/>
+<line x1="125" y1="115" x2="75" y2="190" stroke="#57606a" stroke-width="2"/>
+<line x1="125" y1="115" x2="175" y2="190" stroke="#57606a" stroke-width="2"/>
+<polyline points="125,45 125,115" fill="none" stroke="#0969da" stroke-width="60" stroke-opacity="0.35" stroke-linecap="round" stroke-linejoin="round"/>
+<circle cx="175" cy="190" r="29" fill="#bc4c00" fill-opacity="0.22" stroke="#bc4c00" stroke-width="2"/>
+<circle cx="75" cy="190" r="29" fill="#6e7781" fill-opacity="0.22" stroke="#6e7781" stroke-width="2"/>
+<circle cx="125" cy="45" r="21" fill="#ffffff" stroke="#24292f" stroke-width="1.5"/>
+<text x="125" y="50" text-anchor="middle" font-size="15" fill="#24292f">load</text>
+<circle cx="125" cy="115" r="21" fill="#ffffff" stroke="#24292f" stroke-width="1.5"/>
+<text x="125" y="120" text-anchor="middle" font-size="15" fill="#24292f">add</text>
+<circle cx="75" cy="190" r="21" fill="#ffffff" stroke="#24292f" stroke-width="1.5"/>
+<text x="75" y="195" text-anchor="middle" font-size="15" fill="#24292f">a</text>
+<circle cx="175" cy="190" r="21" fill="#ffffff" stroke="#24292f" stroke-width="1.5"/>
+<text x="175" y="195" text-anchor="middle" font-size="15" fill="#24292f">8</text>
+<text x="125" y="255" text-anchor="middle" font-size="15" font-weight="bold" fill="#24292f">ldrreg + mov + reg</text>
+<text x="125" y="278" text-anchor="middle" font-size="14" fill="#24292f">cost 4 + 1 + 0 = 5</text>
+</g>
+<g transform="translate(755 0)">
+<line x1="125" y1="45" x2="125" y2="115" stroke="#57606a" stroke-width="2"/>
+<line x1="125" y1="115" x2="75" y2="190" stroke="#57606a" stroke-width="2"/>
+<line x1="125" y1="115" x2="175" y2="190" stroke="#57606a" stroke-width="2"/>
+<circle cx="125" cy="45" r="29" fill="#0969da" fill-opacity="0.22" stroke="#0969da" stroke-width="2"/>
+<circle cx="125" cy="115" r="29" fill="#1a7f37" fill-opacity="0.22" stroke="#1a7f37" stroke-width="2"/>
+<circle cx="175" cy="190" r="29" fill="#bc4c00" fill-opacity="0.22" stroke="#bc4c00" stroke-width="2"/>
+<circle cx="75" cy="190" r="29" fill="#6e7781" fill-opacity="0.22" stroke="#6e7781" stroke-width="2"/>
+<circle cx="125" cy="45" r="21" fill="#ffffff" stroke="#24292f" stroke-width="1.5"/>
+<text x="125" y="50" text-anchor="middle" font-size="15" fill="#24292f">load</text>
+<circle cx="125" cy="115" r="21" fill="#ffffff" stroke="#24292f" stroke-width="1.5"/>
+<text x="125" y="120" text-anchor="middle" font-size="15" fill="#24292f">add</text>
+<circle cx="75" cy="190" r="21" fill="#ffffff" stroke="#24292f" stroke-width="1.5"/>
+<text x="75" y="195" text-anchor="middle" font-size="15" fill="#24292f">a</text>
+<circle cx="175" cy="190" r="21" fill="#ffffff" stroke="#24292f" stroke-width="1.5"/>
+<text x="175" y="195" text-anchor="middle" font-size="15" fill="#24292f">8</text>
+<text x="125" y="255" text-anchor="middle" font-size="15" font-weight="bold" fill="#24292f">ldr + add + mov + reg</text>
+<text x="125" y="278" text-anchor="middle" font-size="14" fill="#24292f">cost 4 + 1 + 1 + 0 = 6</text>
+</g>
+</svg>
