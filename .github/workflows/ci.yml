@@ -41,12 +41,16 @@ jobs:
       # The badge describes the library: example commands are not part of its API.
       - if: matrix.go == 'stable'
         run: grep -v '^github.com/dimchansky/dlx/examples/' coverage.out > coverage-lib.out
+      # Coveralls being down or slow must not fail a required check.
       - if: matrix.go == 'stable'
         uses: coverallsapp/github-action@8d6379e14d29928660c4ba802d8e85393440b329 # v2.3.8
+        timeout-minutes: 2
+        continue-on-error: true
         with:
           file: coverage-lib.out
           format: golang
           fail-on-error: false
+          coverage-reporter-version: v0.6.22 # not updated by Dependabot; bump manually
 
   lint:
     runs-on: ubuntu-latest
@@ -57,7 +61,7 @@ jobs:
           persist-credentials: false
       - uses: actions/setup-go@b7ad1dad31e06c5925ef5d2fc7ad053ef454303e # v7.0.0
         with:
-          go-version: stable
+          go-version: 1.27.x # bump together with golangci-lint, so a new Go can't block every PR
           cache: false
       - run: go mod tidy -diff
       - uses: golangci/golangci-lint-action@ba0d7d2ec06a0ea1cb5fa41b2e4a3ab91d21278a # v9.3.0

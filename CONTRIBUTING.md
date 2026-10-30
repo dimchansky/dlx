@@ -2,11 +2,11 @@
 
 ## Before you send a change
 
-Run the same checks as CI:
+Run the vet, lint and test passes that CI runs:
 
     make check
 
-This needs [golangci-lint](https://golangci-lint.run/) v2.15.0, the version CI uses. `make task` also applies `go fix` and the formatters first.
+This needs [golangci-lint](https://golangci-lint.run/) v2.15.0, the version CI uses. `make task` also applies `go fix` and the formatters first. CI also runs `make tidy_check` (Go 1.23+) and `make vulncheck` (Go 1.26+), which stay separate because `make check` has to work with Go 1.19.
 
 Tests run with the race detector and `-short`, because the slowest example totals take minutes under it, and then once in full without it. `make fuzz` runs `FuzzSolve` for 30 seconds. If it writes a failing input to `testdata/fuzz`, commit that file with the fix.
 
@@ -35,3 +35,5 @@ Treat every version as permanent:
 
       // Solve reports wrong solutions when a row repeats a column.
       retract v1.2.3
+
+If the workflow fails after the tag is pushed, no release exists, so the tag isn't locked. If the failure was temporary, re-run the workflow. Otherwise, if nobody can have fetched the version yet, delete the tag with `git push origin :refs/tags/v1.2.3`, fix master and tag again. If it may have been fetched, leave the tag, retract the version in `go.mod` and move to the next one.

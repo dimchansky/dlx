@@ -7,8 +7,8 @@ updates:
     schedule:
       interval: weekly
     cooldown:
-      default-days: 7 # let fresh releases settle before they are proposed (and auto-merged)
+      default-days: 7 # let fresh releases settle before they are proposed
     groups:
       actions:
         patterns: ["*"]
-        update-types: [minor, patch] # majors arrive as separate PRs for manual review
+        update-types: [minor, patch] # majors arrive as separate PRs
