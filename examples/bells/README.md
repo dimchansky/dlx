@@ -72,7 +72,7 @@ This is the whole matrix for 3 bells. Each step has one 1 under `out` and one 1 
 | 321 to 231 (a) | 0 | 0 | 0 | 0 | 0 | 1 | 0 | 0 | 0 | 1 | 0 | 0 |
 | 321 to 312 (b) | 0 | 0 | 0 | 0 | 0 | 1 | 0 | 0 | 0 | 0 | 1 | 0 |
 
-For example, the first step in the table leaves `123`, so it has a 1 under `out 123`, and it reaches `213`, so it has a 1 under `in 213`. Picking both "123 to 213" and "123 to 132" is impossible, because both have a 1 under `out 123`. No slack rows are needed, because every row of bells really does have one step out and one step in.
+For example, the first step in the table leaves `123`, so it has a 1 under `out 123`, and it reaches `213`, so it has a 1 under `in 213`. Picking both "123 to 213" and "123 to 132" is impossible, because both have a 1 under `out 123`. No [slack rows](../README.md#at-most-once-slack-rows) are needed, because every row of bells really does have one step out and one step in.
 
 ### What the matrix misses
 
@@ -101,6 +101,8 @@ flowchart LR
     L -- "Yes" --> D["Stop"]
     S -- "No covers left" --> D
 ```
+
+This is the path for printing. With `-count`, every cover is counted and there is no `-limit` check, so it stops only when no covers are left.
 
 ## How a solution decodes back
 
@@ -237,7 +239,7 @@ The other 11 sets have none, because from rounds they can't reach every row. The
 
 Of the 10792 extents, half are the reverses of the other half, which leaves 5396 different loops.
 
-One of the 106 extents that use `bcd` is the method that ringers call Plain Bob Minimus, which repeats the changes d b d b d b d c three times:
+One of the 106 extents that use `bcd` is the method that ringers call [Plain Bob Minimus](https://complib.org/method/10460), which repeats the changes d b d b d b d c three times. In ringers' notation that is `-14-14,12`, where `-` swaps every pair and a number names a place that stays put, and the 9th row, `1342`, is what ringers call its lead head:
 
     1234 2143 2413 4231 4321 3412 3142 1324
     1342 3124 3214 2341 2431 4213 4123 1432
@@ -247,13 +249,13 @@ One of the 106 extents that use `bcd` is the method that ringers call Plain Bob 
 ## How the results are checked
 
 - The total of 10792 is published in ["Ringing the changes"](https://plus.maths.org/content/ringing-changes) by Burkard Polster and Marty Ross, in Plus magazine, 2009. The article calls a row a "change". No published source is known for the other totals, including the 88, so they rest on the checks below.
-- A separate walk over the rows finds every extent one step at a time, with no matrix and no cycle covers. The tests compare the two lists, extent by extent, for every set of changes except `acd`, where the solver would spend a second or more finding nothing. For `acd`, the walk and the count below check the totals.
+- A separate walk over the rows finds every extent one step at a time, with no matrix and no cycle covers. The tests compare the two lists, extent by extent, for every set of changes.
 - A separate count of the cycle covers goes through the rows in turn and keeps a tally of the choices so far. It involves no search, and it must give the same total.
 - Both of those build their own rows and read the changes off pairs of rows, so they share no data with the solver.
-- Each extent is checked against the three rules, and Plain Bob Minimus has to be among the extents.
+- Each extent is checked against the three rules, and Plain Bob Minimus has to be among the extents. That only proves it is an extent. Its name and notation come from [CompLib](https://complib.org/method/10460), a database of ringing methods.
 - The larger matrix from [Limits](#limits) has to give the same extents as the walk, on 3 bells and with `abc`, with no filter.
 
-`go test` checks everything and takes several seconds, nearly all of it on `abcd`. `go test -short` leaves out the solver runs for the seven sets with more than 1000 covers, though the walk and the count still check every total, including the 10792. Use `-short` with `-race`.
+`go test` checks everything and takes several seconds, nearly all of it on `abcd` and `acd`. `go test -short` leaves out the solver runs for the eight sets with more than 1000 covers, and the separate count for `abcd`. The walk still checks every total of extents, including the 10792, and the count still checks the other cover totals. Use `-short` with `-race`.
 
 ## Limits
 
@@ -275,20 +277,38 @@ No group depends on another, so the choices multiply: the number of covers is at
 | 5     | 120  | 30             | a 19 digit number         |
 | 6     | 720  | 180            | a 109 digit number        |
 
-At about a million covers a second, 5 bells would take tens of thousands of years, and that is only a lower limit. So the command stops at 4 bells.
+At about a million covers a second, going through every cover on 5 bells would take tens of thousands of years, and that is only a lower limit. Stopping at the first extent doesn't rescue it. In a 20 second trial on 5 bells, once with the 4 single swaps and once with all 7 changes, dlx went through 3 to 4.5 million covers without finding an extent, and the loop through rounds never had more than 2 rows. So the command stops at 4 bells.
 
 ### A larger matrix can hold the rule
 
-The limit is in the step matrix, not in exact cover. A matrix can say "only one loop" if it also says when each row of bells is rung, so that the ringing is one path through time instead of a set of loops. With n rows of bells, time runs from 0 to n - 1, and the last step returns to rounds at time 0.
+The limit is in the step matrix, not in exact cover. A matrix can say "only one loop" if it also says when each row of bells is rung, so that the ringing has to be one path through time instead of a set of loops. With n rows of bells, time runs from 0 to n - 1, and the last step returns to rounds at time 0.
 
-| Matrix part | Meaning                                                    | `abc` |
-|-------------|------------------------------------------------------------|-------|
-| Column      | A step leaves this row of bells                            | 24    |
-| Column      | This row of bells at this time, on the way out             | 576   |
-| Column      | This row of bells at this time, on the way in              | 576   |
-| Row         | A step from one row of bells to another at this time, or   | 2033  |
-|             | slack: the ringing isn't at this row of bells at this time |       |
+Each row of this matrix is one step at one time. For each row of bells at each time there is a pair of columns, `in` and `out`. A step that arrives at that row of bells at that time covers `in`. A step that leaves it at that time covers `out`. A [slack row](../README.md#at-most-once-slack-rows) covers both at once, and it means the ringing isn't there at that time.
 
-A step covers "leaves" for its row of bells, "out" at its time, and "in" for the next row of bells at the next time. The slack row covers "out" and "in" together. So at each time and for each row of bells, either the ringing passes through or it isn't there. Only rounds can be at time 0, and rounds can't be at any other time. One path sets off and nothing else can start, so there is only one loop, and the first column makes it visit every row of bells.
+The pair is what joins one step to the next. One column couldn't do this, because the step that arrives and the step that leaves would both cover it, and a column can only be covered once. With two columns, each pair has just two ways to be covered:
+
+- A step arrives and a step leaves.
+- The slack row covers both.
+
+A step can't arrive without another leaving, because then `out` has nothing left to cover it: the slack row would cover `in` a second time. A step can't leave without another arriving, for the same reason.
+
+Take 3 bells and the extent `123 213 231 321 312 132 123`. At time 1 the ringing is at `213`, so the pairs for time 1 are covered like this:
+
+| Pair at time 1         | Covered by                                                       |
+|------------------------|------------------------------------------------------------------|
+| `in 213` and `out 213` | The step 123 to 213 at time 0, and the step 213 to 231 at time 1 |
+| The five other pairs   | One slack row each                                               |
+
+Now try to start a second loop somewhere else, with the step 132 to 312 at time 2. It covers `out 132` at time 2, so a step has to arrive at `132` at time 2. That step left another row of bells at time 1, so a step has to arrive there at time 1. That one left a row of bells at time 0, and only rounds can do that, because rounds is the only row of bells at time 0: it has no slack row there, and the others have no steps there. So every step traces back to rounds at time 0. Only one step leaves rounds, so one row of bells is reached at time 1, one step leaves that, and so on. The ringing is a single path, and nothing else can start.
+
+One more column for each row of bells says that a step leaves it, so the path has to visit them all.
+
+| Matrix part | Meaning                                                 | 3 bells, `ab` | 4 bells, `abc` |
+|-------------|---------------------------------------------------------|---------------|----------------|
+| Column      | A step leaves this row of bells                         | 6             | 24             |
+| Column      | `out`: this row of bells at this time                   | 36            | 576            |
+| Column      | `in`: this row of bells at this time                    | 36            | 576            |
+| Row         | A step from one row of bells to another at this time    | 36            | 1458           |
+| Row         | Slack: the ringing isn't at this row of bells this time | 35            | 575            |
 
 That gives 1176 columns and 2033 rows for `abc`, against 48 columns and 72 rows above, and the solutions are exactly the extents, with no filter. The tests check this against the walk. The price is speed. Here `abc` took about 0.25 seconds instead of 0.04, `abd` and `bcd` about 0.9 seconds instead of 0.03, and `abcd` hadn't finished after more than 5 minutes, while the step matrix and its filter take a few seconds. That is why the example filters instead.

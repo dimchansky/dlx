@@ -41,9 +41,13 @@ var knownTotals = []struct {
 	{4, "abcd", 2655552, 10792},
 }
 
-// maxShortCovers keeps go test -short fast, even with -race. TestIndependentTotals
-// still checks every total in that mode.
-const maxShortCovers = 1000
+// maxShortCovers keeps go test -short fast, even with -race, by leaving out the
+// solver runs above it. maxShortCount does the same for countCovers, whose map is
+// slow under -race on abcd. The walk still checks every total of extents.
+const (
+	maxShortCovers = 1000
+	maxShortCount  = 1000000
+)
 
 // changesNamed picks the changes for a test without going through the command.
 func changesNamed(names string) []change {
@@ -78,6 +82,10 @@ func independentRows(bells int) []string {
 	}
 	return rows
 }
+
+// independent holds independentRows for each number of bells, built once because
+// nearly every subtest needs it.
+var independent = map[int][]string{3: independentRows(3), 4: independentRows(4)}
 
 // isAllowed reads the rules of ringing off two rows, without using the change
 // type: it finds the places that differ and names the change from them.
@@ -127,31 +135,58 @@ func neighbours(rows []string, names string) [][]int {
 // walk finds every extent by walking the rows step by step, with no matrix and
 // no cycle covers, and passes each one to visit as a joined string.
 func walk(rows []string, names string, visit func(extent string)) {
-	next := neighbours(rows, names)
-	visited := make([]bool, len(rows))
-	path := []string{rows[0]}
-	var step func(at int)
-	step = func(at int) {
-		if len(path) == len(rows) {
-			for _, to := range next[at] {
-				if to == 0 {
-					visit(strings.Join(append(path, rows[0]), " "))
-				}
+	w := walker{
+		rows:    rows,
+		next:    neighbours(rows, names),
+		visited: make([]bool, len(rows)),
+		path:    make([]int, len(rows)),
+		visit:   visit,
+	}
+	w.visited[0] = true
+	w.step(1)
+}
+
+// walker is the state of one walk, which stays on one goroutine.
+type walker struct {
+	rows    []string
+	next    [][]int
+	visited []bool
+	path    []int
+	visit   func(extent string)
+}
+
+// step extends the path from its first depth rows. It is marked norace because
+// the walk on abcd takes millions of steps, which would cost about a second under
+// -race, and it shares nothing with another goroutine.
+//
+//go:norace
+func (w *walker) step(depth int) {
+	at := w.path[depth-1]
+	if depth == len(w.rows) {
+		for _, to := range w.next[at] {
+			if to == 0 {
+				w.visit(joinPath(w.rows, w.path))
 			}
-			return
 		}
-		for _, to := range next[at] {
-			if !visited[to] {
-				visited[to] = true
-				path = append(path, rows[to])
-				step(to)
-				path = path[:len(path)-1]
-				visited[to] = false
-			}
+		return
+	}
+	for _, to := range w.next[at] {
+		if !w.visited[to] {
+			w.visited[to] = true
+			w.path[depth] = to
+			w.step(depth + 1)
+			w.visited[to] = false
 		}
 	}
-	visited[0] = true
-	step(0)
+}
+
+// joinPath writes out a walk through the rows, with rounds again at the end.
+func joinPath(rows []string, path []int) string {
+	extent := make([]string, 0, len(path)+1)
+	for _, i := range path {
+		extent = append(extent, rows[i])
+	}
+	return strings.Join(append(extent, rows[0]), " ")
 }
 
 // countCovers counts the cycle covers without a search: it goes through the
@@ -203,7 +238,7 @@ func TestAllRows(t *testing.T) {
 			}
 			sorted := append([]string{}, got...)
 			sort.Strings(sorted)
-			if want := independentRows(tt.bells); !reflect.DeepEqual(sorted, want) {
+			if want := independent[tt.bells]; !reflect.DeepEqual(sorted, want) {
 				t.Errorf("rows = %v, want %v", sorted, want)
 			}
 		})
@@ -220,9 +255,6 @@ func TestSolve_Totals(t *testing.T) {
 		tt := tt
 		t.Run(fmt.Sprintf("%d bells %s", tt.bells, tt.names), func(t *testing.T) {
 			t.Parallel()
-			if tt.names == "acd" {
-				t.Skip("slow, with no extent to find: TestIndependentTotals checks it")
-			}
 			if tt.covers > maxShortCovers && testing.Short() {
 				t.Skip("slow: goes through every cycle cover")
 			}
@@ -245,12 +277,12 @@ func TestSolve_Totals(t *testing.T) {
 				t.Errorf("found %d different extents, want %d", len(got), tt.extents)
 			}
 
-			independent := independentRows(tt.bells)
-			if want := countCovers(independent, tt.names); covers != want {
+			rowsAgain := independent[tt.bells]
+			if want := countCovers(rowsAgain, tt.names); covers != want {
 				t.Errorf("found %d cycle covers, independent count gives %d", covers, want)
 			}
 			want := map[string]bool{}
-			walk(independent, tt.names, func(extent string) { want[extent] = true })
+			walk(rowsAgain, tt.names, func(extent string) { want[extent] = true })
 			if !reflect.DeepEqual(got, want) {
 				t.Errorf("found %d extents, the walk found %d others", len(got), len(want))
 			}
@@ -258,8 +290,9 @@ func TestSolve_Totals(t *testing.T) {
 	}
 }
 
-// TestIndependentTotals checks every total, the published one included, with
-// neither the solver nor a search through the covers, so it runs under -short too.
+// TestIndependentTotals checks the totals, the published one included, with
+// neither the solver nor a search through the covers. Under -short it leaves out
+// only the count for abcd, so the walk still checks the 10792.
 func TestIndependentTotals(t *testing.T) {
 	t.Parallel()
 
@@ -268,9 +301,11 @@ func TestIndependentTotals(t *testing.T) {
 		t.Run(fmt.Sprintf("%d bells %s", tt.bells, tt.names), func(t *testing.T) {
 			t.Parallel()
 
-			rows := independentRows(tt.bells)
-			if got := countCovers(rows, tt.names); got != tt.covers {
-				t.Errorf("the count found %d cycle covers, want %d", got, tt.covers)
+			rows := independent[tt.bells]
+			if tt.covers <= maxShortCount || !testing.Short() {
+				if got := countCovers(rows, tt.names); got != tt.covers {
+					t.Errorf("the count found %d cycle covers, want %d", got, tt.covers)
+				}
 			}
 			extents := 0
 			walk(rows, tt.names, func(string) { extents++ })
@@ -292,7 +327,7 @@ func TestIndependentTotals(t *testing.T) {
 // at time t+1. A slack row covers the second and third for one u and t, and means
 // that the ringing isn't at u at time t. Only rounds is at time 0, and rounds is at
 // no other time, so one walker sets off and every row of bells is on its path.
-func timeMatrix(rows []string, names string) (m dlx.Matrix, matrixRows int) {
+func timeMatrix(rows []string, names string) (m dlx.Matrix, steps, slack int) {
 	n := len(rows)
 	next := neighbours(rows, names)
 	out := func(t, u int) int { return n + t*n + u }
@@ -303,7 +338,7 @@ func timeMatrix(rows []string, names string) (m dlx.Matrix, matrixRows int) {
 		for u := 0; u < n; u++ {
 			if t != 0 || u != 0 {
 				m.AddRow(out(t, u), in(t, u))
-				matrixRows++
+				slack++
 			}
 			if (t == 0) != (u == 0) {
 				continue
@@ -312,12 +347,12 @@ func timeMatrix(rows []string, names string) (m dlx.Matrix, matrixRows int) {
 			for _, v := range next[u] {
 				if (arrival == 0) == (v == 0) {
 					m.AddRow(u, out(t, u), in(arrival, v))
-					matrixRows++
+					steps++
 				}
 			}
 		}
 	}
-	return m, matrixRows
+	return m, steps, slack
 }
 
 // TestTimeMatrix checks the README's claim that a matrix can hold the single loop
@@ -330,11 +365,12 @@ func TestTimeMatrix(t *testing.T) {
 		bells       int
 		names       string
 		wantColumns int
-		wantRows    int
+		wantSteps   int
+		wantSlack   int
 		slow        bool
 	}{
-		{name: "3 bells", bells: 3, names: "ab", wantColumns: 78, wantRows: 71},
-		{name: "4 bells", bells: 4, names: "abc", wantColumns: 1176, wantRows: 2033, slow: true},
+		{name: "3 bells", bells: 3, names: "ab", wantColumns: 78, wantSteps: 36, wantSlack: 35},
+		{name: "4 bells", bells: 4, names: "abc", wantColumns: 1176, wantSteps: 1458, wantSlack: 575, slow: true},
 	}
 
 	for _, tt := range tests {
@@ -345,14 +381,14 @@ func TestTimeMatrix(t *testing.T) {
 				t.Skip("slow: the matrix is much larger than the one in solver.go")
 			}
 
-			rows := independentRows(tt.bells)
+			rows := independent[tt.bells]
 			n := len(rows)
 			if columns := n + 2*n*n; columns != tt.wantColumns {
 				t.Errorf("%d columns, want %d", columns, tt.wantColumns)
 			}
-			m, matrixRows := timeMatrix(rows, tt.names)
-			if matrixRows != tt.wantRows {
-				t.Errorf("%d matrix rows, want %d", matrixRows, tt.wantRows)
+			m, steps, slack := timeMatrix(rows, tt.names)
+			if steps != tt.wantSteps || slack != tt.wantSlack {
+				t.Errorf("%d steps and %d slack rows, want %d and %d", steps, slack, tt.wantSteps, tt.wantSlack)
 			}
 
 			got := map[string]bool{}
@@ -440,7 +476,7 @@ func TestUnreachableRows(t *testing.T) {
 		t.Run(fmt.Sprintf("%d bells %s", tt.bells, tt.names), func(t *testing.T) {
 			t.Parallel()
 
-			rows := independentRows(tt.bells)
+			rows := independent[tt.bells]
 			next := neighbours(rows, tt.names)
 			reached := map[int]bool{0: true}
 			queue := []int{0}
@@ -480,7 +516,8 @@ func TestBuildMatrix_RawCover(t *testing.T) {
 }
 
 // TestPlainBobMinimus checks that a method rung by real ringers is among the
-// extents: on 4 bells, repeat d b d b d b d c three times.
+// extents: on 4 bells, repeat d b d b d b d c three times. That is the place
+// notation -14-14,12 of method 10460 on CompLib, https://complib.org/method/10460.
 func TestPlainBobMinimus(t *testing.T) {
 	t.Parallel()
 
