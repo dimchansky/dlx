@@ -28,7 +28,7 @@ The interesting part is that a processor usually has several ways to do the same
 | `add R0, a, #8`<br>`ldr R1, [R0]` | Put a+8 in register R0, then load from the address in R0 | 5 |
 | `ldr R0, [a, #8]` | Load from address a+8 in one instruction | 4 |
 
-In this notation, `#8` is the constant 8, and square brackets mean the memory box at that address, so `[a, #8]` is the box at address a+8.
+In this notation, the first register named is where the result goes, so `add R0, a, #8` puts a+8 in R0. `#8` is the constant 8, and square brackets mean the memory box at that address, so `[a, #8]` is the box at address a+8.
 
 The **cost** stands for how long an instruction takes. The task is to pick instructions that compute the whole tree at the lowest total cost.
 
@@ -51,6 +51,8 @@ An instruction fits a piece of the tree. Think of each one as a **tile** cut to 
 | `ldrimm` | `load(add(_, C))` | 4 | `ldr R0, [x, #C]` | Add a constant, then load |
 | `ldrreg` | `load(add(_, _))` | 4 | `ldr R0, [x, y]` | Add two registers, then load |
 | `ldrshift` | `load(add(_, shl(_, C)))` | 4 | `ldr R0, [x, y, lsl #C]` | Shift, add, then load |
+
+In the Instruction column, `R0` is the register that gets the result, and `x`, `y` and `z` are the registers holding the tile's operands, from left to right. So `madd R0, x, y, z` means R0 = x × y + z.
 
 A **shift** left by C places doubles a number C times, so `shl(i, 3)` means i × 8. Numbers in a computer are often 8 boxes wide, so the number at position i of a list that starts at address `a` is at address a + i × 8. This is why `load(add(a, shl(i, 3)))` is so common that machines have an instruction for it.
 
@@ -233,12 +235,12 @@ Listing every tiling only to keep the cheapest one wastes work, and the number o
 
 | Levels | Nodes | Rows | Tilings | Time with dlx |
 |:---:|:---:|:---:|:---:|:---:|
-| 8 | 25 | 49 | 65,536 | about 0.1 s |
-| 10 | 31 | 61 | 1,048,576 | about 2 s |
-| 11 | 34 | 67 | 4,194,304 | about 8 s |
+| 8 | 25 | 49 | 65,536 | under a second |
+| 10 | 31 | 61 | 1,048,576 | a few seconds |
+| 11 | 34 | 67 | 4,194,304 | 10 seconds or more |
 | 21 | 64 | 127 | 4,398,046,511,104 | not run |
 
-The times are for the default `-limit 1` on the machine used to write this, while it was busy with other work, and they vary from run to run. The last line is the 64-node cap. Its total comes from dynamic programming, as dlx could not list that many.
+The times are rough. They are for the default `-limit 1` on the machine used to write this, while it was busy with other work, and they vary a lot from run to run. The last line is the 64-node cap. Its total comes from dynamic programming, as dlx could not list that many.
 
 **Dynamic programming** gets the same answer without listing anything. It works from the bottom of the tree to the top and, at each node, writes down the cheapest cost of computing that node. Those numbers are all it needs to decide the node above:
 
@@ -251,7 +253,7 @@ The times are for the default `-limit 1` on the machine used to write this, whil
 
 Each node is handled once, so the work grows with the size of the tree instead of exploding. The cheapest cost at the root is 4, the same answer dlx gives. A production compiler working on trees should use this. Aho and Johnson applied dynamic programming to code generation in 1976, and the survey below says that many later methods were influenced by it.
 
-The exact cover model is also a choice made for this example. The survey ["Survey on Instruction Selection"](https://arxiv.org/abs/1306.4898) by Hjort Blindell states the tree problem as every node being "covered by at least one pattern" (section 3.1). A pattern is the survey's word for a tile, so its basic definition allows tiles to overlap. Some methods it describes do require exactly one (section 5.3).
+The exact cover model is also a choice made for this example. The survey ["Survey on Instruction Selection"](https://arxiv.org/abs/1306.4898) by Hjort Blindell states the tree problem as every node being "covered by at least one pattern" (section 3.1). A pattern is the survey's word for a tile, so its basic definition allows tiles to overlap. Exactly one is not unusual either: methods in sections 5.3.2 and 5.3.3 require it, and a footnote in section 4.3.4 calls it the more common constraint in the integer programming setting discussed there.
 
 On a tree with these tiles, requiring exactly one loses nothing. Here is a program for `load(add(a, 8))` whose tiles overlap, because `ldrimm` and `addi` both cover `add` and `8`:
 
@@ -263,7 +265,7 @@ On a tree with these tiles, requiring exactly one loses nothing. Here is a progr
 
 It costs 4 + 1 + 0 = 5, and it works. But start at the tile on the root, `ldrimm`, and follow what each tile reads. `ldrimm` reads `a`, so it needs `reg`. `reg` reads nothing, so the walk ends. Nothing reads the result of `addi`, so it can go, which leaves the tiling that costs 4.
 
-The same walk works for any program. Each tile it reaches starts where another stops, so together those tiles cover every node exactly once. The tiles it never reaches are not needed, and dropping them can only lower the cost.
+The same walk works for any program. Each tile it reaches starts where another stops, so together those tiles cover every node exactly once. The tiles it never reaches are not needed, and dropping them can't raise the cost.
 
 So this example is here to show how a problem turns into a matrix, and why tiles join up without a rule for it. It is not a way to build a compiler.
 
@@ -271,8 +273,8 @@ So this example is here to show how a problem turns into a matrix, and why tiles
 
 - **An independent method.** The test file has its own dynamic programming, written out rule by rule with its own tree type. It uses neither the pattern table nor the parser, and it also counts tilings by adding and multiplying, without listing them. On 2000 random trees, the same ones on every run, its cheapest cost and its count of tilings both match dlx. The largest tree has 48 nodes, the most rows in one tree is 53, the most tilings for one tree is 512, and the total is 14,045 tilings. 136 of the trees have no tiling, because they shift by a register, and both methods agree on those too. Its rules have no `adds`, so this check can't test the rule about `adds`. A test of `add(a, b)` covers that rule.
 - **Running the programs.** Each of those 14,045 tilings becomes a program, and a small stand-in for the processor, written in the test, runs that program as text. Its result must equal the value of the expression worked out from the tree. This shows that the tiles really do join up, and that the instructions read their operands in the right order.
-- **Overlaps don't help.** Dynamic programming also places tiles edge to edge, so it can't show that overlapping tiles gain nothing. Another test finds the cheapest set of tiles that covers each node at least once, trying every combination of rows. It doesn't even ask that the tiles join up, so it can only find a lower cost. On 3,432 random trees of at most 18 nodes, picked from 5000, the cost always equals the one from dlx.
-- **Published numbers.** The matrix, the outputs on standard output and the growth table are checked by tests. For 10, 11 and 21 levels, the tests check the totals by dynamic programming only. The dlx runs at 10 and 11 levels were done by hand, and their totals matched. The times are not tested.
+- **Overlaps don't help.** Dynamic programming also places tiles edge to edge, so it can't show that overlapping tiles gain nothing. Another test finds the cheapest set of tiles that covers each node at least once, using a table of the cheapest cost for each set of covered nodes. It doesn't even ask that the tiles join up, so it can only find a lower or equal cost. On 3,432 random trees of at most 18 nodes, picked from 5000, the cost always equals the one from dlx.
+- **Published numbers.** The matrix, the outputs on standard output, the costs under [Limits](#limits), the order of tilings of equal cost and the growth table are checked by tests. For 10, 11 and 21 levels, the tests check the totals by dynamic programming only. The dlx runs at 10 and 11 levels were done by hand, and their totals matched. The times are not tested.
 
 `go test` checks all of this. `go test -short` uses 200 trees instead of 2000, picks the overlap trees from 500 and allows them at most 14 nodes, and skips the 8-level run with dlx. The race detector makes the tests several times slower, so use `-short` with `-race`.
 

@@ -5,7 +5,6 @@ import (
 	"fmt"
 	"strconv"
 	"strings"
-	"unicode/utf8"
 )
 
 // maxNodes caps the size of an expression. It only stops the program building
@@ -64,8 +63,7 @@ func parse(text string) (tree, error) {
 	}
 	p.skipSpaces()
 	if p.pos != len(p.text) {
-		next, _ := utf8.DecodeRuneInString(p.text[p.pos:])
-		return tree{}, p.errorf("unexpected %q after the expression", next)
+		return tree{}, p.errorf("unexpected %q after the expression", p.text[p.pos:])
 	}
 	return tree{root: root, nodes: p.nodes}, nil
 }
@@ -77,15 +75,11 @@ type parser struct {
 	nodes []*node
 }
 
-// errorf returns an error that names the current position.
+// errorf returns an error that names the current position, counted from 1. The
+// parser stops at the first byte outside ASCII, so bytes before it are also
+// characters.
 func (p *parser) errorf(format string, args ...any) error {
-	return p.errorAt(p.pos, format, args...)
-}
-
-// errorAt returns an error that names a position, counted from 1. The parser
-// stops at the first byte outside ASCII, so bytes before it are also characters.
-func (p *parser) errorAt(pos int, format string, args ...any) error {
-	return fmt.Errorf("column %d: %s", pos+1, fmt.Sprintf(format, args...))
+	return fmt.Errorf("column %d: %s", p.pos+1, fmt.Sprintf(format, args...))
 }
 
 func (p *parser) skipSpaces() {
@@ -110,15 +104,14 @@ func (p *parser) expression() (*node, error) {
 	if len(p.nodes) == maxNodes {
 		return nil, p.errorf("the expression has more than %d nodes", maxNodes)
 	}
-	start := p.pos
 	word := p.word()
 	switch {
 	case word == "":
 		return nil, p.errorf("expected a name or a number")
 	case isDigit(word[0]):
-		return p.constant(word, start)
+		return p.constant(word)
 	case p.accept('('):
-		return p.operator(word, start)
+		return p.operator(word)
 	}
 	n := &node{id: len(p.nodes), op: opReg, label: word}
 	p.nodes = append(p.nodes, n)
@@ -138,26 +131,25 @@ func isDigit(c byte) bool { return '0' <= c && c <= '9' }
 
 func isLower(c byte) bool { return 'a' <= c && c <= 'z' }
 
-// constant parses word, which starts at position start.
-func (p *parser) constant(word string, start int) (*node, error) {
+// constant parses word.
+func (p *parser) constant(word string) (*node, error) {
 	value, err := strconv.ParseUint(word, 10, 64)
 	if err != nil {
 		if errors.Is(err, strconv.ErrRange) {
-			return nil, p.errorAt(start, "constant %s does not fit in 64 bits", word)
+			return nil, fmt.Errorf("constant %s does not fit in 64 bits", word)
 		}
-		return nil, p.errorAt(start, "invalid constant %q", word)
+		return nil, fmt.Errorf("invalid constant %q", word)
 	}
 	n := &node{id: len(p.nodes), op: opConst, label: strconv.FormatUint(value, 10)}
 	p.nodes = append(p.nodes, n)
 	return n, nil
 }
 
-// operator parses the operands of word, which starts at position start and
-// whose "(" has been consumed.
-func (p *parser) operator(word string, start int) (*node, error) {
+// operator parses the operands of word, whose "(" has been consumed.
+func (p *parser) operator(word string) (*node, error) {
 	arity, isKnown := operators[word]
 	if !isKnown {
-		return nil, p.errorAt(start, "unknown operator %q", word)
+		return nil, fmt.Errorf("unknown operator %q", word)
 	}
 	n := &node{id: len(p.nodes), op: word, label: word}
 	p.nodes = append(p.nodes, n)

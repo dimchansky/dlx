@@ -128,7 +128,7 @@ func TestRun(t *testing.T) {
 			name:       "invalid expression",
 			args:       []string{"-expr", "sub(a, b)"},
 			wantCode:   2,
-			wantStderr: "instrselect: column 1: unknown operator \"sub\"\n",
+			wantStderr: "instrselect: unknown operator \"sub\"\n",
 		},
 		{
 			name:       "unknown flag",

@@ -109,16 +109,16 @@ func TestParse_Errors(t *testing.T) {
 		{name: "empty", text: "", want: "column 1: expected a name or a number"},
 		{name: "only spaces", text: "  ", want: "column 3: expected a name or a number"},
 		{name: "uppercase", text: "A", want: "column 1: expected a name or a number"},
-		{name: "unknown operator", text: "sub(a, b)", want: `column 1: unknown operator "sub"`},
-		{name: "unknown operator as an operand", text: "add(a, sub(b, c))", want: `column 8: unknown operator "sub"`},
-		{name: "trailing text", text: "a b", want: `column 3: unexpected 'b' after the expression`},
-		{name: "trailing letter outside ASCII", text: "a é", want: `column 3: unexpected 'é' after the expression`},
+		{name: "unknown operator", text: "sub(a, b)", want: `unknown operator "sub"`},
+		{name: "unknown operator as an operand", text: "add(a, sub(b, c))", want: `unknown operator "sub"`},
+		{name: "trailing text", text: "a b", want: `column 3: unexpected "b" after the expression`},
+		{name: "trailing letter outside ASCII", text: "a é", want: `column 3: unexpected "é" after the expression`},
 		{name: "missing operand", text: "add(a)", want: "column 6: add needs 2 operands"},
 		{name: "extra operand", text: "load(a, b)", want: `column 7: expected ')' to close load`},
 		{name: "unclosed", text: "load(a", want: `column 7: expected ')' to close load`},
 		{name: "operand is not an expression", text: "add(a, )", want: "column 8: expected a name or a number"},
-		{name: "constant too big", text: "18446744073709551616", want: "column 1: constant 18446744073709551616 does not fit in 64 bits"},
-		{name: "digit then letter", text: "8a", want: `column 1: invalid constant "8a"`},
+		{name: "constant too big", text: "18446744073709551616", want: "constant 18446744073709551616 does not fit in 64 bits"},
+		{name: "digit then letter", text: "8a", want: `invalid constant "8a"`},
 	}
 
 	for _, tt := range tests {

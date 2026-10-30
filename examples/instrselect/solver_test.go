@@ -4,9 +4,12 @@ import (
 	"fmt"
 	"math/rand"
 	"reflect"
+	"sort"
 	"strconv"
 	"strings"
 	"testing"
+
+	"github.com/dimchansky/dlx"
 )
 
 func mustParse(t *testing.T, text string) tree {
@@ -78,7 +81,8 @@ func TestPlacements_SameNodeSetKeepsCheapest(t *testing.T) {
 	}
 }
 
-// TestSolve checks every number the README publishes for a single expression.
+// TestSolve checks the outputs and costs that the README publishes for a single
+// expression. The tables it works out by hand are not tested line by line.
 func TestSolve(t *testing.T) {
 	t.Parallel()
 
@@ -135,12 +139,48 @@ func TestSolve(t *testing.T) {
 			wantResult: "R0",
 		},
 		{
+			name:       "constant on the right is an immediate",
+			expression: "add(a, 8)",
+			wantRows:   4,
+			wantTotal:  2,
+			wantCost:   1,
+			wantCode:   []string{"add R0, a, #8"},
+			wantResult: "R0",
+		},
+		{
 			name:       "constant on the left is not an immediate",
 			expression: "add(8, a)",
 			wantRows:   3,
 			wantTotal:  1,
 			wantCost:   2,
 			wantCode:   []string{"mov R0, #8", "add R1, R0, a"},
+			wantResult: "R1",
+		},
+		{
+			name:       "multiply on the right can't use madd",
+			expression: "add(c, mul(a, b))",
+			wantRows:   5,
+			wantTotal:  1,
+			wantCost:   4,
+			wantCode:   []string{"mul R0, a, b", "add R1, c, R0"},
+			wantResult: "R1",
+		},
+		{
+			name:       "fused shift and add",
+			expression: "add(a, shl(b, 2))",
+			wantRows:   6,
+			wantTotal:  2,
+			wantCost:   1,
+			wantCode:   []string{"add R0, a, b, lsl #2"},
+			wantResult: "R0",
+		},
+		{
+			name:       "shift on the left can't use addshift",
+			expression: "add(shl(a, 2), b)",
+			wantRows:   5,
+			wantTotal:  1,
+			wantCost:   2,
+			wantCode:   []string{"lsl R0, a, #2", "add R1, R0, b"},
 			wantResult: "R1",
 		},
 		{
@@ -181,6 +221,51 @@ func TestSolve(t *testing.T) {
 			}
 			if best.result != tt.wantResult {
 				t.Errorf("result = %s, want %s", best.result, tt.wantResult)
+			}
+		})
+	}
+}
+
+// TestSolve_CountingAddsSeparately checks the README's "four, not five": a tile
+// stands for every pattern of the same shape, and only add and adds share one.
+func TestSolve_CountingAddsSeparately(t *testing.T) {
+	t.Parallel()
+
+	tests := []struct {
+		expression string
+		want       int
+		wantWith   int
+	}{
+		{expression: "add(a, b)", want: 1, wantWith: 2},
+		{expression: "load(add(a, 8))", want: 4, wantWith: 5},
+	}
+
+	for _, tt := range tests {
+		tt := tt
+		t.Run(tt.expression, func(t *testing.T) {
+			t.Parallel()
+
+			found := solve(mustParse(t, tt.expression), instructions, 0)
+
+			if found.total != tt.want {
+				t.Errorf("total = %d, want %d", found.total, tt.want)
+			}
+			programs := 0
+			for _, listed := range found.tilings {
+				ways := 1
+				for _, chosen := range listed.tiles {
+					same := 0
+					for _, p := range instructions {
+						if reflect.DeepEqual(p.shape, chosen.pattern.shape) {
+							same++
+						}
+					}
+					ways *= same
+				}
+				programs += ways
+			}
+			if programs != tt.wantWith {
+				t.Errorf("programs = %d, want %d", programs, tt.wantWith)
 			}
 		})
 	}
@@ -241,6 +326,67 @@ func TestSolve_LimitKeepsTheCheapestInOrder(t *testing.T) {
 	}
 }
 
+// TestSolve_TiesStayInSearchOrder compares solve with a list made straight from
+// dlx, in the order dlx reports it and with no solver code in between. The six
+// levels give 4096 tilings with many equal costs, which is enough to expose an
+// unstable sort, and the limits make solve trim the list during the search.
+func TestSolve_TiesStayInSearchOrder(t *testing.T) {
+	t.Parallel()
+
+	text := "a"
+	for i := 0; i < 6; i++ {
+		text = "load(add(" + text + ", 8))"
+	}
+	parsed := mustParse(t, text)
+
+	tiles := placements(parsed, instructions)
+	m := dlx.NewMatrix(len(parsed.nodes))
+	costs := make(map[uint64]int, len(tiles))
+	for _, placed := range tiles {
+		m.AddRow(placed.covered...)
+		costs[nodeSet(placed.covered)] = placed.pattern.cost
+	}
+	type listed struct {
+		cost int
+		rows string
+	}
+	var search []listed
+	m.Solve(dlx.SolutionAccepterFunc(func(exactCover [][]int) bool {
+		var next listed
+		for _, row := range exactCover {
+			next.cost += costs[nodeSet(row)]
+			next.rows += fmt.Sprint(row)
+		}
+		search = append(search, next)
+		return false
+	}))
+	if len(search) != 4096 {
+		t.Fatalf("dlx listed %d tilings, want 4096", len(search))
+	}
+	sort.SliceStable(search, func(i, j int) bool { return search[i].cost < search[j].cost })
+
+	for _, limit := range []int{0, 5, 100, 1000} {
+		found := solve(parsed, instructions, uint64(limit))
+
+		want := search
+		if limit != 0 {
+			want = want[:limit]
+		}
+		if len(found.tilings) != len(want) {
+			t.Fatalf("limit %d kept %d tilings, want %d", limit, len(found.tilings), len(want))
+		}
+		for i := range want {
+			got := listed{cost: found.tilings[i].cost}
+			for _, chosen := range found.tilings[i].tiles {
+				got.rows += fmt.Sprint(chosen.covered)
+			}
+			if got != want[i] {
+				t.Fatalf("limit %d, tiling %d is %+v, want %+v", limit, i, got, want[i])
+			}
+		}
+	}
+}
+
 // TestSolve_Growth checks the growth table in the README. Each level is a load
 // from a register plus a constant, and it can be tiled in four ways. dlx lists
 // the tilings, so the largest sizes are checked by dynamic programming alone.
@@ -251,7 +397,7 @@ func TestSolve_Growth(t *testing.T) {
 		levels     int
 		wantNodes  int
 		wantRows   int
-		wantTotal  int
+		wantTotal  int64
 		wantCost   int
 		useDLX     bool
 		skipIfSlow bool
@@ -290,7 +436,7 @@ func TestSolve_Growth(t *testing.T) {
 				return
 			}
 			found := solve(parsed, instructions, 1)
-			if found.total != tt.wantTotal || found.tilings[0].cost != tt.wantCost {
+			if int64(found.total) != tt.wantTotal || found.tilings[0].cost != tt.wantCost {
 				t.Errorf("dlx: %d tilings, cost %d", found.total, found.tilings[0].cost)
 			}
 		})
@@ -356,15 +502,16 @@ func randomLeaf(r *rand.Rand) *expr {
 	return &expr{op: "reg", name: []string{"a", "b", "c", "d"}[r.Intn(4)]}
 }
 
-// choices gathers the ways to tile a node: the cheapest cost and how many.
+// choices gathers the ways to tile a node: the cheapest cost and how many. The
+// count is 64 bits wide because the largest totals don't fit in a 32-bit int.
 type choices struct {
 	cost int
-	ways int
+	ways int64
 }
 
 // add records a tile of the given cost whose operands are the given subtrees.
 func (c *choices) add(cost int, operands ...choices) {
-	ways := 1
+	ways := int64(1)
 	for _, operand := range operands {
 		cost += operand.cost
 		ways *= operand.ways
@@ -510,7 +657,7 @@ func execute(t *testing.T, chosen *tiling) uint64 {
 
 // cheapestOverlappingCover returns the lowest cost of any set of tiles that
 // covers each node at least once. It doesn't ask that the tiles join up, so it
-// can only do better than a real program could. costs[m] is the cheapest way
+// can only match or beat a real program. costs[m] is the cheapest way
 // found so far to cover exactly the nodes in the bit mask m, and each tile
 // extends every mask. Using a tile twice would change nothing but the cost.
 func cheapestOverlappingCover(tiles []tile, nodes int) (int, bool) {
@@ -601,7 +748,7 @@ func TestSolve_RandomTrees(t *testing.T) {
 
 		found := solve(mustParse(t, text), instructions, 0)
 
-		if found.total != want.ways {
+		if int64(found.total) != want.ways {
 			t.Fatalf("%s: dlx found %d tilings, dynamic programming %d", text, found.total, want.ways)
 		}
 		if want.ways == 0 {
