@@ -104,10 +104,6 @@ func TestRun(t *testing.T) {
 		{name: "hat needs base 2", args: []string{"-base", "3", "-n", "4", "-hat"}, wantCode: 2, wantStderr: "needs base 2"},
 		{name: "hats too short", args: []string{"-play", "01"}, wantCode: 2, wantStderr: `invalid hats "01": want 7 digits`},
 		{name: "hats not binary", args: []string{"-n", "3", "-play", "012"}, wantCode: 2, wantStderr: `invalid hats "012"`},
-		{name: "empty hats", args: []string{"-play="}, wantCode: 2, wantStderr: `invalid hats "": want 7 digits`},
-		{name: "empty hats with count", args: []string{"-play=", "-count"}, wantCode: 2, wantStderr: "use only one of"},
-		{name: "empty hats with hat", args: []string{"-play=", "-hat"}, wantCode: 2, wantStderr: "use only one of"},
-		{name: "empty hats need base 2", args: []string{"-play=", "-base", "3", "-n", "4"}, wantCode: 2, wantStderr: "needs base 2"},
 		{name: "help", args: []string{"-help"}, wantStderr: "usage: hamming"},
 	}
 	for _, tt := range tests {

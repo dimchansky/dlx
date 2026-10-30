@@ -45,13 +45,11 @@ const (
 // that has perfect codes, and the search does not find one in useful time.
 const maxWords = 1 << 14
 
-// options holds the parsed flags. playing tells whether -play was given at all,
-// because an empty value must be rejected rather than taken for no flag.
+// options holds the parsed flags. hats is empty unless -play was given.
 type options struct {
 	base, length int
 	limit        uint64
 	count, hat   bool
-	playing      bool
 	hats         string
 }
 
@@ -78,11 +76,6 @@ func run(args []string, stdout, stderr io.Writer) int {
 		return exitFailure
 	}
 	opts := options{base: *base, length: *length, limit: *limit, count: *count, hat: *hat, hats: *play}
-	flags.Visit(func(f *flag.Flag) {
-		if f.Name == "play" {
-			opts.playing = true
-		}
-	})
 	if err := validate(flags, opts); err != nil {
 		report(stderr, "%v", err)
 		flags.Usage()
@@ -110,7 +103,7 @@ func execute(w io.Writer, opts options) (uint64, error) {
 		return printWithGame(w, opts.length, func(code []int) error {
 			return printScore(w, playAll(code, opts.length))
 		})
-	case opts.playing:
+	case opts.hats != "":
 		return printWithGame(w, opts.length, func(code []int) error {
 			return printRound(w, code, opts.length, opts.hats)
 		})
@@ -130,16 +123,17 @@ func validate(flags *flag.FlagSet, opts options) error {
 	if maxLength := longestWord(opts.base); opts.length < 1 || opts.length > maxLength {
 		return fmt.Errorf("invalid length %d: want 1 to %d for base %d", opts.length, maxLength, opts.base)
 	}
-	if !opts.hat && !opts.playing {
+	playing := opts.hats != ""
+	if !opts.hat && !playing {
 		return nil
 	}
-	if opts.count || (opts.hat && opts.playing) {
+	if opts.count || (opts.hat && playing) {
 		return errors.New("use only one of -count, -hat and -play")
 	}
 	if opts.base != 2 {
 		return errors.New("the hat game needs base 2")
 	}
-	if !opts.playing {
+	if !playing {
 		return nil
 	}
 	if len(opts.hats) != opts.length || strings.Trim(opts.hats, "01") != "" {

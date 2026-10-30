@@ -71,7 +71,7 @@ So the team loses exactly on the 16 code words, and wins on the other 112. That 
 
 ## Which lengths can have a perfect code
 
-The neighbourhoods share out all the words evenly, so the neighbourhood size must divide the number of words. With words of length n, that means n+1 must divide 2 multiplied by itself n times, which works only when n+1 is itself a power of 2. This test can only rule a length out: a yes below says that the sizes fit, not that a code exists. For lengths 1, 3 and 7 the search finds codes, and for length 15 a recipe builds one, as described under [How the results are checked](#how-the-results-are-checked).
+The neighbourhoods share out all the words evenly, so the neighbourhood size must divide the number of words. With words of length n, that means n+1 must divide a product of n twos. A product of twos has only powers of 2 as divisors, so n+1 must itself be a power of 2. For n=4, 5 does not divide 16. This test can only rule a length out: a yes below says that the sizes fit, not that a code exists. For lengths 1, 3 and 7 the search finds codes, and for length 15 a recipe builds one, as described under [How the results are checked](#how-the-results-are-checked).
 
 | Length n | Words | Neighbourhood size | Sizes fit? |
 |----------|-------|--------------------|------------|
@@ -268,19 +268,53 @@ Every other length the command accepts has none. Any of the 240 codes gives the 
 ## How the results are checked
 
 - **Every code is checked against the definition.** The tests count, for each word, the code words at distance 0 or 1, without using the matrix.
-- **The two totals are rebuilt with no search.** Hamming's recipe builds these codes without a solver. It uses a special addition of binary numbers: add each column on its own, where 0 + 0 and 1 + 1 give 0, and 0 + 1 gives 1, with no carrying. So 3 + 5 is `011` + `101` = `110`, which is 6, and any number added to itself gives 0. Now give the places of a word the labels 1, 2, 3 and so on, and give each word a sum: add the labels of its 1 digits. For length 3, `101` has the sum 1 + 3 = 2, and `010` has the sum 2 as well. Words with the same sum form a code. The four sums 0 to 3 give the pairs `000`, `111`, then `011`, `100`, then `010`, `101`, then `001`, `110`, which are the four codes of length 3. It works because flipping a digit changes a word's sum by that place's label, so from any word just one flip reaches any other sum. For length 7, the labels 1 to 7 can go on the places in 5040 orders, each giving 8 codes. Together they make exactly 240 different codes, the same 240 the search finds.
-- **The football pool is rebuilt too.** Take the nine words made of c, d, c + d and c - d, where c and d are 0, 1 or 2 and sums wrap around after 2, so that 2 + 2 = 1. For c = 1 and d = 2 that gives `1202`. Rearranging the places, swapping 1 and 2 in any of the places, and then shifting (explained next) gives exactly the 72 codes the search finds.
-- **Nothing is missing.** A separate search tries sets of words at least 3 apart, with no matrix and no neighbourhoods, and finds 30 codes that contain `0000000` and 8 that contain `0000`. To **shift** a code, add one fixed word to all of its words, digit by digit with wrap-around, so that `0111` shifted by `0012` is `0120`. Two words differ in the same places before and after, so the result is another code. Any word can be shifted onto any other, so every word lies in equally many codes: 30 in base 2 and 8 in base 3. Now count the words of all the codes in two ways. By words, it is 128 words × 30 codes each. By codes, it is the number of codes × 16 words each. So there are 128 × 30 / 16 = 240 codes, and the same count gives 81 × 8 / 9 = 72.
+- **The two totals are rebuilt with no search.** [Hamming's recipe](#hammings-recipe) gives the same 240 codes the search finds, and a [recipe for the football pool](#a-recipe-for-the-football-pool) gives the same 72.
+- **Nothing is missing.** A separate search, with no matrix and no neighbourhoods, [counts the codes another way](#counting-the-codes-another-way) and gets the same totals.
 - **The hat game.** The tests play all 128 patterns with each of the 240 codes and get 112 wins, 16 losses, 112 right guesses and 112 wrong guesses every time. For each of the 240 codes, they check that no prisoner's answer ever depends on their own hat. They also check that the team loses when everybody passes, and when a right guess comes with a wrong one. For three prisoners, they try all 531441 fixed plans, with no code involved, and the best one wins 6 of 8 patterns, as the plan here does.
 - **The shortcut for impossible lengths.** The tests confirm that the matrix itself has no exact cover for lengths 2, 4, 5, 6, 8, 9, 10 and 12 in base 2, and for lengths 2, 3, 5 and 6 in base 3.
 
-`go test` runs everything. `go test -short` skips the three slowest checks. Use `-short` with `-race`.
+`go test` runs everything. `go test -short` skips the slowest checks: the search for length 7 codes with no matrix, all 531441 plans, and the shortcut check for lengths 9, 10 and 12 in base 2 and length 6 in base 3. Use `-short` with `-race`.
+
+### Hamming's recipe
+
+Hamming's recipe builds these codes without a solver. It uses a special addition of binary numbers: add each column on its own, where 0 + 0 and 1 + 1 give 0, and 0 + 1 gives 1, with no carrying. So 3 + 5 is `011` + `101` = `110`, which is 6, and any number added to itself gives 0.
+
+Now give the places of a word the labels 1, 2, 3 and so on, and give each word a sum: add the labels of its 1 digits. For length 3, `101` has the sum 1 + 3 = 2. Here are all eight words:
+
+| Word  | Labels added | Sum |
+|-------|--------------|-----|
+| `000` | none         | 0   |
+| `001` | 3            | 3   |
+| `010` | 2            | 2   |
+| `011` | 2 + 3        | 1   |
+| `100` | 1            | 1   |
+| `101` | 1 + 3        | 2   |
+| `110` | 1 + 2        | 3   |
+| `111` | 1 + 2 + 3    | 0   |
+
+Words with the same sum form a code. The four sums 0 to 3 give the pairs `000`, `111`, then `011`, `100`, then `010`, `101`, then `001`, `110`, which are the four codes of length 3.
+
+It works because flipping a digit changes a word's sum by that place's label. To get from one sum to another, flip the place labelled with those two sums added together. For example, `101` has sum 2. To reach sum 1, flip the place labelled 2 + 1 = 3, which gives `100`, whose sum is 1. Only one place has that label, so every word is one flip from exactly one word of each other sum. This is also why every label from 1 to 3 is needed: with one missing, some sums couldn't be reached.
+
+For length 7, the labels 1 to 7 can go on the places in 5040 orders, each giving 8 codes. Together they make exactly 240 different codes.
+
+### A recipe for the football pool
+
+Take the nine words made of c, d, c + d and c - d, where c and d are 0, 1 or 2. Sums wrap around after 2 and differences before 0, so 2 + 2 = 1 and 1 - 2 = 2. For c = 1 and d = 2 that gives `1202`. Rearranging the places, swapping 1 and 2 in any of the places, and then shifting (explained next) gives exactly 72 codes.
+
+### Counting the codes another way
+
+The separate search tries sets of words at least 3 apart, and finds 30 codes that contain `0000000` and 8 that contain `0000`.
+
+To **shift** a code, add one fixed word to all of its words, digit by digit with wrap-around, so that `0111` shifted by `0012` is `0120`. Two words differ in the same places before and after, so the result is another code. Any word can be shifted onto any other, so every word lies in equally many codes: 30 in base 2 and 8 in base 3.
+
+Now count the words of all the codes in two ways. By words, it is 128 words × 30 codes each. By codes, it is the number of codes × 16 words each. So there are 128 × 30 / 16 = 240 codes, and the same count gives 81 × 8 / 9 = 72.
 
 ## Limits
 
 The search doesn't reach length 15. A perfect code of length 15 exists, with 2048 words: the tests build one with the recipe above, using the labels 1 to 15, and check it against the definition. But dlx sees only a matrix of 32768 rows and columns, and on the machine used to write this it found no code in five minutes. So the command stops at 14 digits in base 2, which is 16384 words, rather than appearing to hang. In base 3 it stops at 8 digits, the longest that stays within 16384 words. Length 7 is no trouble: the total takes about two milliseconds.
 
-The game needs a perfect code, so `-hat` and `-play` only work for 1, 3 or 7 prisoners. Other team sizes exit with code 1, and this example has no plan for them.
+The game needs a perfect code, so `-hat` and `-play` only work for 1, 3 or 7 prisoners. Other team sizes up to 14 exit with code 1, larger ones exit with code 2 as invalid usage, and this example has no plan for any of them.
 
 The 7/8 is the chance for the team, with hats chosen by fair coin flips. It doesn't change the 1/2 chance of any single guess.
 

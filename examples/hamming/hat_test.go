@@ -15,8 +15,8 @@ func allCodes(length int) [][]int {
 	return codes
 }
 
-// TestPlayAll_EveryCode plays the strategy of every code. The wins need no
-// solver: the team loses exactly on the code words.
+// TestPlayAll_EveryCode plays the strategy of every code the search finds. Each
+// code must get the same score.
 func TestPlayAll_EveryCode(t *testing.T) {
 	t.Parallel()
 

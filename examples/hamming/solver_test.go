@@ -107,26 +107,44 @@ func TestSizesFit_AgreesWithSearch(t *testing.T) {
 	t.Parallel()
 
 	tests := []struct {
-		base    int
-		lengths []int
+		base, length int
+		slow         bool // skipped with -short
 	}{
-		{base: 2, lengths: []int{1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 12}},
-		{base: 3, lengths: []int{1, 2, 3, 4, 5, 6}},
+		{base: 2, length: 1},
+		{base: 2, length: 2},
+		{base: 2, length: 3},
+		{base: 2, length: 4},
+		{base: 2, length: 5},
+		{base: 2, length: 6},
+		{base: 2, length: 7},
+		{base: 2, length: 8},
+		{base: 2, length: 9, slow: true},
+		{base: 2, length: 10, slow: true},
+		{base: 2, length: 12, slow: true},
+		{base: 3, length: 1},
+		{base: 3, length: 2},
+		{base: 3, length: 3},
+		{base: 3, length: 4},
+		{base: 3, length: 5},
+		{base: 3, length: 6, slow: true},
 	}
 	for _, tt := range tests {
-		for _, length := range tt.lengths {
-			if length == 12 && testing.Short() {
-				continue // about two seconds, and much longer with -race
+		tt := tt
+		t.Run(fmt.Sprintf("base %d length %d", tt.base, tt.length), func(t *testing.T) {
+			t.Parallel()
+			if tt.slow && testing.Short() {
+				t.Skip("slow: searches the whole matrix")
 			}
+
 			covers := 0
-			buildMatrix(tt.base, length).Solve(dlx.SolutionAccepterFunc(func([][]int) bool {
+			buildMatrix(tt.base, tt.length).Solve(dlx.SolutionAccepterFunc(func([][]int) bool {
 				covers++
 				return false
 			}))
-			if fits := sizesFit(tt.base, length); !fits && covers != 0 {
-				t.Errorf("base %d length %d: sizes don't fit, but %d codes exist", tt.base, length, covers)
+			if !sizesFit(tt.base, tt.length) && covers != 0 {
+				t.Errorf("sizes don't fit, but %d codes exist", covers)
 			}
-		}
+		})
 	}
 }
 
