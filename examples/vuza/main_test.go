@@ -78,6 +78,12 @@ func TestRun(t *testing.T) {
 			wantStdout: "Complement 1: 0 3\nxxx...\n...xxx\nComplement 2: 1 4\n.xxx..\nx...xx\nComplement 3: 2 5\n..xxx.\nxx...x\n",
 		},
 		{
+			name:       "entries of a rhythm that does not start on beat 0",
+			args:       []string{"-n", "6", "-tile", "1,2,3", "-all", "-score"},
+			wantLines:  3,
+			wantStdout: "Complement 1: 0 3\n.xxx..\nx...xx\n",
+		},
+		{
 			name:       "count ignores limit and score",
 			args:       []string{"-count", "-limit", "1", "-score"},
 			slow:       true,
@@ -139,6 +145,12 @@ func TestRun(t *testing.T) {
 			args:       []string{"-n", "12", "-tile", "0,6", "-all"},
 			wantCode:   2,
 			wantStderr: "vuza: invalid tile \"0,6\": it repeats every 6 beats\n",
+		},
+		{
+			name:       "tile of every beat",
+			args:       []string{"-n", "4", "-tile", "0,1,2,3", "-all"},
+			wantCode:   2,
+			wantStderr: "vuza: invalid tile \"0,1,2,3\": it repeats every beat\n",
 		},
 		{
 			name:       "unknown flag",

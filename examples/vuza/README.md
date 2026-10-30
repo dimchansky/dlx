@@ -115,7 +115,7 @@ Results and totals go to standard output. Error messages go to standard error, a
 | 1         | No result exists                                         |
 | 2         | Invalid usage, or a write failure                        |
 
-With `-count` the totals still go to standard output when the exit code is 1, for example `Aperiodic: 0`.
+With `-count` the totals still go to standard output when the exit code is 1, for example `Aperiodic: 0`. With `-count -all` any complement counts as a result, so the exit code is 0 even when the output says `Aperiodic: 0`.
 
 ## Examples
 
@@ -150,7 +150,7 @@ Output:
     Complements: 1296
     Aperiodic: 432
 
-Swap the roles. A voice strikes note + entry, and note + entry = entry + note, so rhythm and entries can trade places and the same sums come out. For example, the rhythm 0, 1, 2 with entries 0, 3 in 6 beats becomes the rhythm 0, 3 with entries 0, 1, 2. So the entries above are themselves a rhythm of 12 notes, and it needs 6 voices. All of its complements are aperiodic:
+Swap the roles. A voice strikes note + entry, and note + entry = entry + note, so rhythm and entries can trade places and the same sums come out. For example, the rhythm 0, 1, 2 with entries 0, 3 in 6 beats becomes the rhythm 0, 3 with entries 0, 1, 2. (That sum works, but the command would refuse the rhythm 0, 3, because it repeats.) The entries above don't repeat, so they can be used as a rhythm of 12 notes, which needs 6 voices. All of its complements are aperiodic:
 
     vuza -tile 0,1,5,6,12,25,29,36,42,48,49,53 -count
 
@@ -193,23 +193,30 @@ Output:
 
 ## Reading the totals
 
-Shift all the entries of a canon by one beat and you get another canon, which is the same music started later. The totals count these separately. An aperiodic list of entries has one different shift for each beat of the loop, because if two shifts gave the same list, the list would repeat. So dividing by 72 gives the number of different shapes:
+Shift all the entries of a canon by one beat and you get another canon, which is the same music started later. The totals count these separately. Two lists of entries have the same **shape** if one is a shift of the other. An aperiodic list of entries has one different shift for each beat of the loop, because if two shifts gave the same list, the list would repeat. So dividing the aperiodic total by 72 gives the number of different shapes of entries:
 
-| Rhythm            | Notes | Complements | Aperiodic | Shapes (aperiodic / 72) |
-|-------------------|-------|-------------|-----------|-------------------------|
-| Default rhythm    | 6     | 1296        | 432       | 6                       |
-| Its 12-note entries | 12  | 216         | 216       | 3                       |
+| Rhythm              | Notes | Complements | Aperiodic | Different entry patterns, up to shifting (aperiodic / 72) |
+|---------------------|-------|-------------|-----------|-----------------------------------------------------------|
+| Default rhythm      | 6     | 1296        | 432       | 6, each of 12 entries                                     |
+| Its 12-note entries | 12    | 216         | 216       | 3, each of 6 entries                                      |
 
-Those 6 and 3 are the known answer for 72 beats. There are 3 six-note rhythms and 6 twelve-note rhythms, and each of the 3 fits with each of the 6, which makes 18 canons.
+Rhythm and entries can swap roles, so the last column counts partners. The 6 in the first row counts twelve-note partners of a six-note rhythm, and the 3 in the second row counts six-note partners of a twelve-note rhythm.
+
+That matches the known answer for 72 beats. There are 3 six-note rhythms and 6 twelve-note rhythms, and each of the 3 fits with each of the 6, which makes 18 canons.
 
 ## How the results are checked
 
 - **Published rhythms.** [Fripertinger's list](https://imsc.uni-graz.at/fripertinger/canons/canon_3.html) gives the 3 and the 6 rhythms for 72 beats. The tests start from each published rhythm and check that the aperiodic complements found are exactly the published partners, each shifted 72 ways. Every six-note rhythm gives 1296 and 432, and every twelve-note rhythm gives 216 and 216. With `-short` they try only the first rhythm of each kind.
-- **Published totals.** Table 1 of Jedrzejewski's [On the enumeration of Vuza canons](https://arxiv.org/abs/1304.6609) gives 3 and 6 for 72 beats, and one of its rows gives 8640 shapes for 144 beats with 6 notes and 24 entries. The tests confirm 8640 by counting only the complements with an entry on beat 0. Every complement has exactly one voice striking beat 0, and shifting moves that job evenly between the six notes, so this finds exactly a sixth of each total: 279936 complements, 207360 of them aperiodic. Multiplied by 6 they give the 1679616 and 1244160 that the full run of `vuza -n 144 -tile 0,16,32,36,52,68 -count` reports, and 1244160 is 8640 x 144. dlx and the separate search below both have to reach these numbers, and the same sum is tested on the 72-beat totals, which are also counted in full.
-- **A separate search.** The totals for the default rhythm, its 12-note partner, the 144-beat rhythm (with an entry on beat 0) and the small examples are compared with a backtracking search that doesn't use dlx.
+- **Published totals.** Table 1 of Jedrzejewski's [On the enumeration of Vuza canons](https://arxiv.org/abs/1304.6609) gives 3 and 6 for 72 beats, and one of its rows gives 8640 shapes for 144 beats with 6 notes and 24 entries. The tests confirm 8640 by counting only the complements with an entry on beat 0. Every complement has exactly one voice striking beat 0, with one of the six notes. Shift the complement by that note and the voice's entry lands on 0, so the complements split into six equal groups, one per note, and the group for note 0 is the one counted. The rhythm 0, 1, 2 in 6 beats shows this on a small scale: in the complement 1, 4, note 2 of the voice on entry 4 strikes beat 0, and shifting by 2 gives 3, 0. Of the 3 complements, exactly 1 contains entry 0, which is 3 / 3. So the count finds exactly a sixth of each total: 279936 complements, 207360 of them aperiodic. Multiplied by 6 they give the 1679616 and 1244160 that the full run of `vuza -n 144 -tile 0,16,32,36,52,68 -count` reports, and 1244160 is 8640 x 144. dlx has to reach these numbers, and the same sum is tested on the 72-beat totals, which are also counted in full.
+- **A separate search.** The totals for the default rhythm, its 12-note partner and the small examples are compared with a backtracking search that doesn't use dlx. That search takes too long for the 144-beat rhythm, so the tests don't run it there, and the 144-beat totals rest on dlx, the definition below and the published number.
 - **Trying everything.** For every aperiodic rhythm starting on beat 0, in loops of up to 12 beats, the tests try every possible list of entries and compare the result with dlx.
 - **The definition.** Every complement in those tests is checked by adding each note to each entry and seeing that every beat comes up once. The repeat check is compared with trying every possible turn.
-- **Short loops.** For loops of up to 28 beats, the tests try every rhythm and find no Vuza canon. It is enough to try rhythms with at most sqrt(n) notes that start on beat 0, where n is the loop length. For 28 beats that means 5 notes at most. Notes times voices equals the loop length, so at least one of the two sets is that small, and its size must divide the loop length, so for 28 beats the test tries 1, 2 and 4 notes. The smaller set may be either the rhythm or the entries, but they can swap roles as shown above, so it can always be the one tried. Any canon can also be shifted so that this set starts on beat 0. The test stops at 28 only to stay quick, so that 72 is the shortest length comes from the published proofs, not from this test.
+- **Short loops.** For loops of up to 28 beats, the tests search for a Vuza canon and find none. They don't need every rhythm, only the short ones that start on beat 0, for three reasons:
+  1. Notes times voices equals the loop length n, so one of the two lists, rhythm or entries, has at most sqrt(n) members, and that size divides n. For 28 beats, sqrt(n) is about 5.3, which leaves sizes 1, 2 and 4.
+  2. Rhythm and entries can swap roles, as shown above, so the shorter list can always be taken as the rhythm.
+  3. Any canon can be shifted so that this rhythm starts on beat 0.
+
+  The test stops at 28 only to stay quick, so that 72 is the shortest length comes from the published proofs, not from this test.
 
 The rhythm itself comes from Example 18 of the paper, which also gives a partner that the tests confirm. A warning if you read that paper: the 12-note set printed in its Example 7 completes this rhythm but repeats every 36 beats, so it isn't a Vuza partner. A test records this.
 

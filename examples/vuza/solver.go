@@ -1,6 +1,7 @@
 package main
 
 import (
+	"errors"
 	"fmt"
 	"sort"
 	"strconv"
@@ -94,8 +95,12 @@ func parseTile(text string, n int) ([]int, error) {
 		seen[beat] = true
 		tile[i] = beat
 	}
-	if p := period(n, tile); p != 0 {
+	switch p := period(n, tile); p {
+	case 0:
+		return tile, nil
+	case 1:
+		return nil, errors.New("it repeats every beat")
+	default:
 		return nil, fmt.Errorf("it repeats every %d beats", p)
 	}
-	return tile, nil
 }

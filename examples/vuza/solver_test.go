@@ -398,8 +398,9 @@ func TestSolve_PaperExamples(t *testing.T) {
 // with an entry on beat 0: of the voices that can strike beat 0, only the one
 // entering there stays. A complement has exactly one of those voices, and a shift
 // moves that job from one to another, so this finds 1/notes of every total. The
-// 72-beat rows check that argument against totals enumerated in full. Both dlx and
-// the separate search must get there, and they share no code with each other.
+// other rows check that argument against totals enumerated in full, with dlx and
+// with the separate search, which share no code. The separate search is too slow
+// for the 144-beat row, which runs dlx alone.
 func TestSolve_EntryOnBeatZero(t *testing.T) {
 	t.Parallel()
 
@@ -407,10 +408,11 @@ func TestSolve_EntryOnBeatZero(t *testing.T) {
 		name          string
 		n             int
 		tile          []int
-		slow          bool
+		slow          bool // skipped with -short, and dlx only otherwise
 		wantTotal     int
 		wantAperiodic int
 	}{
+		{name: "three notes in 6 beats", n: 6, tile: []int{0, 1, 2}, wantTotal: 3},
 		{name: "six notes in 72 beats", n: 72, tile: rhythm72, wantTotal: 1296, wantAperiodic: 432},
 		{name: "twelve notes in 72 beats", n: 72, tile: partner72, wantTotal: 216, wantAperiodic: 216},
 		{name: "six notes in 144 beats", n: 144, tile: []int{0, 16, 32, 36, 52, 68}, slow: true, wantTotal: 1679616, wantAperiodic: 8640 * 144},
@@ -440,6 +442,9 @@ func TestSolve_EntryOnBeatZero(t *testing.T) {
 			}))
 			if total != wantTotal || aperiodic != wantAperiodic {
 				t.Errorf("dlx found %d complements, %d aperiodic, want %d and %d", total, aperiodic, wantTotal, wantAperiodic)
+			}
+			if tt.slow {
+				return
 			}
 
 			total, aperiodic = 0, 0
@@ -524,6 +529,32 @@ func forEachTile(n, size int, visit func(tile []int)) {
 	extend(1, 1)
 }
 
+func TestDecode(t *testing.T) {
+	t.Parallel()
+
+	tests := []struct {
+		name       string
+		n          int
+		tile       []int
+		exactCover [][]int
+		want       []int
+	}{
+		{name: "readme example", n: 6, tile: []int{1, 2, 3}, exactCover: [][]int{{0, 1, 2}, {3, 4, 5}}, want: []int{2, 5}},
+		{name: "entries are sorted", n: 6, tile: []int{0, 1, 2}, exactCover: [][]int{{3, 4, 5}, {0, 1, 2}}, want: []int{0, 3}},
+		{name: "first note is not the lowest", n: 6, tile: []int{2, 0, 1}, exactCover: [][]int{{2, 0, 1}, {5, 3, 4}}, want: []int{0, 3}},
+	}
+
+	for _, tt := range tests {
+		tt := tt
+		t.Run(tt.name, func(t *testing.T) {
+			t.Parallel()
+			if got := decode(tt.n, tt.tile, tt.exactCover); !reflect.DeepEqual(got, tt.want) {
+				t.Errorf("got %v, want %v", got, tt.want)
+			}
+		})
+	}
+}
+
 func TestSolve_StopsWhenAccepted(t *testing.T) {
 	t.Parallel()
 
@@ -601,6 +632,7 @@ func TestParseTile(t *testing.T) {
 		{name: "past the loop", text: "6", n: 6, wantErr: "beat 6 is outside 0 to 5"},
 		{name: "repeated beat", text: "1,1", n: 6, wantErr: "beat 1 appears twice"},
 		{name: "repeating rhythm", text: "0,3", n: 6, wantErr: "it repeats every 3 beats"},
+		{name: "every beat", text: "0,1,2,3", n: 4, wantErr: "it repeats every beat"},
 	}
 
 	for _, tt := range tests {
