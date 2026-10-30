@@ -1,8 +1,9 @@
 // Command instrselect picks machine instructions for an arithmetic expression,
 // the way the instruction selection step of a compiler does. It covers the
 // expression tree with instruction patterns, each tree node exactly once, and
-// prints the cheapest result as a small program. Results go to standard output
-// and diagnostics to standard error.
+// prints the cheapest result as a small program. Patterns that fit exactly the
+// same nodes count as one tile, the cheapest, in totals and in lists. Results
+// go to standard output and diagnostics to standard error.
 //
 // An expression is built from registers (a, i, x2), numbers and the operators
 // add, mul, shl and load, for example load(add(a, shl(i, 3))).

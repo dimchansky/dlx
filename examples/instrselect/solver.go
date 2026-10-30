@@ -90,8 +90,9 @@ func (t *tile) matches(s shape, n *node) bool {
 
 // placements returns every distinct way to put a pattern on the tree, in order
 // of first appearance. dlx reports a row by its columns alone, so two patterns
-// on the same node set would be two rows that can't be told apart. Only the
-// cheaper can be in the cheapest tiling, so each node set keeps one tile.
+// on the same node set would be two rows that can't be told apart. So each node
+// set keeps one tile, the cheapest. That can't change the cheapest tiling, and
+// it means that every total and list counts node sets, not programs.
 func placements(t tree, set []pattern) []tile {
 	var tiles []tile
 	index := map[string]int{}

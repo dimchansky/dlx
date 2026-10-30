@@ -104,6 +104,7 @@ func TestParse_Errors(t *testing.T) {
 		{name: "uppercase", text: "A", want: "column 1: expected a name or a number"},
 		{name: "unknown operator", text: "sub(a, b)", want: `column 5: unknown operator "sub"`},
 		{name: "trailing text", text: "a b", want: `column 3: unexpected 'b' after the expression`},
+		{name: "trailing letter outside ASCII", text: "a é", want: `column 3: unexpected 'é' after the expression`},
 		{name: "missing operand", text: "add(a)", want: "column 6: add needs 2 operands"},
 		{name: "extra operand", text: "load(a, b)", want: `column 7: expected ')' to close load`},
 		{name: "unclosed", text: "load(a", want: `column 7: expected ')' to close load`},

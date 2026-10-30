@@ -28,6 +28,8 @@ The interesting part is that a processor usually has several ways to do the same
 | `add R0, a, #8`<br>`ldr R1, [R0]` | Put a+8 in register R0, then load from the address in R0 | 5 |
 | `ldr R0, [a, #8]` | Load from address a+8 in one instruction | 4 |
 
+In this notation, `#8` is the constant 8, and square brackets mean the memory box at that address, so `[a, #8]` is the box at address a+8.
+
 The **cost** stands for how long an instruction takes. The task is to pick instructions that compute the whole tree at the lowest total cost.
 
 ## The instructions
@@ -39,7 +41,7 @@ An instruction fits a piece of the tree. Think of each one as a **tile** cut to 
 | `reg` | a register | 0 | none | The value is already in a register |
 | `mov` | `C` | 1 | `mov R0, #C` | Put a constant in a register |
 | `add` | `add(_, _)` | 1 | `add R0, x, y` | Add two registers |
-| `adds` | `add(_, _)` | 2 | `adds R0, x, y` | The same sum, also recording facts about it |
+| `adds` | `add(_, _)` | 2 | `adds R0, x, y` | The same sum, and it also notes whether the result was zero |
 | `addi` | `add(_, C)` | 1 | `add R0, x, #C` | Add a constant |
 | `mul` | `mul(_, _)` | 3 | `mul R0, x, y` | Multiply |
 | `madd` | `add(mul(_, _), _)` | 3 | `madd R0, x, y, z` | Multiply, then add, in one step |
@@ -56,7 +58,7 @@ The instructions look like a small part of the ARM64 processor, simplified. **Th
 
 ## Tilings
 
-A **tiling** is a set of tiles that covers each node of the tree exactly once. The tree above has four tilings:
+A **tiling** is a set of tiles that covers each node of the tree exactly once. One rule keeps the count simple: when two instructions fit exactly the same nodes, they count as one tile, the cheaper one. So `adds` is never used here, because `add` fits the same nodes for less. The section on [costs](#costs-stay-outside-the-matrix) explains why. With that rule, the tree above has four tilings:
 
 ![The four tilings of the tree: ldrimm and reg cost 4, ldr with addi and reg cost 5, ldrreg with mov and reg cost 5, and ldr with add, mov and reg cost 6](tilings.svg)
 
@@ -104,14 +106,16 @@ So "cover each node exactly once" is the only rule. This works here because ever
 
 dlx knows nothing about cost. It lists every tiling, and [solver.go](solver.go) adds up the cost of each one and keeps the cheapest. The [crew example](../crew) works in the same way.
 
-`add` and `adds` have the same shape, so at the same place they cover the same nodes. As matrix rows they would be identical, and dlx reports a row by its columns alone, so the two could not be told apart. The same tiling would also be found twice. Only the cheaper of the two can be in the cheapest tiling, so the solver keeps one row for each set of nodes, and the table above has no row for `adds`.
+`add` and `adds` have the same shape, so at the same place they cover the same nodes. As matrix rows they would be identical, and dlx reports a row by its columns alone, so the two could not be told apart. So the solver keeps one row for each set of nodes, with the cheapest instruction for it, and the table above has no row for `adds`.
+
+Swapping `adds` for `add` only lowers the cost, so this never changes the cheapest tiling. It does change what gets counted. The totals, the list from `-limit` and the growth table all count sets of nodes, each with its cheapest instruction. A program that differs only by using `adds` is not counted, so `add(a, b)` has one tiling, not two, and `load(add(a, 8))` has four, not five.
 
 ## How a solution decodes back
 
 dlx reports the cheapest tiling as two rows, `[0 1 3]` and `[2]`, which are lists of column numbers. Each list is sorted, so its first number is the top node of that tile.
 
 ```mermaid
-flowchart LR
+flowchart TD
     A["Rows from dlx: [0 1 3] and [2]"] --> B["Look up each row: ldrimm and reg"]
     B --> C["Start at the root, node 0: its tile is ldrimm"]
     C --> D["ldrimm stops at node 2: its tile is reg, so the value is already in a"]
@@ -129,7 +133,7 @@ The decoder starts at the tile on the root and first produces the code for each 
     instrselect [-expr expression] [-limit n]
 
 - `-expr expression` sets the expression, `load(add(a, 8))` by default.
-- `-limit n` sets how many tilings to print, cheapest first, 1 by default. Zero prints all of them. The search goes through every tiling whatever the limit.
+- `-limit n` sets how many tilings to print, cheapest first, 1 by default. Zero prints all of them, counted as described under [Tilings](#tilings). The search goes through every tiling whatever the limit.
 
 `-help` prints the usage text to standard error.
 
@@ -223,7 +227,7 @@ Output, on standard error:
 
 ## Dynamic programming is the right tool
 
-Listing every tiling only to keep the cheapest one wastes work, and the number of tilings grows very fast. In the expression `load(add(load(add(a, 8)), 8))` and its longer relatives, each level can be tiled in 4 ways, whatever the other levels do. So 10 levels have 4 × 4 × ... × 4 = 1,048,576 tilings:
+Listing every tiling only to keep the cheapest one wastes work, and the number of tilings grows very fast. In the expression `load(add(load(add(a, 8)), 8))` and its longer relatives, each level can be tiled in 4 ways, whatever the other levels do, counted as described under [Tilings](#tilings). So 10 levels have 4 × 4 × ... × 4 = 1,048,576 tilings:
 
 | Levels | Nodes | Rows | Tilings | Time with dlx |
 |:---:|:---:|:---:|:---:|:---:|
@@ -232,7 +236,7 @@ Listing every tiling only to keep the cheapest one wastes work, and the number o
 | 11 | 34 | 67 | 4,194,304 | about 29 s |
 | 21 | 64 | 127 | 4,398,046,511,104 | not run |
 
-The times come from one run on the machine used to write this. The last line is the 64-node cap. Its total comes from dynamic programming, as dlx could not list that many.
+The times come from one run on the machine used to write this, and they vary from run to run. The last line is the 64-node cap. Its total comes from dynamic programming, as dlx could not list that many.
 
 **Dynamic programming** gets the same answer without listing anything. It works from the bottom of the tree to the top and, at each node, writes down the cheapest cost of computing that node. Those numbers are all it needs to decide the node above:
 
@@ -240,28 +244,29 @@ The times come from one run on the machine used to write this. The last line is 
 |------|------------------------------------------|:---:|
 | `a` | `reg`: 0 | 0 |
 | `8` | `mov`: 1 | 1 |
-| `add` | `add`: 1 + 0 (for `a`) + 1 (for `8`) = 2<br>`addi`: 1 + 0 (for `a`) = 1 | 1 |
+| `add` | `add`: 1 + 0 (for `a`) + 1 (for `8`) = 2<br>`adds`: 2 + 0 (for `a`) + 1 (for `8`) = 3<br>`addi`: 1 + 0 (for `a`) = 1 | 1 |
 | `load` | `ldr`: 4 + 1 (for `add`) = 5<br>`ldrreg`: 4 + 0 (for `a`) + 1 (for `8`) = 5<br>`ldrimm`: 4 + 0 (for `a`) = 4 | 4 |
 
 Each node is handled once, so the work grows with the size of the tree instead of exploding. The cheapest cost at the root is 4, the same answer dlx gives. A production compiler working on trees should use this. Aho and Johnson applied dynamic programming to code generation in 1976, and the survey below says that many later methods were influenced by it.
 
-The exact cover model is also a choice made for this example. The survey ["Survey on Instruction Selection"](https://arxiv.org/abs/1306.4898) by Hjort Blindell states the tree problem as every node being "covered by at least one pattern" (section 3.1), so its basic definition allows tiles to overlap. Some methods it describes do require exactly one (section 5.3). On a tree with these tiles, the test below shows that requiring exactly one loses nothing: dlx finds the same cheapest cost as dynamic programming.
+The exact cover model is also a choice made for this example. The survey ["Survey on Instruction Selection"](https://arxiv.org/abs/1306.4898) by Hjort Blindell states the tree problem as every node being "covered by at least one pattern" (section 3.1), so its basic definition allows tiles to overlap. Some methods it describes do require exactly one (section 5.3). On a tree with these tiles, requiring exactly one loses nothing. Take a working program whose tiles overlap, and start at the tile on the root. It reads the values at the places where it stops, so each of those places needs a tile with its top node there. Follow those tiles down the same way. The tiles you reach cover every node exactly once, because each one starts where another stops. No tile reads the result of any other tile, so those can go, and that can only lower the cost.
 
 So this example is here to show how a problem turns into a matrix, and why tiles join up without a rule for it. It is not a way to build a compiler.
 
 ## How the results are checked
 
-- **An independent method.** The test file has its own dynamic programming, written out rule by rule with its own tree type. It uses neither the pattern table nor the parser, and it also counts tilings by adding and multiplying, without listing them. On 2000 random trees from a fixed seed, its cheapest cost and its count of tilings both match dlx. The largest tree has 48 nodes and 53 rows, the most tilings for one tree is 512, and the total is 14,045 tilings. 136 of the trees have no tiling, because they shift by a register, and both methods agree on those too.
-- **Running the programs.** Every tiling of every one of those trees becomes a program, and a small interpreter in the test runs that program as text. Its result must equal the value of the expression worked out from the tree. This shows that the tiles really do join up, and that the instructions read their operands in the right order.
+- **An independent method.** The test file has its own dynamic programming, written out rule by rule with its own tree type. It uses neither the pattern table nor the parser, and it also counts tilings by adding and multiplying, without listing them. On 2000 random trees, the same ones on every run, its cheapest cost and its count of tilings both match dlx. The largest tree has 48 nodes and 53 rows, the most tilings for one tree is 512, and the total is 14,045 tilings. 136 of the trees have no tiling, because they shift by a register, and both methods agree on those too. Its rules have no `adds`, so this check can't test the rule about `adds`. A test of `add(a, b)` covers that rule.
+- **Overlaps don't help.** Dynamic programming also places tiles edge to edge, so it can't show that overlapping tiles gain nothing. Another test finds the cheapest set of tiles that covers each node at least once, trying every combination of rows. It doesn't even ask that the tiles join up, so it can only find a lower cost. On 3,432 random trees of at most 18 nodes, the cost always equals the one from dlx.
+- **Running the programs.** Every tiling of every one of those trees becomes a program, and a small stand-in for the processor, written in the test, runs that program as text. Its result must equal the value of the expression worked out from the tree. This shows that the tiles really do join up, and that the instructions read their operands in the right order.
 - **Published numbers.** The matrix, the outputs on standard output and the growth table are checked by tests. For 10, 11 and 21 levels, the tests check the totals by dynamic programming only. The dlx runs at 10 and 11 levels were done by hand, and their totals matched. The times are not tested.
 
 `go test` checks all of this. `go test -short` uses 200 trees instead of 2000 and skips the 8-level run with dlx. Use `-short` with `-race`.
 
 ## Limits
 
-- **Trees only.** If a value is used twice, as in `add(load(a), load(a))`, this example computes it twice. Real compilers often share such a value, which makes the expression a graph that is no longer a tree. There, tiles overlapping can be useful, and exact cover would forbid it.
+- **Trees only.** If a value is used twice, as in `add(load(a), load(a))`, this example computes it twice. Real compilers often compute such a value once and use it twice. That node then hangs below two others, so the picture is no longer a tree. There, tiles overlapping can be useful, and exact cover would forbid it.
 - **One kind of result.** The tiles join up by themselves only because every tile leaves its result in a register. If some instructions gave a result in another form, the tile above would have to accept that form, and covering each node once would not be enough. The survey points out this gap for an exact-once model (section 5.3.3).
 - **Operand order matters.** `addi` fits a constant on the right only, so `add(8, a)` costs 2 and `add(a, 8)` costs 1. The same goes for `madd` and `addshift`. Compilers usually tidy such expressions first, and this example doesn't.
 - **Simplified machine.** Real instructions limit which constants they accept, and a real shift inside a load must match the data size. Here any constant fits.
 - **Unlimited registers.** Each instruction writes a new register. Choosing real registers and the final order of instructions are later steps in a compiler.
-- **Exponential search.** The 64-node cap only stops the program building a huge matrix. Many expressions well below it would take far too long, as the table above shows.
+- **Slow on big expressions.** The number of tilings multiplies as the tree grows. The 64-node cap only stops the program building a huge matrix. Many expressions well below it would take far too long, as the table above shows.

@@ -60,6 +60,14 @@ Tiling 2, cost 4:
   result in R1
 `
 
+const oneAdd = `Expression: add(a, b)
+Nodes: 3, rows: 3, tilings: 1
+
+Tiling 1, cost 1:
+  add R0, a, b               ; add, cost 1, covers add
+  result in R0
+`
+
 func TestRun(t *testing.T) {
 	t.Parallel()
 
@@ -91,6 +99,12 @@ func TestRun(t *testing.T) {
 			name:        "limit above the number of tilings",
 			args:        []string{"-limit", "100"},
 			wantTilings: 4,
+		},
+		{
+			name:        "adds is not a second tiling",
+			args:        []string{"-expr", "add(a, b)", "-limit", "0"},
+			wantTilings: 1,
+			wantStdout:  oneAdd,
 		},
 		{
 			name:        "element of an array",

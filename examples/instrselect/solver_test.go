@@ -366,7 +366,7 @@ func (c *choices) add(cost int, operands ...choices) {
 // bestCost is the dynamic programming method: the memo means it works out each
 // node once, and at each node it tries the tiles that can sit there. It is written out rule by
 // rule, without the pattern table, and adds the tilings up instead of listing
-// them. adds is left out, because add always beats it on the same nodes.
+// them. adds is left out, as in the solver: tiles on the same nodes count once.
 func bestCost(e *expr, memo map[*expr]choices) choices {
 	if known, isKnown := memo[e]; isKnown {
 		return known
@@ -490,6 +490,78 @@ func execute(t *testing.T, chosen *tiling) uint64 {
 		}
 	}
 	return value(chosen.result)
+}
+
+// cheapestOverlappingCover returns the lowest cost of any set of tiles that
+// covers each node at least once. It doesn't ask that the tiles join up, so it
+// can only do better than a real program could. costs[m] is the cheapest way
+// found so far to cover exactly the nodes in the bit mask m, and each tile
+// extends every mask. Using a tile twice would change nothing but the cost.
+func cheapestOverlappingCover(tiles []tile, nodes int) (int, bool) {
+	const unreached = -1
+	costs := make([]int, 1<<nodes)
+	for m := range costs {
+		costs[m] = unreached
+	}
+	costs[0] = 0
+	for _, placed := range tiles {
+		mask := 0
+		for _, id := range placed.covered {
+			mask |= 1 << id
+		}
+		for m, cost := range costs {
+			if cost == unreached {
+				continue
+			}
+			next := cost + placed.pattern.cost
+			if known := costs[m|mask]; known == unreached || next < known {
+				costs[m|mask] = next
+			}
+		}
+	}
+	best := costs[len(costs)-1]
+	return best, best != unreached
+}
+
+// TestSolve_OverlapsDontHelp checks the README's claim that requiring each node
+// to be covered exactly once loses nothing. The published count is for this seed
+// and this size cap.
+func TestSolve_OverlapsDontHelp(t *testing.T) {
+	t.Parallel()
+
+	const mostNodes = 18
+	trees := 5000
+	if testing.Short() {
+		trees = 500
+	}
+
+	r := rand.New(rand.NewSource(2))
+	compared := 0
+	for i := 0; i < trees; i++ {
+		e := randomExpr(r, 5)
+		if e.size() > mostNodes {
+			continue
+		}
+		compared++
+		parsed := mustParse(t, e.String())
+
+		found := solve(parsed, instructions, 1)
+		cost, isCovered := cheapestOverlappingCover(placements(parsed, instructions), len(parsed.nodes))
+
+		if isCovered != (found.total > 0) {
+			t.Fatalf("%s: covered with overlaps: %v, tilings: %d", e, isCovered, found.total)
+		}
+		if isCovered && cost != found.tilings[0].cost {
+			t.Fatalf("%s: overlaps cost %d, exact cover %d", e, cost, found.tilings[0].cost)
+		}
+	}
+
+	if testing.Short() {
+		return
+	}
+	if want := 3432; compared != want {
+		t.Errorf("compared %d trees, want %d", compared, want)
+	}
 }
 
 // TestSolve_RandomTrees compares dlx with the dynamic programming method and

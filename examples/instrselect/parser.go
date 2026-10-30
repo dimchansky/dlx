@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"strconv"
 	"strings"
+	"unicode/utf8"
 )
 
 // maxNodes caps the size of an expression. It only stops the program building
@@ -63,7 +64,8 @@ func parse(text string) (tree, error) {
 	}
 	p.skipSpaces()
 	if p.pos != len(p.text) {
-		return tree{}, p.errorf("unexpected %q after the expression", p.text[p.pos])
+		next, _ := utf8.DecodeRuneInString(p.text[p.pos:])
+		return tree{}, p.errorf("unexpected %q after the expression", next)
 	}
 	return tree{root: root, nodes: p.nodes}, nil
 }
