@@ -3,6 +3,7 @@ package main
 import (
 	"bytes"
 	"errors"
+	"reflect"
 	"strings"
 	"testing"
 )
@@ -17,9 +18,6 @@ func TestRun(t *testing.T) {
 		wantLines  int
 		wantStdout string
 		wantStderr string
-		// wantLine is a line stdout must contain, for long output.
-		wantLine string
-		slow     bool
 	}{
 		{
 			name:       "first series by default",
@@ -31,13 +29,6 @@ func TestRun(t *testing.T) {
 			args:       []string{"-n", "6", "-limit", "0"},
 			wantLines:  4,
 			wantStdout: "0 1 5 2 4 3\n0 2 1 4 5 3\n0 4 5 2 1 3\n0 5 1 4 2 3\n",
-		},
-		{
-			name:      "finds Berg's series",
-			args:      []string{"-first", "5", "-limit", "0"},
-			wantLines: 3856,
-			wantLine:  "F E C A G D G# C# D# F# A# B",
-			slow:      true,
 		},
 		{
 			name:       "other sizes print numbers",
@@ -156,9 +147,6 @@ func TestRun(t *testing.T) {
 		tt := tt
 		t.Run(tt.name, func(t *testing.T) {
 			t.Parallel()
-			if tt.slow && testing.Short() {
-				t.Skip("slow: enumerates every series")
-			}
 
 			var stdout, stderr bytes.Buffer
 			code := run(tt.args, &stdout, &stderr)
@@ -172,9 +160,6 @@ func TestRun(t *testing.T) {
 			if tt.wantStdout != "" && stdout.String() != tt.wantStdout {
 				t.Errorf("stdout:\n%s\nwant:\n%s", stdout.String(), tt.wantStdout)
 			}
-			if tt.wantLine != "" && !strings.Contains("\n"+stdout.String(), "\n"+tt.wantLine+"\n") {
-				t.Errorf("stdout has no line %q", tt.wantLine)
-			}
 			if !strings.Contains(stderr.String(), tt.wantStderr) {
 				t.Errorf("stderr:\n%s\nwant it to contain:\n%s", stderr.String(), tt.wantStderr)
 			}
@@ -182,6 +167,46 @@ func TestRun(t *testing.T) {
 				t.Errorf("unexpected stderr:\n%s", stderr.String())
 			}
 		})
+	}
+}
+
+// TestRun_ShiftedSeries runs the program from Berg's starting pitch and checks
+// that it prints exactly the series from pitch 0, shifted up, and Berg's among
+// them. This is the only dlx run from another pitch at this size.
+func TestRun_ShiftedSeries(t *testing.T) {
+	t.Parallel()
+	if testing.Short() {
+		t.Skip("slow: enumerates every series")
+	}
+
+	const n, first = 12, 5
+	want := make(map[string]bool)
+	for _, series := range seriesFromZero(n) {
+		shifted := make([]int, n)
+		for i, pitch := range series {
+			shifted[i] = (pitch + first) % n
+		}
+		want[formatSeries(shifted)] = true
+	}
+
+	var stdout, stderr bytes.Buffer
+	if code := run([]string{"-first", "5", "-limit", "0"}, &stdout, &stderr); code != 0 {
+		t.Fatalf("exit status %d, stderr: %s", code, stderr.String())
+	}
+
+	lines := strings.Split(strings.TrimSuffix(stdout.String(), "\n"), "\n")
+	if len(lines) != 3856 {
+		t.Errorf("printed %d lines, want 3856", len(lines))
+	}
+	got := make(map[string]bool)
+	for _, line := range lines {
+		got[line] = true
+	}
+	if !reflect.DeepEqual(got, want) {
+		t.Errorf("printed series are not the shifted series from pitch 0")
+	}
+	if !got["F E C A G D G# C# D# F# A# B"] {
+		t.Errorf("Berg's series is missing")
 	}
 }
 

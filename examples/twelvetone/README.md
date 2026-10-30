@@ -53,6 +53,8 @@ The obvious first idea is one matrix row per "pitch p at position q", as a Sudok
 | Column      | A link: one inner position and one pitch (explained below) | 8             | 120            |
 | Row         | One step from one pitch to another                         | 18            | 1210           |
 
+The two row counts already have both ends of the series fixed, which [comes later](#fixing-both-ends). Without that, each of the 3 steps for n=4 has 4 × 3 = 12 rows, 36 in all, and each of the 11 steps for n=12 has 12 × 11 = 132 rows, 1452 in all.
+
 The first three families say almost everything. Each row covers its step, the pitch it leaves, and the interval from x to y. There are n-1 steps but n pitches, so the last step also covers the pitch it reaches.
 
 One thing is still missing. Nothing yet says that step 1 must **start** where step 0 **ended**. Picking "0 to 3" and then "2 to 1" would break the series in two. Equality is not something exact cover can state. It can only say "exactly once".
@@ -76,14 +78,7 @@ The first two rows fit perfectly: each of the four columns has exactly one 1. Th
 
 The reason is a counting one. The arriving row has one 1 and the leaving row has n-1 of them, which makes n in total for n columns. They cover everything exactly once only if they don't overlap, and that happens only when the one column the leaving row skips is the one column the arriving row covers. So:
 
-> When every solution picks exactly two rows that touch a variable, one forced by each of two other columns, let one cover (variable, value), and let the other cover (variable, v) for every v except its own value. Exact cover then forces the two values to be equal.
-
-```mermaid
-flowchart LR
-    A["Step 0 arrives on pitch 3: covers L1.3"] --> P["Position 1: the four columns L1.0 to L1.3 must each be covered once"]
-    B["Step 1 leaves from pitch 3: covers L1.0, L1.1, L1.2"] --> P
-    C["Step 1 leaves from pitch 2: covers L1.0, L1.1, L1.3"] -. "with the first box" .-> R["Rejected: L1.3 covered twice, L1.2 not at all"]
-```
+> The step-0 column makes a solution pick exactly one row for step 0, and the step-1 column makes it pick exactly one row for step 1. So exactly one arriving row and one leaving row touch position 1. Let the arriving row cover the one link column of the pitch it arrives on, and let the leaving row cover every link column except the one of the pitch it leaves from. Exact cover then forces the two pitches to be equal.
 
 Only inner positions need links, because only they are shared by two steps. That gives n-2 positions with n columns each. Many rows touch a position's links, 15 of them at position 1 for n=4, but a solution picks only one row for each step, so exactly two of the rows it picks touch them. That is what the trick needs.
 
@@ -248,9 +243,9 @@ The tests also check that:
 - Berg's series passes the definition and the program prints it,
 - the `0, n-1, 1, n-2, ...` construction is a series for every even size up to 32,
 - the equality trick accepts a pair of rows exactly when the two values are equal,
-- the matrix sizes and the column lists in this README are right.
+- the matrix sizes, the column lists and the whole n=4 table in this README are right.
 
-`go test` checks every total. For n=12 the total over all starting pitches comes from the plain search and from 12 times the 3856 found by dlx, to keep the tests quick. `go test -short` skips n=10 and n=12, which are much slower with `-race`. Use `-short` with `-race`.
+`go test` checks every total. For n=12 the total over all starting pitches comes from the plain search and from 12 times the 3856 found by dlx, to keep the tests quick, so `go test` never runs `twelvetone -first -1 -count` at that size. It does run that command for n=8. `go test -short` skips n=10 and n=12, which are much slower with `-race`. Use `-short` with `-race`.
 
 ## Limits
 

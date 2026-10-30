@@ -2,8 +2,12 @@ package main
 
 import (
 	"fmt"
+	"os"
 	"reflect"
+	"regexp"
 	"sort"
+	"strings"
+	"sync"
 	"testing"
 
 	"github.com/dimchansky/dlx"
@@ -65,11 +69,27 @@ func isAllInterval(n int, series []int) bool {
 	return len(pitches) == n && len(intervals) == n-1
 }
 
-// collect returns the series that start on first, as printed strings.
-func collect(n, first int) map[string]bool {
-	found := make(map[string]bool)
-	solve(n, first, func(series []int) bool {
-		found[fmt.Sprint(series)] = true
+// twelveOnce and twelve keep the series of 12 pitches, so that the tests share
+// one slow enumeration.
+var (
+	twelveOnce sync.Once
+	twelve     map[string][]int
+)
+
+// seriesFromZero returns the series that start on pitch 0, keyed by their
+// printed form. Callers must not change the result.
+func seriesFromZero(n int) map[string][]int {
+	if n == 12 {
+		twelveOnce.Do(func() { twelve = enumerate(12) })
+		return twelve
+	}
+	return enumerate(n)
+}
+
+func enumerate(n int) map[string][]int {
+	found := make(map[string][]int)
+	solve(n, 0, func(series []int) bool {
+		found[fmt.Sprint(series)] = append([]int(nil), series...)
 		return false
 	})
 	return found
@@ -105,14 +125,12 @@ func TestSolve_KnownCounts(t *testing.T) {
 				t.Skip("slow: enumerates every series")
 			}
 
-			found := make(map[string]bool)
-			solve(tt.n, 0, func(series []int) bool {
+			found := seriesFromZero(tt.n)
+			for _, series := range found {
 				if !isAllInterval(tt.n, series) {
 					t.Errorf("invalid series %v", series)
 				}
-				found[fmt.Sprint(series)] = true
-				return false
-			})
+			}
 			if len(found) != tt.want {
 				t.Errorf("found %d series, want %d", len(found), tt.want)
 			}
@@ -120,7 +138,7 @@ func TestSolve_KnownCounts(t *testing.T) {
 			independent := 0
 			backtrack(tt.n, 0, func(series []int) {
 				independent++
-				if !found[fmt.Sprint(series)] {
+				if found[fmt.Sprint(series)] == nil {
 					t.Errorf("independent search found %v, which solve did not", series)
 				}
 			})
@@ -134,8 +152,8 @@ func TestSolve_KnownCounts(t *testing.T) {
 // TestSolve_AnyFirst checks that the series from each starting pitch are
 // shifted copies of the series from pitch 0, and that the totals add up. For 12
 // pitches that total is the published 46272. Running dlx from all twelve pitches
-// would take too long there, so it runs from one other pitch, and the plain
-// search covers all twelve.
+// would take too long there, so the plain search covers all twelve, and
+// TestRun_ShiftedSeries runs dlx from one other pitch.
 func TestSolve_AnyFirst(t *testing.T) {
 	t.Parallel()
 
@@ -159,7 +177,7 @@ func TestSolve_AnyFirst(t *testing.T) {
 				t.Skip("slow: enumerates every series")
 			}
 
-			base := collect(tt.n, 0)
+			base := seriesFromZero(tt.n)
 			if got := tt.n * len(base); got != tt.want {
 				t.Errorf("%d starting pitches and %d series each make %d, want %d", tt.n, len(base), got, tt.want)
 			}
@@ -177,7 +195,7 @@ func TestSolve_AnyFirst(t *testing.T) {
 				firsts[first] = first
 			}
 			if tt.n == 12 {
-				firsts = []int{5}
+				firsts = nil
 			}
 			for _, first := range firsts {
 				first := first
@@ -191,7 +209,7 @@ func TestSolve_AnyFirst(t *testing.T) {
 						for i, pitch := range series {
 							shifted[i] = (pitch - first + tt.n) % tt.n
 						}
-						if series[0] != first || !base[fmt.Sprint(shifted)] {
+						if series[0] != first || base[fmt.Sprint(shifted)] == nil {
 							t.Errorf("series %v is not a shifted copy of a series from 0", series)
 						}
 						return false
@@ -223,8 +241,8 @@ func TestBacktrack_LastPitch(t *testing.T) {
 	}
 }
 
-// TestBergRow checks the historical row against the definition. TestRun checks
-// that the program prints it.
+// TestBergRow checks the historical row against the definition.
+// TestRun_ShiftedSeries checks that the program prints it.
 func TestBergRow(t *testing.T) {
 	t.Parallel()
 
@@ -358,6 +376,54 @@ func TestBuildRows_WorkedExample(t *testing.T) {
 	sort.Slice(series, func(i, j int) bool { return fmt.Sprint(series[i]) < fmt.Sprint(series[j]) })
 	if wantSeries := [][]int{{0, 1, 3, 2}, {0, 3, 1, 2}}; !reflect.DeepEqual(series, wantSeries) {
 		t.Errorf("series = %v, want %v", series, wantSeries)
+	}
+}
+
+// TestREADME_FullMatrix checks the whole n=4 table in the README against
+// buildRows, row by row and in order.
+func TestREADME_FullMatrix(t *testing.T) {
+	t.Parallel()
+
+	readme, err := os.ReadFile("README.md")
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	names := []string{"s0", "s1", "s2", "p0", "p1", "p2", "p3", "i1", "i2", "i3"}
+	for position := 1; position <= 2; position++ {
+		for pitch := 0; pitch < 4; pitch++ {
+			names = append(names, fmt.Sprintf("L%d.%d", position, pitch))
+		}
+	}
+	wantHeader := "|   | " + strings.Join(names, " | ") + " |"
+	if !strings.Contains(string(readme), "\n"+wantHeader+"\n") {
+		t.Errorf("README has no header line %q", wantHeader)
+	}
+
+	var got []string
+	label := regexp.MustCompile(`^\| s\d: \d to \d \|`)
+	for _, line := range strings.Split(string(readme), "\n") {
+		if label.MatchString(line) {
+			got = append(got, line)
+		}
+	}
+
+	c := columns{4}
+	var want []string
+	for _, row := range buildRows(4, 0) {
+		cells := make([]string, c.count())
+		for i := range cells {
+			cells[i] = "0"
+		}
+		for _, column := range row {
+			cells[column] = "1"
+		}
+		x := row[1] - c.pitch(0)
+		y := (x + row[2] - c.interval(1) + 1) % 4
+		want = append(want, fmt.Sprintf("| s%d: %d to %d | %s |", row[0], x, y, strings.Join(cells, " | ")))
+	}
+	if !reflect.DeepEqual(got, want) {
+		t.Errorf("README table:\n%s\nwant:\n%s", strings.Join(got, "\n"), strings.Join(want, "\n"))
 	}
 }
 
