@@ -1,36 +1,91 @@
 # N queens
 
-A command-line solver for the n-queens problem, written as an example of using package [dlx](https://github.com/dimchansky/dlx): place n queens on an n by n chessboard so that no two share a row, column or diagonal.
+A command-line solver for the n-queens problem, written as an example of using package [dlx](https://github.com/dimchansky/dlx). If exact cover is new to you, read the [introduction to the examples](../README.md) first.
 
-## How it maps to exact cover
+## The problem
 
-This example shows what to do with an "at most once" requirement. Each board row and column holds exactly one queen, but a diagonal holds at most one, and most diagonals stay empty. dlx requires every column to be covered exactly once, so the problem doesn't fit as it stands.
+A queen in chess attacks along four lines: its row, its column and its two diagonals.
 
-The fix is a slack row, as described in the [dlx README](../../README.md#what-it-doesnt-do): for each optional column, add a row with that column alone. The search picks it when no queen covers that diagonal.
+![A queen on a 5 by 5 board with lines along its row, its column and both diagonals](lines.svg)
 
-| Matrix part | Meaning                                               | Count for n=8 |
-|-------------|-------------------------------------------------------|---------------|
-| Column      | A board row, which needs exactly one queen            | 8             |
-| Column      | A board column, which needs exactly one queen         | 8             |
-| Column      | A diagonal, which takes at most one queen             | 15            |
-| Column      | An antidiagonal, which takes at most one queen        | 15            |
-| Row         | A queen on one square, covering its four lines        | 64            |
-| Row         | A slack row for one diagonal or antidiagonal          | 30            |
+The task is to place n queens on an n by n board so that no two share a row, a column or a diagonal. It is a classic search puzzle because the rules are simple, yet a queen placed early can block many squares much later.
 
-Two facts make this safe, and both must hold whenever you use the recipe:
+For n=4 there are two solutions. This is the first:
+
+```
+. Q . .
+. . . Q
+Q . . .
+. . Q .
+```
+
+Rotations and reflections of a placement count as separate solutions, so the second solution for n=4 is this one flipped.
+
+## Why diagonals are "at most once"
+
+Count the lines. A board of size n has n rows and n queens, and no two queens share a row, so each row holds exactly one queen. The same goes for columns.
+
+Diagonals are different. An n by n board has 2n-1 diagonals in each direction: 7 for n=4, and 15 for n=8. The n queens stand on n different diagonals in each direction, so exactly n-1 diagonals in each direction stay empty: 3 for n=4, and 7 for n=8. So a row or column needs **exactly one** queen, but a diagonal takes **at most one**.
+
+dlx requires every column of the matrix to be covered exactly once, so diagonals don't fit as they stand. The fix is a slack row: for each diagonal, add a matrix row that covers that diagonal alone. The [introduction](../README.md#at-most-once-slack-rows) explains the idea on a small example. Think of a slack row as a stand-in that says "this diagonal is empty".
+
+## How it becomes a matrix
+
+**One column of the matrix is one line on the board.** **One row of the matrix is either a queen on one square, or a slack row for one diagonal.**
+
+| Matrix part | Meaning                                               | Count for n=4 | Count for n=8 |
+|-------------|-------------------------------------------------------|---------------|---------------|
+| Column      | A board row, which needs exactly one queen            | 4             | 8             |
+| Column      | A board column, which needs exactly one queen         | 4             | 8             |
+| Column      | A diagonal, which takes at most one queen             | 7             | 15            |
+| Column      | An antidiagonal, which takes at most one queen        | 7             | 15            |
+| Row         | A queen on one square, covering its four lines        | 16            | 64            |
+| Row         | A slack row for one diagonal or antidiagonal          | 14            | 30            |
+
+Rows and columns are counted from 0. All the squares of a diagonal share a simple number, which gives it a name:
+
+- A **diagonal** runs from bottom left to top right, and its squares have the same value of row+column.
+- An **antidiagonal** runs from top left to bottom right, and its squares have the same value of row-column. Adding n-1 keeps the number from being negative.
+
+For n=4, these are the numbers on each square:
+
+```
+Diagonal number           Antidiagonal number
+(row + column)            (row - column + 3)
+
+0 1 2 3                   3 2 1 0
+1 2 3 4                   4 3 2 1
+2 3 4 5                   5 4 3 2
+3 4 5 6                   6 5 4 3
+```
+
+So the queen at row 0, column 1 lies on diagonal 1 and antidiagonal 2. Its matrix row has four 1s: `r0`, `c1`, `d1` and `a2`.
+
+The full matrix for n=4 has 22 columns and 30 rows. This table shows only the 10 rows of the first solution above, so you can check that each column has a 1 in exactly one row. The other 12 queen rows and 8 slack rows are not shown.
+
+|   | r0 | r1 | r2 | r3 | c0 | c1 | c2 | c3 | d0 | d1 | d2 | d3 | d4 | d5 | d6 | a0 | a1 | a2 | a3 | a4 | a5 | a6 |
+|---|:-:|:-:|:-:|:-:|:-:|:-:|:-:|:-:|:-:|:-:|:-:|:-:|:-:|:-:|:-:|:-:|:-:|:-:|:-:|:-:|:-:|:-:|
+| queen r0 c1 | 1 | 0 | 0 | 0 | 0 | 1 | 0 | 0 | 0 | 1 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 1 | 0 | 0 | 0 | 0 |
+| queen r1 c3 | 0 | 1 | 0 | 0 | 0 | 0 | 0 | 1 | 0 | 0 | 0 | 0 | 1 | 0 | 0 | 0 | 1 | 0 | 0 | 0 | 0 | 0 |
+| queen r2 c0 | 0 | 0 | 1 | 0 | 1 | 0 | 0 | 0 | 0 | 0 | 1 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 1 | 0 |
+| queen r3 c2 | 0 | 0 | 0 | 1 | 0 | 0 | 1 | 0 | 0 | 0 | 0 | 0 | 0 | 1 | 0 | 0 | 0 | 0 | 0 | 1 | 0 | 0 |
+| slack d0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 1 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 |
+| slack d3 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 1 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 |
+| slack d6 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 1 | 0 | 0 | 0 | 0 | 0 | 0 | 0 |
+| slack a0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 1 | 0 | 0 | 0 | 0 | 0 | 0 |
+| slack a3 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 1 | 0 | 0 | 0 |
+| slack a6 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 1 |
+
+Two queens on the same diagonal would both have a 1 in that diagonal's column, so they can't both be picked. That single rule is the whole "no attacks" condition.
+
+Two facts make slack rows safe here, and both must hold whenever you use the recipe:
 
 - Slack rows add no duplicate solutions. An empty diagonal can be covered in only one way, by its own slack row, so each placement of queens is exactly one exact cover.
-- Slack rows can be told apart from real rows. A queen's row has four columns and a slack row has one, so [solver.go](solver.go) drops rows of length one when it decodes a solution.
+- Slack rows can be told apart from real rows. A queen's row has four columns and a slack row has one.
 
-Slack rows have a cost. dlx branches on the column with the fewest remaining rows, and it treats optional diagonals like any other column. On the machine used to write this, the first solution for n=24 took under a second, while n=32 had not finished after two minutes. The total for n=13 took about a second.
+## How a solution decodes back
 
-Rotations and reflections of a placement count as separate solutions.
-
-| n         | 1 | 2 | 3 | 4 | 5  | 6 | 7  | 8  | 9   | 10  | 11   | 12    |
-|-----------|---|---|---|---|----|---|----|----|-----|-----|------|-------|
-| Solutions | 1 | 0 | 0 | 2 | 10 | 4 | 40 | 92 | 352 | 724 | 2680 | 14200 |
-
-The tests check these totals and compare every solution with an independent backtracking search.
+[solver.go](solver.go) skips the rows with one column, because those are slack rows. In each remaining row, the first column is the board row and the second is the board column plus n, since the column family comes after the n row columns. That is enough to draw the board.
 
 ## Installation
 
@@ -40,7 +95,7 @@ The tests check these totals and compare every solution with an independent back
 
     queens [-n size] [-limit n] [-count]
 
-- `-n size` sets the board size, 8 by default, from 1 to 64. That limit bounds memory: it is not a usable range, as the timings above show.
+- `-n size` sets the board size, 8 by default, from 1 to 64. That limit bounds memory: it is not a usable range, as the timings below show.
 - `-limit n` sets how many solutions to print, 1 by default. Zero prints all of them.
 - `-count` enumerates every solution and prints the total instead, so `-limit` has no effect with it.
 
@@ -88,6 +143,18 @@ Output, on standard error:
 
     queens: no solution found
 
-## Tests
+## Number of solutions
+
+| n         | 1 | 2 | 3 | 4 | 5  | 6 | 7  | 8  | 9   | 10  | 11   | 12    |
+|-----------|---|---|---|---|----|---|----|----|-----|-----|------|-------|
+| Solutions | 1 | 0 | 0 | 2 | 10 | 4 | 40 | 92 | 352 | 724 | 2680 | 14200 |
+
+## How the results are checked
+
+The tests check these totals and compare every solution with an independent backtracking search that doesn't use dlx.
 
 `go test` checks every total. `go test -short` skips n=11 and n=12, which are much slower with `-race`. Use `-short` with `-race`.
+
+## Limits
+
+Slack rows have a cost. dlx branches on the column with the fewest remaining rows, and it treats optional diagonals like any other column, so it can spend its time deciding which diagonals stay empty. On the machine used to write this, the first solution for n=24 took under a second, while n=32 took nearly three minutes. The total for n=13 took about a second.

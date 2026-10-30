@@ -1,0 +1,35 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 300 300" width="300" height="300" role="img" aria-label="A queen attacks along its row, its column and both diagonals" font-family="Helvetica, Arial, sans-serif">
+<title>A queen attacks along its row, its column and both diagonals</title>
+<rect x="0.5" y="0.5" width="299" height="299" rx="8" fill="#ffffff" stroke="#8c959f"/>
+<rect x="10" y="10" width="56" height="56" fill="#f6f8fa"/>
+<rect x="66" y="10" width="56" height="56" fill="#d0d7de"/>
+<rect x="122" y="10" width="56" height="56" fill="#f6f8fa"/>
+<rect x="178" y="10" width="56" height="56" fill="#d0d7de"/>
+<rect x="234" y="10" width="56" height="56" fill="#f6f8fa"/>
+<rect x="10" y="66" width="56" height="56" fill="#d0d7de"/>
+<rect x="66" y="66" width="56" height="56" fill="#f6f8fa"/>
+<rect x="122" y="66" width="56" height="56" fill="#d0d7de"/>
+<rect x="178" y="66" width="56" height="56" fill="#f6f8fa"/>
+<rect x="234" y="66" width="56" height="56" fill="#d0d7de"/>
+<rect x="10" y="122" width="56" height="56" fill="#f6f8fa"/>
+<rect x="66" y="122" width="56" height="56" fill="#d0d7de"/>
+<rect x="122" y="122" width="56" height="56" fill="#f6f8fa"/>
+<rect x="178" y="122" width="56" height="56" fill="#d0d7de"/>
+<rect x="234" y="122" width="56" height="56" fill="#f6f8fa"/>
+<rect x="10" y="178" width="56" height="56" fill="#d0d7de"/>
+<rect x="66" y="178" width="56" height="56" fill="#f6f8fa"/>
+<rect x="122" y="178" width="56" height="56" fill="#d0d7de"/>
+<rect x="178" y="178" width="56" height="56" fill="#f6f8fa"/>
+<rect x="234" y="178" width="56" height="56" fill="#d0d7de"/>
+<rect x="10" y="234" width="56" height="56" fill="#f6f8fa"/>
+<rect x="66" y="234" width="56" height="56" fill="#d0d7de"/>
+<rect x="122" y="234" width="56" height="56" fill="#f6f8fa"/>
+<rect x="178" y="234" width="56" height="56" fill="#d0d7de"/>
+<rect x="234" y="234" width="56" height="56" fill="#f6f8fa"/>
+<line x1="38" y1="94" x2="262" y2="94" stroke="#0969da" stroke-width="5" stroke-linecap="round" opacity="0.85"/>
+<line x1="150" y1="38" x2="150" y2="262" stroke="#1a7f37" stroke-width="5" stroke-linecap="round" opacity="0.85"/>
+<line x1="206" y1="38" x2="38" y2="206" stroke="#cf222e" stroke-width="5" stroke-linecap="round" opacity="0.85"/>
+<line x1="94" y1="38" x2="262" y2="206" stroke="#bf8700" stroke-width="5" stroke-linecap="round" opacity="0.85"/>
+<circle cx="150" cy="94" r="19" fill="#24292f"/><text x="150" y="102" text-anchor="middle" font-size="22" font-weight="bold" fill="#ffffff">Q</text>
+<rect x="10" y="10" width="280" height="280" fill="none" stroke="#24292f" stroke-width="2"/>
+</svg>
