@@ -1,0 +1,29 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 320 290" width="320" height="290" role="img" aria-label="The Fano plane: seven numbered points joined by six straight lines and one circle, with three points on each" font-family="Helvetica, Arial, sans-serif">
+<title>The Fano plane: seven points, seven lines, three points on each line</title>
+<rect x="0.5" y="0.5" width="319" height="289" rx="8" fill="#ffffff" stroke="#8c959f"/>
+<line x1="160" y1="30" x2="30" y2="255" stroke="#0969da" stroke-width="4" stroke-linecap="round"/>
+<line x1="160" y1="30" x2="290" y2="255" stroke="#1a7f37" stroke-width="4" stroke-linecap="round"/>
+<line x1="30" y1="255" x2="290" y2="255" stroke="#cf222e" stroke-width="4" stroke-linecap="round"/>
+<line x1="160" y1="30" x2="160" y2="255" stroke="#bf8700" stroke-width="4" stroke-linecap="round"/>
+<line x1="30" y1="255" x2="225" y2="142.5" stroke="#8250df" stroke-width="4" stroke-linecap="round"/>
+<line x1="290" y1="255" x2="95" y2="142.5" stroke="#e16f24" stroke-width="4" stroke-linecap="round"/>
+<circle cx="160" cy="180" r="75" fill="none" stroke="#57606a" stroke-width="4"/>
+<g fill="#24292f">
+<circle cx="160" cy="30" r="15"/>
+<circle cx="30" cy="255" r="15"/>
+<circle cx="290" cy="255" r="15"/>
+<circle cx="95" cy="142.5" r="15"/>
+<circle cx="160" cy="255" r="15"/>
+<circle cx="225" cy="142.5" r="15"/>
+<circle cx="160" cy="180" r="15"/>
+</g>
+<g fill="#ffffff" font-size="18" font-weight="bold" text-anchor="middle">
+<text x="160" y="36">4</text>
+<text x="30" y="261">6</text>
+<text x="290" y="261">2</text>
+<text x="95" y="148.5">1</text>
+<text x="160" y="261">3</text>
+<text x="225" y="148.5">5</text>
+<text x="160" y="186">0</text>
+</g>
+</svg>
